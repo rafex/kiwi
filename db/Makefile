@@ -2,7 +2,7 @@ SHELL := /bin/bash
 .ONESHELL:
 .SHELLFLAGS := -eu -o pipefail -c
 
-FLYWAY ?= flyway
+FLYWAY := ./flywayw
 CONF   ?= flyway.conf
 ARGS   ?=
 NONINTERACTIVE ?= 0

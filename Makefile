@@ -7,8 +7,12 @@ ifeq ($(V),0)
 .SILENT:
 endif
 
-ENV_FILE   ?= .env
-GITIGNORE  ?= .gitignore
+REPO_ROOT := $(abspath $(dir $(lastword $(MAKEFILE_LIST))))
+ENV_FILE  ?= $(REPO_ROOT)/.env
+GITIGNORE ?= $(REPO_ROOT)/.gitignore
+ENV_GITIGNORE_ENTRY ?= .env
+
+# Variables requeridas (las que imprimimos)
 REQUIRED_ENV_VARS ?= FLYWAY_URL FLYWAY_USER FLYWAY_PASSWORD
 
 define require_file
@@ -26,43 +30,43 @@ define require_gitignore_contains_exact_line
 	fi
 endef
 
-define load_dotenv
-	set -a
-	# shellcheck disable=SC1090
-	source "$(ENV_FILE)"
-	set +a
-endef
-
-define require_env_vars
+define require_env_vars_in_file
 	missing=0
 	for v in $(REQUIRED_ENV_VARS); do
-		if [[ -z "$${!v:-}" ]]; then
-			echo "ERROR: env var '$$v' is missing (expected in $(ENV_FILE) or exported)."
+		if ! grep -Eq "^[[:space:]]*$$v[[:space:]]*=" "$(ENV_FILE)"; then
+			echo "ERROR: '$$v' is missing in $(ENV_FILE)"
 			missing=1
 		fi
 	done
 	if [[ "$$missing" -ne 0 ]]; then exit 4; fi
 endef
 
-.PHONY: init validate_env show_env print-export
+# Prints: export VAR='value' (shell-safe)
+define print_exports_from_env
+	for v in $(REQUIRED_ENV_VARS); do \
+		line="$$(grep -E "^[[:space:]]*$${v}[[:space:]]*=" "$(ENV_FILE)" | tail -n 1 || true)"; \
+		if [[ -z "$$line" ]]; then \
+			echo "ERROR: '$$v' not found in $(ENV_FILE)"; exit 4; \
+		fi; \
+		val="$${line#*=}"; \
+		val_escaped="$$(printf "%s" "$$val" | sed "s/'/'\\\\''/g")"; \
+		echo "export $$v='$$val_escaped'"; \
+	done
+endef
 
-init: validate_env
-	echo "init OK."
+.PHONY: help
+help:
+	echo "Targets:"
+	echo "  print_env   Print export commands from .env (use with eval)"
+	echo ""
+	echo "Usage:"
+	echo "  eval \"\$$(make print_env)\""
+	echo ""
 
-validate_env:
+.PHONY: print_env
+print_env:
 	$(call require_file,$(GITIGNORE))
-	$(call require_gitignore_contains_exact_line,$(ENV_FILE))
+	$(call require_gitignore_contains_exact_line,$(ENV_GITIGNORE_ENTRY))
 	$(call require_file,$(ENV_FILE))
-	$(call load_dotenv)
-	$(call require_env_vars)
-	echo "Environment loaded from $(ENV_FILE) and validated."
-
-show_env: validate_env
-	echo "FLYWAY_URL=$${FLYWAY_URL:-}"
-	echo "FLYWAY_USER=$${FLYWAY_USER:-}"
-	echo "FLYWAY_PASSWORD=*** (hidden)"
-
-print-export: validate_env
-	echo "export FLYWAY_URL='$${FLYWAY_URL:-}'"
-	echo "export FLYWAY_USER='$${FLYWAY_USER:-}'"
-	echo "export FLYWAY_PASSWORD='$${FLYWAY_PASSWORD:-}'"
+	$(call require_env_vars_in_file)
+	$(call print_exports_from_env)

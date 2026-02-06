@@ -1,0 +1,52 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# -------- Config --------
+FLYWAY_IMAGE="${FLYWAY_IMAGE:-docker.io/flyway/flyway:10}"
+SQL_DIR="${SQL_DIR:-sql}"
+CONF_FILE="${CONF_FILE:-flyway.conf}"
+
+# -------- Load .env if present --------
+if [[ -f ".env" ]]; then
+  set -a
+  # shellcheck disable=SC1090
+  source .env
+  set +a
+fi
+
+# -------- Required env vars --------
+: "${FLYWAY_URL:?Missing FLYWAY_URL}"
+: "${FLYWAY_USER:?Missing FLYWAY_USER}"
+: "${FLYWAY_PASSWORD:?Missing FLYWAY_PASSWORD}"
+
+# -------- Sanity checks --------
+if [[ ! -d "$SQL_DIR" ]]; then
+  echo "ERROR: SQL directory '$SQL_DIR' not found"
+  exit 2
+fi
+
+if [[ ! -f "$CONF_FILE" ]]; then
+  echo "ERROR: Flyway config '$CONF_FILE' not found"
+  exit 3
+fi
+
+# -------- Container runtime --------
+if command -v podman >/dev/null 2>&1; then
+  RUNTIME="podman"
+else
+  RUNTIME="docker"
+fi
+
+# -------- Network mode --------
+# Linux: host is simplest
+NET_ARGS="--network host"
+
+# -------- Run Flyway --------
+exec "$RUNTIME" run --rm \
+  $NET_ARGS \
+  -e FLYWAY_URL \
+  -e FLYWAY_USER \
+  -e FLYWAY_PASSWORD \
+  -v "$(pwd)/$SQL_DIR:/flyway/sql:ro" \
+  -v "$(pwd)/$CONF_FILE:/flyway/conf/flyway.conf:ro" \
+  "$FLYWAY_IMAGE" "$@"

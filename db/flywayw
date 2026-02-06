@@ -3,14 +3,22 @@ set -euo pipefail
 
 # -------- Config --------
 FLYWAY_IMAGE="${FLYWAY_IMAGE:-docker.io/flyway/flyway:10}"
-SQL_DIR="${SQL_DIR:-sql}"
-CONF_FILE="${CONF_FILE:-flyway.conf}"
 
-# -------- Load .env if present --------
-if [[ -f ".env" ]]; then
+# Script lives in kiwi/db
+SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
+DB_DIR="${SCRIPT_DIR}"
+REPO_ROOT="$(cd -- "${DB_DIR}/.." && pwd)"
+
+SQL_DIR="${SQL_DIR:-${DB_DIR}/sql}"
+CONF_FILE="${CONF_FILE:-${DB_DIR}/flyway.conf}"
+ENV_FILE="${ENV_FILE:-${REPO_ROOT}/.env}"
+
+# -------- Load .env from repo root if present --------
+# (This is optional; db/Makefile also supports interactive prompts)
+if [[ -f "$ENV_FILE" ]]; then
   set -a
   # shellcheck disable=SC1090
-  source .env
+  source "$ENV_FILE"
   set +a
 fi
 
@@ -38,7 +46,6 @@ else
 fi
 
 # -------- Network mode --------
-# Linux: host is simplest
 NET_ARGS="--network host"
 
 # -------- Run Flyway --------
@@ -47,6 +54,6 @@ exec "$RUNTIME" run --rm \
   -e FLYWAY_URL \
   -e FLYWAY_USER \
   -e FLYWAY_PASSWORD \
-  -v "$(pwd)/$SQL_DIR:/flyway/sql:ro" \
-  -v "$(pwd)/$CONF_FILE:/flyway/conf/flyway.conf:ro" \
+  -v "${SQL_DIR}:/flyway/sql:ro" \
+  -v "${CONF_FILE}:/flyway/conf/flyway.conf:ro" \
   "$FLYWAY_IMAGE" "$@"

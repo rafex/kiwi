@@ -3,7 +3,6 @@ SHELL := /bin/bash
 .SHELLFLAGS := -eu -o pipefail -c
 
 FLYWAY := ./flywayw
-CONF   ?= flyway.conf
 ARGS   ?=
 NONINTERACTIVE ?= 0
 
@@ -18,12 +17,12 @@ help:
 	@echo "  clean      Run flyway clean (DANGER)"
 	@echo ""
 	@echo "Options:"
-	@echo "  CONF=flyway.conf"
-	@echo "  ARGS='-locations=filesystem:sql'"
-	@echo "  NONINTERACTIVE=1   (fail if env vars are missing)"
+	@echo "  ARGS='-X'               (extra Flyway args)"
+	@echo "  NONINTERACTIVE=1        (fail if env vars are missing)"
 	@echo ""
-	@echo "Credentials via env:"
+	@echo "Credentials via env (recommended):"
 	@echo "  FLYWAY_URL, FLYWAY_USER, FLYWAY_PASSWORD"
+	@echo "If not set, it will prompt (unless NONINTERACTIVE=1)."
 	@echo ""
 
 .PHONY: _env
@@ -50,19 +49,19 @@ _env:
 
 .PHONY: migrate
 migrate: _env
-	$(FLYWAY) -configFiles="$(CONF)" $(ARGS) migrate
+	$(FLYWAY) $(ARGS) migrate
 
 .PHONY: info
 info: _env
-	$(FLYWAY) -configFiles="$(CONF)" $(ARGS) info
+	$(FLYWAY) $(ARGS) info
 
 .PHONY: validate
 validate: _env
-	$(FLYWAY) -configFiles="$(CONF)" $(ARGS) validate
+	$(FLYWAY) $(ARGS) validate
 
 .PHONY: repair
 repair: _env
-	$(FLYWAY) -configFiles="$(CONF)" $(ARGS) repair
+	$(FLYWAY) $(ARGS) repair
 
 .PHONY: clean
 clean: _env
@@ -72,4 +71,4 @@ clean: _env
 	fi
 	@read -rp "Type 'YES' to confirm: " ans; \
 	if [[ "$$ans" != "YES" ]]; then echo "Aborted."; exit 4; fi
-	$(FLYWAY) -configFiles="$(CONF)" $(ARGS) clean
+	$(FLYWAY) $(ARGS) clean

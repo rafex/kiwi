@@ -13,7 +13,7 @@ GITIGNORE ?= $(REPO_ROOT)/.gitignore
 ENV_GITIGNORE_ENTRY ?= .env
 
 # Variables requeridas (las que imprimimos)
-REQUIRED_ENV_VARS ?= FLYWAY_URL FLYWAY_USER FLYWAY_PASSWORD
+REQUIRED_ENV_VARS ?= FLYWAY_URL FLYWAY_USER FLYWAY_PASSWORD DB_URL DB_USER DB_PASSWORD
 
 define require_file
 	if [[ ! -f "$(1)" ]]; then

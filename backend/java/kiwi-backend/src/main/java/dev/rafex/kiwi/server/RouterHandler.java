@@ -7,11 +7,17 @@ import org.eclipse.jetty.server.Request;
 import org.eclipse.jetty.server.Response;
 import org.eclipse.jetty.util.Callback;
 
+import dev.rafex.kiwi.db.Db;
+import dev.rafex.kiwi.db.ObjectRepository;
 import dev.rafex.kiwi.handlers.HelloHandler;
+import dev.rafex.kiwi.handlers.ObjectCreateHandler;
+import dev.rafex.kiwi.logging.Log;
 
 public class RouterHandler extends Handler.Abstract {
 
 	private final HelloHandler helloHandler = new HelloHandler();
+	private final ObjectCreateHandler objectCreateHandler = new ObjectCreateHandler(
+			new ObjectRepository(Db.dataSource()));
 
 	@Override
 	public boolean handle(Request request, Response response, Callback callback) {
@@ -23,6 +29,11 @@ public class RouterHandler extends Handler.Abstract {
 				return helloHandler.handle(request, response, callback);
 			}
 
+			if ("POST".equals(method) && "/objects".equals(path)) {
+				Log.info(getClass(), "Handling object creation request");
+				return objectCreateHandler.handle(request, response, callback);
+			}
+
 			response.setStatus(404);
 			response.getHeaders().put("content-type", "application/json; charset=utf-8");
 			byte[] body = "{\"error\":\"not_found\"}".getBytes(StandardCharsets.UTF_8);
@@ -30,6 +41,9 @@ public class RouterHandler extends Handler.Abstract {
 			callback.succeeded();
 			return true;
 		} catch (Throwable t) {
+
+			Log.error(getClass(), "Error handling request", t);
+
 			response.setStatus(500);
 			callback.failed(t);
 			return true;

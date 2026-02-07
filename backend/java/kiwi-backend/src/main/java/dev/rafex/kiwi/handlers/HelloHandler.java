@@ -1,7 +1,5 @@
 package dev.rafex.kiwi.handlers;
 
-import java.util.logging.Logger;
-
 import org.eclipse.jetty.server.Request;
 import org.eclipse.jetty.server.Response;
 import org.eclipse.jetty.util.Callback;
@@ -10,8 +8,6 @@ import dev.rafex.kiwi.http.HttpUtil;
 import dev.rafex.kiwi.logging.Log;
 
 public class HelloHandler {
-
-	private static final Logger LOG = Logger.getLogger(HelloHandler.class.getName());
 
 	public boolean handle(Request request, Response response, Callback callback) throws Exception {
 

@@ -12,5 +12,5 @@ curl -X POST http://localhost:8080/objects \
       "ram_gb": 32,
       "os": "linux"
     },
-    "locationId": "11111111-1111-1111-1111-111111111111"
+    "locationId": "f1d6c222-2d8b-425f-b77e-5cfefee313b1"
   }'

@@ -1,6 +1,9 @@
 package dev.rafex.kiwi.server;
 
 import java.nio.charset.StandardCharsets;
+import java.util.UUID;
+
+import javax.sql.DataSource;
 
 import org.eclipse.jetty.server.Handler;
 import org.eclipse.jetty.server.Request;
@@ -12,15 +15,19 @@ import dev.rafex.kiwi.db.ObjectRepository;
 import dev.rafex.kiwi.handlers.HelloHandler;
 import dev.rafex.kiwi.handlers.LocationCreateHandler;
 import dev.rafex.kiwi.handlers.ObjectCreateHandler;
+import dev.rafex.kiwi.handlers.ObjectMoveHandler;
 import dev.rafex.kiwi.logging.Log;
 
 public class RouterHandler extends Handler.Abstract {
 
+	private final DataSource dataSource = Db.dataSource();
 	private final HelloHandler helloHandler = new HelloHandler();
-	private final ObjectCreateHandler objectCreateHandler = new ObjectCreateHandler(
-			new ObjectRepository(Db.dataSource()));
+	private final ObjectCreateHandler objectCreateHandler = new ObjectCreateHandler(new ObjectRepository(dataSource));
 	private final LocationCreateHandler locationCreateHandler = new LocationCreateHandler(
-			new dev.rafex.kiwi.db.LocationRepository(Db.dataSource()));
+			new dev.rafex.kiwi.db.LocationRepository(dataSource));
+
+	private final ObjectRepository objectRepo = new ObjectRepository(dataSource);
+	private final ObjectMoveHandler objectMoveHandler = new ObjectMoveHandler(objectRepo);
 
 	@Override
 	public boolean handle(final Request request, final Response response, final Callback callback) {
@@ -39,6 +46,22 @@ public class RouterHandler extends Handler.Abstract {
 
 			if ("POST".equals(method) && "/locations".equals(path)) {
 				return locationCreateHandler.handle(request, response, callback);
+			}
+
+			// POST /objects/{id}/move
+			if ("POST".equals(method) && path.startsWith("/objects/") && path.endsWith("/move")) {
+				// path = /objects/{uuid}/move
+				final var parts = path.split("/");
+				// ["", "objects", "{uuid}", "move"]
+				if (parts.length == 4) {
+					try {
+						final var objectId = UUID.fromString(parts[2]);
+						return objectMoveHandler.handle(request, response, callback, objectId);
+					} catch (final IllegalArgumentException e) {
+						dev.rafex.kiwi.http.HttpUtil.badRequest(response, callback, "invalid UUID in path");
+						return true;
+					}
+				}
 			}
 
 			response.setStatus(404);

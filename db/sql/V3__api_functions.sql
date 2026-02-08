@@ -174,3 +174,14 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
+CREATE OR REPLACE FUNCTION api_create_location(
+  p_location_id UUID,
+  p_name TEXT,
+  p_parent_location_id UUID DEFAULT NULL
+)
+RETURNS VOID AS $$
+BEGIN
+  INSERT INTO locations (location_id, name, parent_location_id)
+  VALUES (p_location_id, p_name, p_parent_location_id);
+END;
+$$ LANGUAGE plpgsql;

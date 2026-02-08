@@ -11,27 +11,27 @@ public final class HttpUtil {
 	private HttpUtil() {
 	}
 
-	public static void json(Response response, Callback callback, int status, String jsonBody) {
+	public static void json(final Response response, final Callback callback, final int status, final String jsonBody) {
 		response.setStatus(status);
 		response.getHeaders().put("content-type", "application/json; charset=utf-8");
 
-		byte[] bytes = jsonBody.getBytes(StandardCharsets.UTF_8);
+		final var bytes = jsonBody.getBytes(StandardCharsets.UTF_8);
 		response.write(true, ByteBuffer.wrap(bytes), callback);
 	}
 
-	public static void ok(Response response, Callback callback, String jsonBody) {
+	public static void ok(final Response response, final Callback callback, final String jsonBody) {
 		json(response, callback, 200, jsonBody);
 	}
 
-	public static void notFound(Response response, Callback callback) {
+	public static void notFound(final Response response, final Callback callback) {
 		json(response, callback, 404, "{\"error\":\"not_found\"}");
 	}
 
-	public static void badRequest(Response response, Callback callback, String message) {
+	public static void badRequest(final Response response, final Callback callback, final String message) {
 		json(response, callback, 400, "{\"error\":\"bad_request\",\"message\":\"" + escape(message) + "\"}");
 	}
 
-	private static String escape(String value) {
+	private static String escape(final String value) {
 		return value.replace("\\", "\\\\").replace("\"", "\\\"");
 	}
 }

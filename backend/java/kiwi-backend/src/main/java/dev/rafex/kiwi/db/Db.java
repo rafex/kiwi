@@ -12,7 +12,7 @@ public final class Db {
 	private static final HikariDataSource DS = create();
 
 	private static HikariDataSource create() {
-		HikariConfig cfg = new HikariConfig();
+		final var cfg = new HikariConfig();
 
 		cfg.setJdbcUrl(System.getenv("DB_URL"));
 		cfg.setUsername(System.getenv("DB_USER"));

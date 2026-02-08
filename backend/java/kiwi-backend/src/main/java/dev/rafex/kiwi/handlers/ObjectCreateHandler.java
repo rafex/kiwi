@@ -19,16 +19,16 @@ public class ObjectCreateHandler {
 	private final ObjectRepository repo;
 	private final ObjectMapper om = new ObjectMapper();
 
-	public ObjectCreateHandler(ObjectRepository repo) {
+	public ObjectCreateHandler(final ObjectRepository repo) {
 		this.repo = repo;
 	}
 
-	public boolean handle(Request request, Response response, Callback callback) {
+	public boolean handle(final Request request, final Response response, final Callback callback) {
 		try {
-			byte[] bytes = Request.asInputStream(request).readAllBytes();
-			String body = new String(bytes, StandardCharsets.UTF_8);
+			final var bytes = Request.asInputStream(request).readAllBytes();
+			final var body = new String(bytes, StandardCharsets.UTF_8);
 
-			CreateObjectRequest r = om.readValue(body, CreateObjectRequest.class);
+			final var r = om.readValue(body, CreateObjectRequest.class);
 
 			// validaciones mínimas
 			if (r.getName() == null || r.getName().isBlank()) {
@@ -40,22 +40,22 @@ public class ObjectCreateHandler {
 				return true;
 			}
 
-			UUID objectId = UUID.randomUUID();
-			UUID locationId = UUID.fromString(r.getLocationId());
+			final var objectId = UUID.randomUUID();
+			final var locationId = UUID.fromString(r.getLocationId());
 
-			String[] tags = (r.getTags() == null) ? null : r.getTags().toArray(new String[0]);
-			String metadataJson = (r.getMetadata() == null) ? null : om.writeValueAsString(r.getMetadata());
+			final var tags = r.getTags() == null ? null : r.getTags().toArray(new String[0]);
+			final var metadataJson = r.getMetadata() == null ? null : om.writeValueAsString(r.getMetadata());
 
 			repo.createObject(objectId, r.getName(), r.getDescription(), r.getType(), tags, metadataJson, locationId);
 
 			HttpUtil.json(response, callback, 201, "{\"object_id\":\"" + objectId + "\"}");
 			return true;
 
-		} catch (IllegalArgumentException e) {
+		} catch (final IllegalArgumentException e) {
 			Log.error(getClass(), "Invalid UUID format", e);
 			HttpUtil.badRequest(response, callback, "invalid UUID");
 			return true;
-		} catch (Exception e) {
+		} catch (final Exception e) {
 			Log.error(getClass(), "Error creating object", e);
 			HttpUtil.json(response, callback, 500, "{\"error\":\"internal_error\"}");
 			return true;

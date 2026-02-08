@@ -9,7 +9,7 @@ import dev.rafex.kiwi.logging.Log;
 
 public class HelloHandler {
 
-	public boolean handle(Request request, Response response, Callback callback) throws Exception {
+	public boolean handle(final Request request, final Response response, final Callback callback) throws Exception {
 
 		Log.debug(getClass(), "GET /hello");
 

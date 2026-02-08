@@ -15,7 +15,7 @@ public class CreateObjectRequest {
 		return name;
 	}
 
-	public void setName(String name) {
+	public void setName(final String name) {
 		this.name = name;
 	}
 
@@ -23,7 +23,7 @@ public class CreateObjectRequest {
 		return description;
 	}
 
-	public void setDescription(String description) {
+	public void setDescription(final String description) {
 		this.description = description;
 	}
 
@@ -31,7 +31,7 @@ public class CreateObjectRequest {
 		return type;
 	}
 
-	public void setType(String type) {
+	public void setType(final String type) {
 		this.type = type;
 	}
 
@@ -39,7 +39,7 @@ public class CreateObjectRequest {
 		return tags;
 	}
 
-	public void setTags(List<String> tags) {
+	public void setTags(final List<String> tags) {
 		this.tags = tags;
 	}
 
@@ -47,7 +47,7 @@ public class CreateObjectRequest {
 		return metadata;
 	}
 
-	public void setMetadata(Object metadata) {
+	public void setMetadata(final Object metadata) {
 		this.metadata = metadata;
 	}
 
@@ -55,7 +55,7 @@ public class CreateObjectRequest {
 		return locationId;
 	}
 
-	public void setLocationId(String locationId) {
+	public void setLocationId(final String locationId) {
 		this.locationId = locationId;
 	}
 
@@ -65,17 +65,14 @@ public class CreateObjectRequest {
 	}
 
 	@Override
-	public boolean equals(Object obj) {
+	public boolean equals(final Object obj) {
 		if (this == obj) {
 			return true;
 		}
-		if (obj == null) {
+		if ((obj == null) || (getClass() != obj.getClass())) {
 			return false;
 		}
-		if (getClass() != obj.getClass()) {
-			return false;
-		}
-		CreateObjectRequest other = (CreateObjectRequest) obj;
+		final var other = (CreateObjectRequest) obj;
 		return Objects.equals(description, other.description) && Objects.equals(locationId, other.locationId)
 				&& Objects.equals(metadata, other.metadata) && Objects.equals(name, other.name)
 				&& Objects.equals(tags, other.tags) && Objects.equals(type, other.type);

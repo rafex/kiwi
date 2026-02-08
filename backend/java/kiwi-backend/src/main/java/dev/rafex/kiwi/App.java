@@ -8,7 +8,7 @@ public class App {
 
 	private static final Logger LOG = Logger.getLogger(App.class.getName());
 
-	public static void main(String[] args) throws Exception {
+	public static void main(final String[] args) throws Exception {
 		LOG.info("Starting Kiwi backend...");
 		KiwiServer.start();
 	}

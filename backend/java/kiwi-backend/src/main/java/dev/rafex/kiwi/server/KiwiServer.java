@@ -14,14 +14,14 @@ public final class KiwiServer {
 	}
 
 	public static void start() throws Exception {
-		int port = Integer.parseInt(System.getenv().getOrDefault("PORT", "8080"));
+		final var port = Integer.parseInt(System.getenv().getOrDefault("PORT", "8080"));
 
-		QueuedThreadPool pool = new QueuedThreadPool();
+		final var pool = new QueuedThreadPool();
 		pool.setName("kiwi-http");
 
-		Server server = new Server(pool);
+		final var server = new Server(pool);
 
-		ServerConnector connector = new ServerConnector(server);
+		final var connector = new ServerConnector(server);
 		connector.setPort(port);
 		server.addConnector(connector);
 

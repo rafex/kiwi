@@ -20,10 +20,10 @@ public class RouterHandler extends Handler.Abstract {
 			new ObjectRepository(Db.dataSource()));
 
 	@Override
-	public boolean handle(Request request, Response response, Callback callback) {
+	public boolean handle(final Request request, final Response response, final Callback callback) {
 		try {
-			String method = request.getMethod();
-			String path = request.getHttpURI().getPath();
+			final var method = request.getMethod();
+			final var path = request.getHttpURI().getPath();
 
 			if ("GET".equals(method) && "/hello".equals(path)) {
 				return helloHandler.handle(request, response, callback);
@@ -36,11 +36,11 @@ public class RouterHandler extends Handler.Abstract {
 
 			response.setStatus(404);
 			response.getHeaders().put("content-type", "application/json; charset=utf-8");
-			byte[] body = "{\"error\":\"not_found\"}".getBytes(StandardCharsets.UTF_8);
+			final var body = "{\"error\":\"not_found\"}".getBytes(StandardCharsets.UTF_8);
 			response.write(true, java.nio.ByteBuffer.wrap(body), callback);
 			callback.succeeded();
 			return true;
-		} catch (Throwable t) {
+		} catch (final Throwable t) {
 
 			Log.error(getClass(), "Error handling request", t);
 

@@ -1,8 +1,5 @@
 package dev.rafex.kiwi.db;
 
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Types;
 import java.util.ArrayList;
@@ -15,16 +12,16 @@ public class ObjectRepository {
 
 	private final DataSource ds;
 
-	public ObjectRepository(DataSource ds) {
+	public ObjectRepository(final DataSource ds) {
 		this.ds = ds;
 	}
 
 	// --- Commands (RETURNS void) ---
 
-	public void createObject(UUID objectId, String name, String description, String type, String[] tags,
-			String metadataJson, UUID locationId) throws SQLException {
-		try (Connection c = ds.getConnection();
-				PreparedStatement ps = c
+	public void createObject(final UUID objectId, final String name, final String description, final String type, final String[] tags,
+			final String metadataJson, final UUID locationId) throws SQLException {
+		try (var c = ds.getConnection();
+				var ps = c
 						.prepareStatement("SELECT api_create_object(?::uuid, ?, ?, ?, ?::text[], ?::jsonb, ?::uuid)")) {
 
 			ps.setObject(1, objectId);
@@ -50,18 +47,18 @@ public class ObjectRepository {
 		}
 	}
 
-	public void moveObject(UUID objectId, UUID newLocationId) throws SQLException {
-		try (Connection c = ds.getConnection();
-				PreparedStatement ps = c.prepareStatement("SELECT api_move_object(?::uuid, ?::uuid)")) {
+	public void moveObject(final UUID objectId, final UUID newLocationId) throws SQLException {
+		try (var c = ds.getConnection();
+				var ps = c.prepareStatement("SELECT api_move_object(?::uuid, ?::uuid)")) {
 			ps.setObject(1, objectId);
 			ps.setObject(2, newLocationId);
 			ps.execute();
 		}
 	}
 
-	public void updateTags(UUID objectId, String[] tags) throws SQLException {
-		try (Connection c = ds.getConnection();
-				PreparedStatement ps = c.prepareStatement("SELECT api_update_tags(?::uuid, ?::text[])")) {
+	public void updateTags(final UUID objectId, final String[] tags) throws SQLException {
+		try (var c = ds.getConnection();
+				var ps = c.prepareStatement("SELECT api_update_tags(?::uuid, ?::text[])")) {
 			ps.setObject(1, objectId);
 			if (tags == null) {
 				ps.setNull(2, Types.ARRAY);
@@ -72,9 +69,9 @@ public class ObjectRepository {
 		}
 	}
 
-	public void updateText(UUID objectId, String name, String description) throws SQLException {
-		try (Connection c = ds.getConnection();
-				PreparedStatement ps = c.prepareStatement("SELECT api_update_text(?::uuid, ?, ?)")) {
+	public void updateText(final UUID objectId, final String name, final String description) throws SQLException {
+		try (var c = ds.getConnection();
+				var ps = c.prepareStatement("SELECT api_update_text(?::uuid, ?, ?)")) {
 			ps.setObject(1, objectId);
 			ps.setString(2, name);
 			ps.setString(3, description);
@@ -84,9 +81,9 @@ public class ObjectRepository {
 
 	// --- Queries (RETURNS TABLE) ---
 
-	public List<SearchRow> search(String query, String[] tags, UUID locationId, int limit) throws SQLException {
-		try (Connection c = ds.getConnection();
-				PreparedStatement ps = c.prepareStatement(
+	public List<SearchRow> search(final String query, final String[] tags, final UUID locationId, final int limit) throws SQLException {
+		try (var c = ds.getConnection();
+				var ps = c.prepareStatement(
 						"SELECT object_id, name, rank FROM api_search_objects(?, ?::text[], ?::uuid, ?)")) {
 
 			ps.setString(1, query);
@@ -105,8 +102,8 @@ public class ObjectRepository {
 
 			ps.setInt(4, limit);
 
-			try (ResultSet rs = ps.executeQuery()) {
-				List<SearchRow> out = new ArrayList<>();
+			try (var rs = ps.executeQuery()) {
+				final List<SearchRow> out = new ArrayList<>();
 				while (rs.next()) {
 					out.add(new SearchRow((UUID) rs.getObject("object_id"), rs.getString("name"), rs.getFloat("rank")));
 				}
@@ -115,15 +112,15 @@ public class ObjectRepository {
 		}
 	}
 
-	public List<FuzzyRow> fuzzy(String text, int limit) throws SQLException {
-		try (Connection c = ds.getConnection();
-				PreparedStatement ps = c
+	public List<FuzzyRow> fuzzy(final String text, final int limit) throws SQLException {
+		try (var c = ds.getConnection();
+				var ps = c
 						.prepareStatement("SELECT object_id, name, score FROM api_fuzzy_search(?, ?)")) {
 			ps.setString(1, text);
 			ps.setInt(2, limit);
 
-			try (ResultSet rs = ps.executeQuery()) {
-				List<FuzzyRow> out = new ArrayList<>();
+			try (var rs = ps.executeQuery()) {
+				final List<FuzzyRow> out = new ArrayList<>();
 				while (rs.next()) {
 					out.add(new FuzzyRow((UUID) rs.getObject("object_id"), rs.getString("name"), rs.getFloat("score")));
 				}
@@ -138,11 +135,11 @@ public class ObjectRepository {
 	public record FuzzyRow(UUID objectId, String name, float score) {
 	}
 
-	public boolean locationExists(UUID locationId) throws SQLException {
-		try (Connection c = ds.getConnection();
-				PreparedStatement ps = c.prepareStatement("SELECT 1 FROM locations WHERE location_id = ?::uuid")) {
+	public boolean locationExists(final UUID locationId) throws SQLException {
+		try (var c = ds.getConnection();
+				var ps = c.prepareStatement("SELECT 1 FROM locations WHERE location_id = ?::uuid")) {
 			ps.setObject(1, locationId);
-			try (ResultSet rs = ps.executeQuery()) {
+			try (var rs = ps.executeQuery()) {
 				return rs.next();
 			}
 		}

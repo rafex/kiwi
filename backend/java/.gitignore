@@ -89,3 +89,7 @@ nb-configuration.xml
 ##############################
 *.log
 
+# GraalVM
+**/graal-trace*.json
+**/agent-trace*.json
+

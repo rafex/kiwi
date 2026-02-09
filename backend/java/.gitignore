@@ -93,5 +93,9 @@ nb-configuration.xml
 **/graal-trace*.json
 **/agent-trace*.json
 
-.lock
-/graal-config/
+*.lock
+**/graal-config/**
+graal-config/
+
+# bin graalvm
+kiwi-backend

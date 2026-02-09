@@ -1,0 +1,12 @@
+{
+  "name": "MacBook Pro 13",
+  "description": "Equipo personal",
+  "type": "EQUIPMENT",
+  "tags": ["laptop", "apple", "macbook"],
+  "metadata": {
+    "serial": "ABC123XYZ",
+    "ram_gb": 32,
+    "os": "macos"
+  },
+  "locationId": "f1d6c222-2d8b-425f-b77e-5cfefee313b1"
+}

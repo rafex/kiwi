@@ -93,3 +93,4 @@ nb-configuration.xml
 **/graal-trace*.json
 **/agent-trace*.json
 
+.lock

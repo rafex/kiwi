@@ -3,4 +3,5 @@
 !/src/main/resources/**
 !/resources/**
 !**/resources/META-INF/native-image/**
+!**/META-INF/native-image/**
 !reachability-metadata.json

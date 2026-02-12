@@ -27,7 +27,7 @@ on:
       marches:
         description: 'Space-separated list of marches to build (e.g. "x86-64-v2 x86-64-v3 aarm64")'
         required: false
-        default: 'x86-64 x86-64-v3'
+        default: 'compatibility x86-64-v3'
 
 jobs:
   build:

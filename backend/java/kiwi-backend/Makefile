@@ -36,15 +36,19 @@ sync-meta: build
 		--res-dir "$(RES_DIR)" \
 		--mvn "$(MVN)"
 
+# Usage: make native [MARCH="x86-64-v2 x86-64-v3"]
 native:
 	./.native_build.sh --out "$(BIN)" \
 		--jar "$(JAR)" \
 		--graal-config "$(GRAAL_CONFIG_DIR)" \
-		--res-dir "$(RES_DIR)"
+		--res-dir "$(RES_DIR)" \
+		$(foreach m,$(MARCH),--march $(m))
 
 run-native:
 	./"$(BIN)"
 
 clean-native:
-	rm -f "$(BIN)"
+	@echo "Removing binaries for $(BIN)..."
+	# remove exact bin and any march-specific variants (e.g. kiwi-backend-x86-64-v2.bin)
+	rm -f $(BIN) $(basename $(BIN))* || true
 	rm -rf "$(GRAAL_CONFIG_DIR)"

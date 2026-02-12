@@ -20,6 +20,10 @@ on:
         description: 'Tag name to create a GitHub Release and upload the binary (optional)'
         required: false
         default: ''
+      marches:
+        description: 'Space-separated list of marches to build (e.g. "x86-64-v2 x86-64-v3 aarm64")'
+        required: false
+        default: 'x86-64-v2 x86-64-v3 aarm64'
 
 jobs:
   build:
@@ -45,28 +49,17 @@ jobs:
       - name: Make native build (Java backend)
         if: ${{ github.event_name != 'workflow_dispatch' || github.event.inputs.build_native == 'true' }}
         working-directory: backend/java/kiwi-backend
-        run: make native
+        env:
+          MARCHES: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.marches || '' }}
+        run: make native MARCH="$MARCHES"
 
-      - name: Create release
-        id: create_release
+      - name: Publish release and upload assets
         if: ${{ (github.event_name == 'workflow_dispatch' && github.event.inputs.release_tag != '') || startsWith(github.ref, 'refs/tags/') }}
-        uses: actions/create-release@v1
+        uses: softprops/action-gh-release@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          tag_name: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.release_tag != '' && github.event.inputs.release_tag || (startsWith(github.ref, 'refs/tags/') && github.ref_name) }}
-          release_name: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.release_tag != '' && github.event.inputs.release_tag || (startsWith(github.ref, 'refs/tags/') && github.ref_name) }}
+          tag_name: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.release_tag != '' && github.event.inputs.release_tag || github.ref_name }}
+          name: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.release_tag != '' && github.event.inputs.release_tag || github.ref_name }}
           body: 'Release created by CI'
-          draft: false
-          prerelease: false
-
-      - name: Upload binary to release
-        if: ${{ (github.event_name == 'workflow_dispatch' && github.event.inputs.release_tag != '') || startsWith(github.ref, 'refs/tags/') }}
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: backend/java/kiwi-backend/kiwi-backend.bin
-          asset_name: kiwi-backend.bin
-          asset_content_type: application/octet-stream
+          files: backend/java/kiwi-backend/kiwi-backend*.bin

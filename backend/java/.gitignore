@@ -99,3 +99,4 @@ graal-config/
 
 # bin graalvm
 kiwi-backend
+*.bin

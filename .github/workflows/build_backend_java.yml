@@ -3,8 +3,12 @@ name: Java Build (Makefile)
 on:
   push:
     branches: [ "main", "develop" ]
+    paths:
+      - 'backend/java/kiwi-backend/**'
   pull_request:
     branches: [ "main" ]
+    paths:
+      - 'backend/java/kiwi-backend/**'
 
 jobs:
   build:
@@ -21,5 +25,5 @@ jobs:
           java-version: '21'
           cache: maven
 
-      - name: Make build
+      - name: Make build (Java backend)
         run: make build

@@ -4,7 +4,7 @@ SHELL := /bin/bash
 
 MVN ?= ./mvnw
 JAR ?= target/kiwi-backend-1.0-SNAPSHOT-jar-with-dependencies.jar
-BIN ?= kiwi-backend
+BIN ?= kiwi-backend.bin
 GRAAL_CONFIG_DIR ?= graal-config
 RES_DIR ?= src/main/resources/META-INF/native-image
 

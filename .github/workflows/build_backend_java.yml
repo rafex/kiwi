@@ -10,6 +10,15 @@ on:
     paths:
       - 'backend/java/kiwi-backend/**'
   workflow_dispatch:
+    inputs:
+      build_native:
+        description: 'Run native build (true/false)'
+        required: false
+        default: 'true'
+      release_tag:
+        description: 'Tag name to create a GitHub Release and upload the binary (optional)'
+        required: false
+        default: ''
 
 jobs:
   build:
@@ -33,5 +42,30 @@ jobs:
           distribution: 'graalvm' # See 'Supported distributions' for available options
 
       - name: Make native build (Java backend)
+        if: ${{ github.event_name != 'workflow_dispatch' || github.event.inputs.build_native == 'true' }}
         working-directory: backend/java/kiwi-backend
         run: make native
+
+      - name: Create release
+        id: create_release
+        if: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.release_tag != '' }}
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.event.inputs.release_tag }}
+          release_name: ${{ github.event.inputs.release_tag }}
+          body: 'Release created by CI'
+          draft: false
+          prerelease: false
+
+      - name: Upload binary to release
+        if: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.release_tag != '' }}
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: backend/java/kiwi-backend/kiwi-backend.bin
+          asset_name: kiwi-backend.bin
+          asset_content_type: application/octet-stream

@@ -26,9 +26,12 @@ jobs:
           java-version: '21'
           cache: maven
 
-      - name: Make build (Java backend)
-        working-directory: backend/java/kiwi-backend
-        run: make build
+      - name: Set up GraalVM
+        uses: graalvm/setup-graalvm@v1
+        with:
+          java-version: '25'      # See 'Options' for more details
+          distribution: 'graalvm' # See 'Supported distributions' for available options
+
       - name: Make native build (Java backend)
         working-directory: backend/java/kiwi-backend
         run: make native

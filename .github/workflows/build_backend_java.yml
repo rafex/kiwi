@@ -29,3 +29,6 @@ jobs:
       - name: Make build (Java backend)
         working-directory: backend/java/kiwi-backend
         run: make build
+      - name: Make native build (Java backend)
+        working-directory: backend/java/kiwi-backend
+        run: make native

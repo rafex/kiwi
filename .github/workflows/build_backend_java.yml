@@ -26,4 +26,5 @@ jobs:
           cache: maven
 
       - name: Make build (Java backend)
+        working-directory: backend/java/kiwi-backend
         run: make build

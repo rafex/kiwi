@@ -1,1 +1,6 @@
 /target/
+# Asegurar que los recursos fuente se rastreen y empaqueten
+!/src/main/resources/**
+!/resources/**
+!**/resources/META-INF/native-image/**
+!reachability-metadata.json

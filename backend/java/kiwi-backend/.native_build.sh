@@ -5,9 +5,9 @@ set -euo pipefail
 # Configurable
 # =========================
 APP_JAR_DEFAULT="target/kiwi-backend-1.0-SNAPSHOT-jar-with-dependencies.jar"
-OUTPUT_BIN_DEFAULT="kiwi-backend"
+OUTPUT_BIN_DEFAULT="kiwi-backend.bin"
 GRAAL_CONFIG_DIR_DEFAULT="graal-config"
-RES_DIR_DEFAULT="src/main/resources/META-INF/native-image"
+RES_DIR_DEFAULT="META-INF/native-image"
 
 # Run agent? (0 = no, 1 = yes)
 RUN_AGENT=0

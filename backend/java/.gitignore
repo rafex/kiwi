@@ -97,6 +97,12 @@ nb-configuration.xml
 **/graal-config/**
 graal-config/
 
+# Allow graal-config and resources inside the kiwi-backend module to be tracked
+!kiwi-backend/graal-config/
+!kiwi-backend/graal-config/**
+!kiwi-backend/src/main/resources/
+!kiwi-backend/src/main/resources/**
+
 # bin graalvm
 kiwi-backend
 *.bin

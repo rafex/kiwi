@@ -6,7 +6,7 @@ MVN ?= ./mvnw
 JAR ?= target/kiwi-backend-1.0-SNAPSHOT-jar-with-dependencies.jar
 BIN ?= kiwi-backend.bin
 GRAAL_CONFIG_DIR ?= graal-config
-RES_DIR ?= src/main/resources/META-INF/native-image
+RES_DIR ?= META-INF/native-image
 
 .PHONY: help build agent sync-meta native run-native clean-native
 
@@ -36,8 +36,11 @@ sync-meta: build
 		--res-dir "$(RES_DIR)" \
 		--mvn "$(MVN)"
 
-native: sync-meta
-	native-image --no-fallback -jar "$(JAR)" "$(BIN)"
+native:
+	./.native_build.sh --out "$(BIN)" \
+		--jar "$(JAR)" \
+		--graal-config "$(GRAAL_CONFIG_DIR)" \
+		--res-dir "$(RES_DIR)"
 
 run-native:
 	./"$(BIN)"

@@ -3,7 +3,7 @@ set -euo pipefail
 
 JAR=""
 GRAAL_CONFIG_DIR="graal-config"
-RES_DIR="src/main/resources/META-INF/native-image"
+RES_DIR="META-INF/native-image"
 MVN="./mvnw"
 
 usage() {

@@ -23,7 +23,7 @@ on:
       marches:
         description: 'Space-separated list of marches to build (e.g. "x86-64-v2 x86-64-v3 aarm64")'
         required: false
-        default: 'x86-64-v2 x86-64-v3 aarm64'
+        default: 'x86-64-v2 x86-64-v3'
 
 jobs:
   build:
@@ -37,10 +37,15 @@ jobs:
         uses: actions/setup-java@v4
         with:
           distribution: temurin
-          java-version: '21'
+          java-version: '25'
+          architecture: x64
           cache: maven
+      - name: Run the Maven verify phase
+        working-directory: backend/java/kiwi-backend
+        run: make build
 
       - name: Set up GraalVM
+        if: ${{ github.event_name != 'workflow_dispatch' || github.event.inputs.build_native == 'true' }}
         uses: graalvm/setup-graalvm@v1
         with:
           java-version: '25'      # See 'Options' for more details

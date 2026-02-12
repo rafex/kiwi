@@ -1,5 +1,9 @@
 name: Java Build (Makefile)
 
+permissions:
+  contents: write
+  packages: write
+
 on:
   push:
     branches: [ "main", "develop" ]

@@ -159,8 +159,8 @@ echo "[4/5] Rebuilding jar to include META-INF/native-image metadata..."
 # =========================
 if [[ ${#MARCH_FLAGS[@]} -eq 0 ]]; then
   echo "[5/5] Building native image: $OUTPUT_BIN"
-  # For many apps, using the jar directly is enough once metadata is on classpath.
-  native-image --no-fallback -jar "$APP_JAR" "$OUTPUT_BIN"
+  # Use -H:Name to specify output reliably
+  native-image --no-fallback -jar "$APP_JAR" -H:Name="$OUTPUT_BIN"
 else
   echo "[5/5] Building native images for marches: ${MARCH_FLAGS[*]}"
   # derive base name and extension from OUTPUT_BIN
@@ -178,7 +178,7 @@ else
     safe_march="$(echo "$march_val" | sed 's/[^A-Za-z0-9._-]/_/g')"
     bin_name="${OUTPUT_BASE}-${safe_march}${OUTPUT_EXT}"
     echo "  - Building for $march_val -> $bin_name"
-    native-image --no-fallback "$mf" -jar "$APP_JAR" "$bin_name"
+    native-image --no-fallback "$mf" -jar "$APP_JAR" -H:Name="$bin_name"
     built_files+=("$bin_name")
   done
 fi

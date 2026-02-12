@@ -45,14 +45,14 @@ jobs:
         run: make build
 
       - name: Set up GraalVM
-        if: ${{ github.event_name != 'workflow_dispatch' || github.event.inputs.build_native == 'true' }}
+        if: ${{ (github.event_name == 'workflow_dispatch' && github.event.inputs.release_tag != '') || startsWith(github.ref, 'refs/tags/') || github.event.inputs.build_native == 'true' }}
         uses: graalvm/setup-graalvm@v1
         with:
           java-version: '25'      # See 'Options' for more details
           distribution: 'graalvm' # See 'Supported distributions' for available options
 
       - name: Make native build (Java backend)
-        if: ${{ github.event_name != 'workflow_dispatch' || github.event.inputs.build_native == 'true' }}
+        if: ${{ (github.event_name == 'workflow_dispatch' && github.event.inputs.release_tag != '') || startsWith(github.ref, 'refs/tags/') || github.event.inputs.build_native == 'true' }}
         working-directory: backend/java/kiwi-backend
         env:
           MARCHES: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.marches || '' }}

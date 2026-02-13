@@ -7,8 +7,12 @@ JAR ?= target/kiwi-backend-1.0-SNAPSHOT-jar-with-dependencies.jar
 BIN ?= kiwi-backend.bin
 GRAAL_CONFIG_DIR ?= graal-config
 RES_DIR ?= META-INF/native-image
+IMAGE ?= kiwi-backend:latest
+PORT ?= 8080
+CONTAINER_NAME ?= kiwi-backend-run
+CONTAINER_TOOL ?= podman
 
-.PHONY: help build agent sync-meta native run-native clean-native
+.PHONY: help build agent sync-meta native run-native clean-native image run-image
 
 help:
 	@echo "Targets:"
@@ -16,6 +20,8 @@ help:
 	@echo "  make agent        -> run app with native-image-agent (generates $(GRAAL_CONFIG_DIR)/)"
 	@echo "  make sync-meta    -> copy metadata/config into $(RES_DIR) and rebuild jar"
 	@echo "  make native       -> build native image $(BIN)"
+	@echo "  make image        -> build a container image with $(CONTAINER_TOOL) (uses Dockerfile)"
+	@echo "  make run-image    -> run the container image with $(CONTAINER_TOOL) (PORT configurable, default 8080)"
 	@echo "  make run-native   -> run ./$(BIN)"
 	@echo "  make clean-native -> remove native binary and temp config"
 
@@ -52,3 +58,19 @@ clean-native:
 	# remove exact bin and any march-specific variants (e.g. kiwi-backend-x86-64-v2.bin)
 	rm -f $(BIN) $(basename $(BIN))* || true
 	rm -rf "$(GRAAL_CONFIG_DIR)"
+
+image:
+	@echo "Checking for built binaries (kiwi-backend*.bin)..."
+	@if ls kiwi-backend*.bin 1> /dev/null 2>&1; then \
+		echo "Found binaries:"; ls -1 kiwi-backend*.bin; \
+		echo "Building podman image: $(IMAGE)"; \
+		$(CONTAINER_TOOL) build -t "$(IMAGE)" -f Dockerfile .; \
+	else \
+		echo "No kiwi-backend*.bin found. Please run 'make native' first." >&2; exit 1; \
+	fi
+	
+run-image: image
+	@echo "Running container $(CONTAINER_NAME), mapping host port $(PORT) -> container 8080"
+	-@$(CONTAINER_TOOL) rm -f "$(CONTAINER_NAME)" 2>/dev/null || true
+	$(CONTAINER_TOOL) run -d --name "$(CONTAINER_NAME)" -p "$(PORT):8080" "$(IMAGE)"
+

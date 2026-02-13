@@ -11,6 +11,9 @@ IMAGE ?= kiwi-backend:latest
 PORT ?= 8080
 CONTAINER_NAME ?= kiwi-backend-run
 CONTAINER_TOOL ?= podman
+DB_USER ?=
+DB_PASSWORD ?=
+DB_URL ?=
 
 .PHONY: help build agent sync-meta native run-native clean-native image run-image
 
@@ -60,17 +63,35 @@ clean-native:
 	rm -rf "$(GRAAL_CONFIG_DIR)"
 
 image:
-	@echo "Checking for built binaries (kiwi-backend*.bin)..."
-	@if ls kiwi-backend*.bin 1> /dev/null 2>&1; then \
-		echo "Found binaries:"; ls -1 kiwi-backend*.bin; \
-		echo "Building podman image: $(IMAGE)"; \
+	@echo "Checking for fat JAR: $(JAR)"
+	@if [ -f "$(JAR)" ]; then \
+		echo "Found JAR: $(JAR)"; \
+		echo "Building container image: $(IMAGE)"; \
 		$(CONTAINER_TOOL) build -t "$(IMAGE)" -f Dockerfile .; \
 	else \
-		echo "No kiwi-backend*.bin found. Please run 'make native' first." >&2; exit 1; \
+		echo "No JAR found at $(JAR). Please run 'make build' first." >&2; exit 1; \
 	fi
 	
 run-image: image
 	@echo "Running container $(CONTAINER_NAME), mapping host port $(PORT) -> container 8080"
 	-@$(CONTAINER_TOOL) rm -f "$(CONTAINER_NAME)" 2>/dev/null || true
-	$(CONTAINER_TOOL) run -d --name "$(CONTAINER_NAME)" -p "$(PORT):8080" "$(IMAGE)"
+	@env_args=""; \
+	# prefer Make variables, otherwise fall back to shell environment variables
+	if [ -n "$(DB_USER)" ]; then \
+		env_args="$$env_args -e DB_USER=$(DB_USER)"; \
+	elif [ -n "$$DB_USER" ]; then \
+		env_args="$$env_args -e DB_USER=$$DB_USER"; \
+	fi; \
+	if [ -n "$(DB_PASSWORD)" ]; then \
+		env_args="$$env_args -e DB_PASSWORD=$(DB_PASSWORD)"; \
+	elif [ -n "$$DB_PASSWORD" ]; then \
+		env_args="$$env_args -e DB_PASSWORD=$$DB_PASSWORD"; \
+	fi; \
+	if [ -n "$(DB_URL)" ]; then \
+		env_args="$$env_args -e DB_URL=$(DB_URL)"; \
+	elif [ -n "$$DB_URL" ]; then \
+		env_args="$$env_args -e DB_URL=$$DB_URL"; \
+	fi; \
+	echo "Using env: $$env_args"; \
+	$(CONTAINER_TOOL) run -d --name "$(CONTAINER_NAME)" $$env_args -p "$(PORT):8080" "$(IMAGE)"
 

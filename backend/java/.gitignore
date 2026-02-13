@@ -102,6 +102,7 @@ graal-config/
 !kiwi-backend/graal-config/**
 !kiwi-backend/src/main/resources/
 !kiwi-backend/src/main/resources/**
+!Dockerfile
 
 # bin graalvm
 kiwi-backend

@@ -19,6 +19,17 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '25'
+          architecture: x64
+          cache: maven
+      - name: Run the Maven verify phase
+        working-directory: backend/java/kiwi-backend
+        run: make build
+
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v2
 
@@ -36,7 +47,7 @@ jobs:
         uses: docker/build-push-action@v4
         with:
           context: backend/java/kiwi-backend
-          file: ./Dockerfile
+          file: backend/java/kiwi-backend/Dockerfile
           push: true
           platforms: linux/amd64,linux/arm64
           tags: |
@@ -47,7 +58,7 @@ jobs:
         uses: docker/build-push-action@v4
         with:
           context: backend/java/kiwi-backend
-          file: ./Dockerfile
+          file: backend/java/kiwi-backend/Dockerfile
           push: true
           platforms: linux/amd64,linux/arm64
           tags: |

@@ -1,0 +1,61 @@
+name: Build and Publish Container
+
+on:
+  push:
+    branches: [ "main" ]
+    tags: [ 'v*' ]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  build-and-push:
+    name: Build and push to GHCR
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v2
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+
+      - name: Login to GHCR
+        uses: docker/login-action@v2
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push (sha tag)
+        uses: docker/build-push-action@v4
+        with:
+          context: .
+          file: backend/java/kiwi-backend/Dockerfile
+          push: true
+          platforms: linux/amd64,linux/arm64
+          tags: |
+            ghcr.io/${{ github.repository_owner }}/kiwi-backend:${{ github.sha }}
+
+      - name: Tag as latest on main
+        if: github.ref == 'refs/heads/main'
+        uses: docker/build-push-action@v4
+        with:
+          context: .
+          file: backend/java/kiwi-backend/Dockerfile
+          push: true
+          platforms: linux/amd64,linux/arm64
+          tags: |
+            ghcr.io/${{ github.repository_owner }}/kiwi-backend:latest
+          cache-from: |
+            type=registry,ref=ghcr.io/${{ github.repository_owner }}/kiwi-backend:${{ github.sha }}
+
+      - name: Publish visibility note
+        run: |
+          echo "Image pushed to ghcr.io/${{ github.repository_owner }}/kiwi-backend"
+          echo "Make the package public in GitHub Packages UI if you want anonymous pulls."

@@ -35,8 +35,8 @@ jobs:
       - name: Build and push (sha tag)
         uses: docker/build-push-action@v4
         with:
-          context: .
-          file: backend/java/kiwi-backend/Dockerfile
+          context: backend/java/kiwi-backend
+          file: Dockerfile
           push: true
           platforms: linux/amd64,linux/arm64
           tags: |
@@ -46,8 +46,8 @@ jobs:
         if: github.ref == 'refs/heads/main'
         uses: docker/build-push-action@v4
         with:
-          context: .
-          file: backend/java/kiwi-backend/Dockerfile
+          context: backend/java/kiwi-backend
+          file: Dockerfile
           push: true
           platforms: linux/amd64,linux/arm64
           tags: |

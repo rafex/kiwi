@@ -21,7 +21,10 @@ RUN chmod +x /usr/local/bin/start-kiwi.sh \
 	&& mkdir -p /etc/kiwi-env \
 	&& chown -R kiwi:kiwi /app /etc/kiwi-env /usr/local/bin/start-kiwi.sh
 
-# Environment variables are accepted at runtime; do not declare sensitive defaults here
+# Environment variables for configuration (set at runtime)
+ENV DB_USER=""
+ENV DB_PASSWORD=""
+ENV DB_URL=""
 
 # Expose service port
 EXPOSE 8080

@@ -46,21 +46,19 @@ public class ObjectServices {
 
     }
 
-    public List<SearchItemDto> search(final String trim, final String[] tags, final UUID locationId, final int limit) {
-
-        final var itemsList = new ArrayList<SearchItemDto>();
+    public List<SearchItemDto> search(final String query, final String[] tags, final UUID locationId, final int limit) {
         try {
-            final var rows = repo.search(trim, tags, locationId, limit);
-            itemsList.ensureCapacity(rows.size());
-
+            final var rows = repo.search(query, tags, locationId, limit);
+            // Si SearchRow y SearchItemDto comparten campos, usar view directa
+            final var result = new ArrayList<SearchItemDto>(rows.size());
             for (final var r : rows) {
-                itemsList.add(new SearchItemDto(r.objectId(), r.name(), r.rank()));
+                result.add(new SearchItemDto(r.objectId(), r.name(), r.rank()));
             }
-
+            return result;
         } catch (final SQLException e) {
             Log.error(getClass(), "Error searching for objects", e);
+            return List.of(); // immutable empty, zero-alloc
         }
-        return itemsList;
     }
 
 }

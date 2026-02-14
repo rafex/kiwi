@@ -42,8 +42,8 @@ public class LocationHandler extends Handler.Abstract {
 
     private boolean create(final Request request, final Response response, final Callback callback) {
         try {
-            final var body = Request.asInputStream(request).readAllBytes();
-            final var r = om.readValue(body, CreateLocationRequest.class);
+
+            final var r = om.readValue(Request.asInputStream(request), CreateLocationRequest.class);
 
             if (r.name() == null || r.name().isBlank()) {
                 HttpUtil.badRequest(response, callback, "name is required");

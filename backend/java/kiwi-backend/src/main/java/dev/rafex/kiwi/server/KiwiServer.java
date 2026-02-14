@@ -24,6 +24,9 @@ public final class KiwiServer {
         final var port = Integer.parseInt(System.getenv().getOrDefault("PORT", "8080"));
 
         final var pool = new QueuedThreadPool();
+        pool.setMaxThreads(Math.max(Runtime.getRuntime().availableProcessors() * 2, 16));
+        pool.setMinThreads(4);
+        pool.setIdleTimeout(30_000);
         pool.setName("kiwi-http");
 
         final var server = new Server(pool);

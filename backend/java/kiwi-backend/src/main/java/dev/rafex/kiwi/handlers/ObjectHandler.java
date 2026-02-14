@@ -45,12 +45,12 @@ public class ObjectHandler extends Handler.Abstract {
 
             // POST /objects/{id}/move
             if ("POST".equals(method) && path.startsWith("/objects/") && path.endsWith("/move")) {
-                // path = /objects/{uuid}/move
-                final var parts = path.split("/");
-                // ["", "objects", "{uuid}", "move"]
-                if (parts.length == 4) {
+                // /objects/{uuid}/move -> uuid starts at 9, ends before last 5 chars
+                final var uuidStart = 9; // "/objects/".length()
+                final var uuidEnd = path.length() - 5; // "/move".length()
+                if (uuidEnd > uuidStart) {
                     try {
-                        final var objectId = UUID.fromString(parts[2]);
+                        final var objectId = UUID.fromString(path.substring(uuidStart, uuidEnd));
                         return moveLocation(request, response, callback, objectId);
                     } catch (final IllegalArgumentException e) {
                         HttpUtil.badRequest(response, callback, "invalid UUID in path");
@@ -63,11 +63,7 @@ public class ObjectHandler extends Handler.Abstract {
                 return search(request, response, callback);
             }
 
-            response.setStatus(404);
-            response.getHeaders().put("content-type", "application/json; charset=utf-8");
-            final var body = "{\"error\":\"not_found\"}".getBytes(StandardCharsets.UTF_8);
-            response.write(true, java.nio.ByteBuffer.wrap(body), callback);
-            callback.succeeded();
+            HttpUtil.notFound(response, callback);
             return true;
         } catch (final Throwable t) {
 
@@ -207,9 +203,7 @@ public class ObjectHandler extends Handler.Abstract {
         try {
             Log.info(getClass(), "Handling object move request");
 
-            final var bytes = Request.asInputStream(request).readAllBytes();
-            final var body = new String(bytes, StandardCharsets.UTF_8);
-            final var r = om.readValue(body, MoveObjectRequest.class);
+            final var r = om.readValue(Request.asInputStream(request), MoveObjectRequest.class);
 
             if (r.newLocationId() == null || r.newLocationId().isBlank()) {
                 HttpUtil.badRequest(response, callback, "newLocationId is required");
@@ -227,8 +221,7 @@ public class ObjectHandler extends Handler.Abstract {
             services.move(objectId, newLocationId);
 
             // 204 No Content
-            response.setStatus(204);
-            callback.succeeded();
+            HttpUtil.ok_noContent(response, callback);
             return true;
 
         } catch (final KiwiError e) {
@@ -258,10 +251,8 @@ public class ObjectHandler extends Handler.Abstract {
 
     private boolean create(final Request request, final Response response, final Callback callback) {
         try {
-            final var bytes = Request.asInputStream(request).readAllBytes();
-            final var body = new String(bytes, StandardCharsets.UTF_8);
 
-            final var r = om.readValue(body, CreateObjectRequest.class);
+            final var r = om.readValue(Request.asInputStream(request), CreateObjectRequest.class);
 
             // validaciones mínimas
             if (r.name() == null || r.name().isBlank()) {

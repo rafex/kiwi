@@ -15,7 +15,7 @@ DB_USER ?=
 DB_PASSWORD ?=
 DB_URL ?=
 
-.PHONY: help build agent sync-meta native run-native clean-native image run-image
+.PHONY: help exec build agent sync-meta native run-native clean-native image run-image
 
 help:
 	@echo "Targets:"
@@ -27,6 +27,10 @@ help:
 	@echo "  make run-image    -> run the container image with $(CONTAINER_TOOL) (PORT configurable, default 8080)"
 	@echo "  make run-native   -> run ./$(BIN)"
 	@echo "  make clean-native -> remove native binary and temp config"
+
+exec:
+	@echo "Running: "
+	$(MVN) -q exec:java -Dexec.mainClass="dev.rafex.kiwi.App" -Dexec.args="--log=DEBUG"
 
 build:
 	$(MVN) -q -DskipTests package

@@ -53,7 +53,6 @@ public class ObjectRepository {
         }
     }
 
-    // TODO falta implementar
     public void updateTags(final UUID objectId, final String[] tags) throws SQLException {
         try (var c = ds.getConnection(); var ps = c.prepareStatement("SELECT api_update_tags(?::uuid, ?::text[])")) {
             ps.setObject(1, objectId);
@@ -66,12 +65,24 @@ public class ObjectRepository {
         }
     }
 
-    // TODO falta implementar
     public void updateText(final UUID objectId, final String name, final String description) throws SQLException {
         try (var c = ds.getConnection(); var ps = c.prepareStatement("SELECT api_update_text(?::uuid, ?, ?)")) {
             ps.setObject(1, objectId);
             ps.setString(2, name);
             ps.setString(3, description);
+            ps.execute();
+        }
+    }
+
+    // actualiza metadata JSONB
+    public void updateMetadata(final UUID objectId, final String metadataJson) throws SQLException {
+        try (var c = ds.getConnection(); var ps = c.prepareStatement("SELECT api_update_metadata(?::uuid, ?::jsonb)")) {
+            ps.setObject(1, objectId);
+            if (metadataJson == null) {
+                ps.setNull(2, Types.OTHER);
+            } else {
+                ps.setString(2, metadataJson);
+            }
             ps.execute();
         }
     }
@@ -119,16 +130,6 @@ public class ObjectRepository {
                     out.add(new FuzzyRow((UUID) rs.getObject("object_id"), rs.getString("name"), rs.getFloat("score")));
                 }
                 return out;
-            }
-        }
-    }
-
-    // TODO falta implementar
-    public boolean locationExists(final UUID locationId) throws SQLException {
-        try (var c = ds.getConnection(); var ps = c.prepareStatement("SELECT 1 FROM locations WHERE location_id = ?::uuid")) {
-            ps.setObject(1, locationId);
-            try (var rs = ps.executeQuery()) {
-                return rs.next();
             }
         }
     }

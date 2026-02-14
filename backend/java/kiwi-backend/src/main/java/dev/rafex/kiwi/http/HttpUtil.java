@@ -12,6 +12,8 @@ import dev.rafex.kiwi.json.JsonUtil;
 
 public final class HttpUtil {
 
+    private static final Map<String, String> NOT_FOUND_BODY = Map.of("error", "not_found");
+
     private HttpUtil() {
     }
 
@@ -46,7 +48,7 @@ public final class HttpUtil {
     }
 
     public static void notFound(final Response response, final Callback callback) {
-        json(response, callback, HttpStatus.NOT_FOUND_404, Map.of("error", "not_found"));
+        json(response, callback, HttpStatus.NOT_FOUND_404, NOT_FOUND_BODY);
 
     }
 

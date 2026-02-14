@@ -1,8 +1,8 @@
 package dev.rafex.kiwi.handlers;
 
 import java.io.IOException;
-import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.UUID;
 
 import javax.sql.DataSource;
@@ -11,13 +11,19 @@ import org.eclipse.jetty.server.Handler;
 import org.eclipse.jetty.server.Request;
 import org.eclipse.jetty.server.Response;
 import org.eclipse.jetty.util.Callback;
+import org.eclipse.jetty.util.MultiMap;
+import org.eclipse.jetty.util.UrlEncoded;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import dev.rafex.kiwi.db.Db;
 import dev.rafex.kiwi.db.ObjectRepository;
 import dev.rafex.kiwi.dtos.CreateObjectRequest;
+import dev.rafex.kiwi.dtos.FuzzyResponse;
 import dev.rafex.kiwi.dtos.MoveObjectRequest;
+import dev.rafex.kiwi.dtos.SearchResponse;
+import dev.rafex.kiwi.dtos.UpdateTagsRequest;
+import dev.rafex.kiwi.dtos.UpdateTextRequest;
 import dev.rafex.kiwi.errors.KiwiError;
 import dev.rafex.kiwi.http.HttpUtil;
 import dev.rafex.kiwi.json.JsonUtil;
@@ -44,7 +50,7 @@ public class ObjectHandler extends Handler.Abstract {
             }
 
             // POST /objects/{id}/move
-            if ("POST".equals(method) && path.startsWith("/objects/") && path.endsWith("/move")) {
+            if ("PATCH".equals(method) && path.startsWith("/objects/") && path.endsWith("/move")) {
                 // /objects/{uuid}/move -> uuid starts at 9, ends before last 5 chars
                 final var uuidStart = 9; // "/objects/".length()
                 final var uuidEnd = path.length() - 5; // "/move".length()
@@ -59,8 +65,42 @@ public class ObjectHandler extends Handler.Abstract {
                 }
             }
 
+            if ("PATCH".equals(method) && path.startsWith("/objects/") && path.endsWith("/tags")) {
+                // /objects/{uuid}/tags -> uuid starts at 9, ends before last 5 chars
+                final var uuidStart = 9; // "/objects/".length()
+                final var uuidEnd = path.length() - 5; // "/tags".length()
+                if (uuidEnd > uuidStart) {
+                    try {
+                        final var objectId = UUID.fromString(path.substring(uuidStart, uuidEnd));
+                        return updateTags(request, response, callback, objectId);
+                    } catch (final IllegalArgumentException e) {
+                        HttpUtil.badRequest(response, callback, "invalid UUID in path");
+                        return true;
+                    }
+                }
+            }
+
+            if ("PATCH".equals(method) && path.startsWith("/objects/") && path.endsWith("/text")) {
+                // /objects/{uuid}/text -> uuid starts at 9, ends before last 5 chars
+                final var uuidStart = 9; // "/objects/".length()
+                final var uuidEnd = path.length() - 5; // "/text".length()
+                if (uuidEnd > uuidStart) {
+                    try {
+                        final var objectId = UUID.fromString(path.substring(uuidStart, uuidEnd));
+                        return updateText(request, response, callback, objectId);
+                    } catch (final IllegalArgumentException e) {
+                        HttpUtil.badRequest(response, callback, "invalid UUID in path");
+                        return true;
+                    }
+                }
+            }
+
             if ("GET".equals(method) && "/objects/search".equals(path)) {
                 return search(request, response, callback);
+            }
+
+            if ("GET".equals(method) && "/objects/fuzzy".equals(path)) {
+                return fuzzySearch(request, response, callback);
             }
 
             HttpUtil.notFound(response, callback);
@@ -77,8 +117,9 @@ public class ObjectHandler extends Handler.Abstract {
 
     private boolean search(final Request request, final Response response, final Callback callback) {
         try {
-            final var qp = request.getHttpURI().getQuery(); // raw query string
+            final var qp = parseQuery(request.getHttpURI().getQuery());
             final var q = queryParam(qp, "q");
+
             if (q == null || q.isBlank()) {
                 HttpUtil.badRequest(response, callback, "q is required");
                 return true;
@@ -92,11 +133,9 @@ public class ObjectHandler extends Handler.Abstract {
             final var locationId = parseUuidOrNull(locationParam);
             final var limit = parseLimit(limitParam, 20, 1, 200);
 
-            final var out = om.createObjectNode();
             final var search = services.search(q.trim(), tags, locationId, limit);
-            out.set("items", om.valueToTree(search));
 
-            HttpUtil.ok(response, callback, om.writeValueAsString(out));
+            HttpUtil.ok(response, callback, om.writeValueAsString(new SearchResponse(search)));
             return true;
 
         } catch (final IllegalArgumentException e) {
@@ -112,23 +151,17 @@ public class ObjectHandler extends Handler.Abstract {
 
     // -------- helpers (sin libs extra) --------
 
-    private static String queryParam(final String rawQuery, final String key) {
-        if (rawQuery == null || rawQuery.isEmpty()) {
-            return null;
+    private static MultiMap<String> parseQuery(final String rawQuery) {
+        final var params = new MultiMap<String>();
+        if (rawQuery != null && !rawQuery.isEmpty()) {
+            UrlEncoded.decodeTo(rawQuery, params, StandardCharsets.UTF_8);
         }
+        return params;
+    }
 
-        // rawQuery example: "q=laptop&tags=a,b&limit=20"
-        for (final String pair : rawQuery.split("&")) {
-            final var idx = pair.indexOf('=');
-            final var k = idx >= 0 ? pair.substring(0, idx) : pair;
-            if (!k.equals(key)) {
-                continue;
-            }
-
-            final var v = idx >= 0 ? pair.substring(idx + 1) : "";
-            return URLDecoder.decode(v, StandardCharsets.UTF_8);
-        }
-        return null;
+    private static String queryParam(final MultiMap<String> params, final String key) {
+        final var v = params.getValue(key);
+        return v == null || v.isBlank() ? null : v;
     }
 
     private static String[] parseTags(final String tagsParam) {
@@ -140,29 +173,15 @@ public class ObjectHandler extends Handler.Abstract {
             return null;
         }
 
-        // soporta "a,b,c" o "a"
         final var parts = t.split(",");
-        // limpia espacios y descarta vacíos
-        var count = 0;
-        for (final String p : parts) {
-            if (!p.trim().isEmpty()) {
-                count++;
-            }
-        }
-        if (count == 0) {
-            return null;
-        }
-
-        final var out = new String[count];
-        var i = 0;
+        final var list = new ArrayList<String>(parts.length);
         for (final String p : parts) {
             final var s = p.trim();
             if (!s.isEmpty()) {
-                out[i] = s;
-                i++;
+                list.add(s);
             }
         }
-        return out;
+        return list.isEmpty() ? null : list.toArray(new String[0]);
     }
 
     private static UUID parseUuidOrNull(final String uuidStr) {
@@ -285,6 +304,89 @@ public class ObjectHandler extends Handler.Abstract {
             return true;
         } catch (final Exception e) {
             Log.error(getClass(), "Error creating object", e);
+            HttpUtil.json(response, callback, 500, "{\"error\":\"internal_error\"}");
+            return true;
+        }
+    }
+
+    private boolean updateTags(final Request request, final Response response, final Callback callback, final UUID objectId) {
+        try {
+            Log.info(getClass(), "Handling object tag update request");
+
+            final var r = om.readValue(Request.asInputStream(request), UpdateTagsRequest.class);
+
+            if (r.tags() == null) {
+                HttpUtil.badRequest(response, callback, "tags is required");
+                return true;
+            }
+
+            final var tags = r.tags().toArray(String[]::new);
+            services.updateTags(objectId, tags);
+
+            // 204 No Content
+            HttpUtil.ok_noContent(response, callback);
+            return true;
+
+        } catch (final KiwiError e) {
+            Log.error(getClass(), "KiwiError updating tags", e);
+            HttpUtil.json(response, callback, 400, "{\"error\":\"" + e.getCode() + "\"}");
+            return true;
+        } catch (final IOException e1) {
+            Log.error(getClass(), "Error updating tags", e1);
+            HttpUtil.json(response, callback, 400, "{\"error\":\"" + e1.getMessage() + "\"}");
+            return true;
+        }
+    }
+
+    private boolean updateText(final Request request, final Response response, final Callback callback, final UUID objectId) {
+
+        try {
+            Log.info(getClass(), "Handling object text update request");
+
+            final var r = om.readValue(Request.asInputStream(request), UpdateTextRequest.class);
+
+            if ((r.name() == null || r.name().isBlank()) && (r.description() == null || r.description().isBlank())) {
+                HttpUtil.badRequest(response, callback, "name or description is required");
+                return true;
+            }
+
+            services.updateText(objectId, r.name(), r.description());
+
+            // 204 No Content
+            HttpUtil.ok_noContent(response, callback);
+            return true;
+
+        } catch (final KiwiError e) {
+            Log.error(getClass(), "KiwiError updating text", e);
+            HttpUtil.json(response, callback, 400, "{\"error\":\"" + e.getCode() + "\"}");
+            return true;
+        } catch (final IOException e1) {
+            Log.error(getClass(), "Error updating text", e1);
+            HttpUtil.json(response, callback, 400, "{\"error\":\"" + e1.getMessage() + "\"}");
+            return true;
+        }
+
+    }
+
+    private boolean fuzzySearch(final Request request, final Response response, final Callback callback) {
+        try {
+            Log.info(getClass(), "Handling object fuzzy search request");
+
+            final var qp = parseQuery(request.getHttpURI().getQuery());
+            final var name = queryParam(qp, "name");
+            if (name == null || name.isBlank()) {
+                HttpUtil.badRequest(response, callback, "name is required");
+                return true;
+            }
+
+            final var search = services.fuzzy(name, 20);
+
+            HttpUtil.ok(response, callback, om.writeValueAsString(new FuzzyResponse(search)));
+
+            return true;
+
+        } catch (final Exception e) {
+            Log.error(getClass(), "Error handling fuzzy search", e);
             HttpUtil.json(response, callback, 500, "{\"error\":\"internal_error\"}");
             return true;
         }

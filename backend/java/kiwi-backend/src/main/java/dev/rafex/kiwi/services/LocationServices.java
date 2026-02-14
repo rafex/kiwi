@@ -22,11 +22,10 @@ public class LocationServices {
             repo.createLocation(locationId, name, parentId);
         } catch (final PSQLException e) {
             Log.debug(getClass(), "DB error creating location: {} ", e.getMessage());
-            // FK violation: parent_location_id no existe
             if ("23503".equals(e.getSQLState())) {
                 throw new KiwiError("E-001", "newLocationId does not exist", e);
             }
-
+            throw new KiwiError("E-002", "DB error creating location", e);
         } catch (final SQLException e) {
             Log.error(getClass(), "Error creating location in DB", e);
             throw new KiwiError("E-002", "Error creating location in DB", e);

@@ -125,6 +125,29 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
+CREATE OR REPLACE FUNCTION api_update_metadata(
+  p_object_id UUID,
+  p_metadata JSONB
+)
+RETURNS VOID AS $$
+BEGIN
+  UPDATE objects
+  SET metadata = p_metadata,
+      updated_at = now()
+  WHERE object_id = p_object_id;
+
+  INSERT INTO object_events (
+    event_id, object_id, event_type, payload
+  )
+  VALUES (
+    gen_random_uuid(),
+    p_object_id,
+    'METADATA_UPDATED',
+    jsonb_build_object('metadata', p_metadata)
+  );
+END;
+$$ LANGUAGE plpgsql;
+
 CREATE OR REPLACE FUNCTION api_search_objects(
   p_query TEXT,
   p_tags TEXT[] DEFAULT NULL,
@@ -164,11 +187,11 @@ RETURNS TABLE (
 BEGIN
   RETURN QUERY
   SELECT
-    object_id,
-    name,
-    similarity(name, p_text) AS score
-  FROM objects
-  WHERE name % p_text
+    o.object_id,
+    o.name,
+    similarity(o.name, p_text) AS score
+  FROM objects o
+  WHERE o.name % p_text
   ORDER BY score DESC
   LIMIT p_limit;
 END;

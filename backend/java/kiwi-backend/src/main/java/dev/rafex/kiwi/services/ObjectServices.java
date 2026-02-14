@@ -8,6 +8,7 @@ import java.util.UUID;
 import org.postgresql.util.PSQLException;
 
 import dev.rafex.kiwi.db.ObjectRepository;
+import dev.rafex.kiwi.dtos.FuzzyItemDto;
 import dev.rafex.kiwi.dtos.SearchItemDto;
 import dev.rafex.kiwi.errors.KiwiError;
 import dev.rafex.kiwi.logging.Log;
@@ -38,7 +39,7 @@ public class ObjectServices {
                 throw new KiwiError("E-001", "newLocationId does not exist", e);
             }
             Log.error(getClass(), "DB error moving object", e);
-
+            throw new KiwiError("E-002", "DB error moving object", e);
         } catch (final SQLException e) {
             Log.error(getClass(), "Error moving object", e);
             throw new KiwiError("E-002", "SQLException", e);
@@ -58,6 +59,39 @@ public class ObjectServices {
         } catch (final SQLException e) {
             Log.error(getClass(), "Error searching for objects", e);
             return List.of(); // immutable empty, zero-alloc
+        }
+    }
+
+    public void updateTags(final UUID objectId, final String[] tags) throws KiwiError {
+        try {
+            repo.updateTags(objectId, tags);
+        } catch (final SQLException e) {
+            Log.error(getClass(), "Error updating tags", e);
+            throw new KiwiError("E-004", "Error updating tags", e);
+        }
+    }
+
+    public void updateText(final UUID objectId, final String name, final String description) throws KiwiError {
+        try {
+            repo.updateText(objectId, name, description);
+        } catch (final SQLException e) {
+            Log.error(getClass(), "Error updating text fields", e);
+            throw new KiwiError("E-005", "Error updating text fields", e);
+        }
+    }
+
+    public List<FuzzyItemDto> fuzzy(final String text, final int limit) throws KiwiError {
+        try {
+            final var rows = repo.fuzzy(text, limit);
+            final var result = new ArrayList<FuzzyItemDto>(rows.size());
+            for (final var r : rows) {
+                result.add(new FuzzyItemDto(r.objectId(), r.name(), r.score()));
+            }
+            return result;
+        } catch (final SQLException e) {
+            Log.error(getClass(), "Error performing fuzzy search", e);
+            // Decide si lanzar error o retornar vacío
+            return List.of();
         }
     }
 

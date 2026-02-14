@@ -18,9 +18,6 @@ public class HelloHandler extends Handler.Abstract.NonBlocking {
 
         Log.debug(getClass(), "GET /hello");
 
-        response.setStatus(200);
-        response.getHeaders().put("content-type", "application/json; charset=utf-8");
-
         HttpUtil.ok(response, callback, services.sayHello());
         return true;
     }

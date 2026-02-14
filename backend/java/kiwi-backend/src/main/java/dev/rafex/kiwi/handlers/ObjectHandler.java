@@ -1,6 +1,7 @@
 package dev.rafex.kiwi.handlers;
 
 import java.io.IOException;
+import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
 import java.util.UUID;
 
@@ -58,7 +59,7 @@ public class ObjectHandler extends Handler.Abstract {
             }
 
             if ("GET".equals(method) && "/objects/search".equals(path)) {
-                return services.search(request, response, callback);
+                return search(request, response, callback);
             }
 
             response.setStatus(404);
@@ -74,6 +75,127 @@ public class ObjectHandler extends Handler.Abstract {
             response.setStatus(500);
             callback.failed(t);
             return true;
+        }
+    }
+
+    private boolean search(final Request request, final Response response, final Callback callback) {
+        try {
+            final var qp = request.getHttpURI().getQuery(); // raw query string
+            final var q = queryParam(qp, "q");
+            if (q == null || q.isBlank()) {
+                HttpUtil.badRequest(response, callback, "q is required");
+                return true;
+            }
+
+            final var tagsParam = queryParam(qp, "tags"); // "a,b,c"
+            final var locationParam = queryParam(qp, "locationId"); // uuid
+            final var limitParam = queryParam(qp, "limit"); // int
+
+            final var tags = parseTags(tagsParam);
+            final var locationId = parseUuidOrNull(locationParam);
+            final var limit = parseLimit(limitParam, 20, 1, 200);
+
+            final var out = services.search(q.trim(), tags, locationId, limit, om);
+
+            HttpUtil.ok(response, callback, om.writeValueAsString(out));
+            return true;
+
+        } catch (final IllegalArgumentException e) {
+            HttpUtil.badRequest(response, callback, e.getMessage());
+            return true;
+
+        } catch (final Exception e) {
+            Log.error(getClass(), "Error searching objects", e);
+            HttpUtil.json(response, callback, 500, "{\"error\":\"internal_error\"}");
+            return true;
+        }
+    }
+
+    // -------- helpers (sin libs extra) --------
+
+    private static String queryParam(final String rawQuery, final String key) {
+        if (rawQuery == null || rawQuery.isEmpty()) {
+            return null;
+        }
+
+        // rawQuery example: "q=laptop&tags=a,b&limit=20"
+        for (final String pair : rawQuery.split("&")) {
+            final var idx = pair.indexOf('=');
+            final var k = idx >= 0 ? pair.substring(0, idx) : pair;
+            if (!k.equals(key)) {
+                continue;
+            }
+
+            final var v = idx >= 0 ? pair.substring(idx + 1) : "";
+            return URLDecoder.decode(v, StandardCharsets.UTF_8);
+        }
+        return null;
+    }
+
+    private static String[] parseTags(final String tagsParam) {
+        if (tagsParam == null) {
+            return null;
+        }
+        final var t = tagsParam.trim();
+        if (t.isEmpty()) {
+            return null;
+        }
+
+        // soporta "a,b,c" o "a"
+        final var parts = t.split(",");
+        // limpia espacios y descarta vacíos
+        var count = 0;
+        for (final String p : parts) {
+            if (!p.trim().isEmpty()) {
+                count++;
+            }
+        }
+        if (count == 0) {
+            return null;
+        }
+
+        final var out = new String[count];
+        var i = 0;
+        for (final String p : parts) {
+            final var s = p.trim();
+            if (!s.isEmpty()) {
+                out[i] = s;
+                i++;
+            }
+        }
+        return out;
+    }
+
+    private static UUID parseUuidOrNull(final String uuidStr) {
+        if (uuidStr == null) {
+            return null;
+        }
+        final var v = uuidStr.trim();
+        if (v.isEmpty()) {
+            return null;
+        }
+        try {
+            return UUID.fromString(v);
+        } catch (final IllegalArgumentException e) {
+            throw new IllegalArgumentException("invalid UUID in locationId");
+        }
+    }
+
+    private static int parseLimit(final String limitStr, final int def, final int min, final int max) {
+        if (limitStr == null || limitStr.trim().isEmpty()) {
+            return def;
+        }
+        try {
+            final var v = Integer.parseInt(limitStr.trim());
+            if (v < min) {
+                return min;
+            }
+            if (v > max) {
+                return max;
+            }
+            return v;
+        } catch (final NumberFormatException e) {
+            throw new IllegalArgumentException("limit must be an integer");
         }
     }
 
@@ -159,6 +281,10 @@ public class ObjectHandler extends Handler.Abstract {
             HttpUtil.json(response, callback, 201, "{\"object_id\":\"" + objectId + "\"}");
             return true;
 
+        } catch (final KiwiError e) {
+            Log.error(getClass(), "KiwiError creating object", e);
+            HttpUtil.json(response, callback, 400, "{\"error\":\"" + e.getCode() + "\"}");
+            return true;
         } catch (final IllegalArgumentException e) {
             Log.error(getClass(), "Invalid UUID format", e);
             HttpUtil.badRequest(response, callback, "invalid UUID");

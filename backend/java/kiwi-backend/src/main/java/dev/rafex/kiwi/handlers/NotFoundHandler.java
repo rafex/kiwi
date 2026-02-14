@@ -8,10 +8,14 @@ import org.eclipse.jetty.server.Request;
 import org.eclipse.jetty.server.Response;
 import org.eclipse.jetty.util.Callback;
 
+import dev.rafex.kiwi.logging.Log;
+
 public final class NotFoundHandler extends Handler.Abstract {
 
     @Override
     public boolean handle(final Request request, final Response response, final Callback callback) throws Exception {
+
+        Log.error(getClass(), "No handler found for path: " + request.getHttpURI().getPath());
 
         response.setStatus(HttpStatus.NOT_FOUND_404);
         response.getHeaders().put("content-type", "application/json; charset=utf-8");

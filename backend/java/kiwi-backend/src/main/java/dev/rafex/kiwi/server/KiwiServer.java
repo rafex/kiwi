@@ -33,8 +33,9 @@ public final class KiwiServer {
 
         final var routes = new PathMappingsHandler();
         routes.addMapping(PathSpec.from("/hello"), new HelloHandler());
-        routes.addMapping(PathSpec.from("/object/*"), new ObjectHandler());
-        // routes.addMapping(PathSpec.from("/location/*"), new LocationRouterHandler());
+        routes.addMapping(PathSpec.from("/objects/*"), new ObjectHandler());
+        // routes.addMapping(PathSpec.from("/locations/*"), new
+        // LocationRouterHandler());
         routes.addMapping(PathSpec.from("/*"), new NotFoundHandler()); // fallback (según versión/impl)
 
         server.setHandler(routes);

@@ -46,13 +46,13 @@ public class ObjectServices {
 
     }
 
-    public List search(final String trim, final String[] tags, final UUID locationId, final int limit) {
+    public List<SearchItemDto> search(final String trim, final String[] tags, final UUID locationId, final int limit) {
 
         final var itemsList = new ArrayList<SearchItemDto>();
         try {
             final var rows = repo.search(trim, tags, locationId, limit);
             itemsList.ensureCapacity(rows.size());
-            
+
             for (final var r : rows) {
                 itemsList.add(new SearchItemDto(r.objectId(), r.name(), r.rank()));
             }

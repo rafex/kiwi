@@ -7,3 +7,24 @@ replay_pid*
 
 .env
 *.bin
+
+
+### macOS ###
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+
+# Thumbnails
+._.DS_Store
+._.Spotlight-V100
+._.Trashes
+
+# Files that might appear in root
+.DocumentRevisions-V100
+.fseventsd
+.Spotlight-V100
+.TemporaryItems
+.Trashes
+.VolumeIcon.icns
+.com.apple.timemachine.donotpresent

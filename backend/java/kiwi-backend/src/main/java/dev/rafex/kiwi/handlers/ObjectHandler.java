@@ -20,6 +20,7 @@ import dev.rafex.kiwi.dtos.CreateObjectRequest;
 import dev.rafex.kiwi.dtos.MoveObjectRequest;
 import dev.rafex.kiwi.errors.KiwiError;
 import dev.rafex.kiwi.http.HttpUtil;
+import dev.rafex.kiwi.json.JsonUtil;
 import dev.rafex.kiwi.logging.Log;
 import dev.rafex.kiwi.services.ObjectServices;
 
@@ -27,7 +28,7 @@ public class ObjectHandler extends Handler.Abstract {
 
     private final DataSource dataSource = Db.dataSource();
     private final ObjectRepository objectRepo = new ObjectRepository(dataSource);
-    private final ObjectMapper om = new ObjectMapper();
+    private final ObjectMapper om = JsonUtil.MAPPER;
 
     private final ObjectServices services = new ObjectServices(objectRepo);
 

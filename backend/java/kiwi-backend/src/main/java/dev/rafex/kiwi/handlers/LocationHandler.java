@@ -16,6 +16,7 @@ import dev.rafex.kiwi.db.LocationRepository;
 import dev.rafex.kiwi.dtos.CreateLocationRequest;
 import dev.rafex.kiwi.errors.KiwiError;
 import dev.rafex.kiwi.http.HttpUtil;
+import dev.rafex.kiwi.json.JsonUtil;
 import dev.rafex.kiwi.logging.Log;
 import dev.rafex.kiwi.services.LocationServices;
 
@@ -25,7 +26,7 @@ public class LocationHandler extends Handler.Abstract {
     private final LocationRepository repo = new LocationRepository(dataSource);
     private final LocationServices services = new LocationServices(repo);
 
-    private final ObjectMapper om = new ObjectMapper();
+    private final ObjectMapper om = JsonUtil.MAPPER;
 
     @Override
     public boolean handle(final Request request, final Response response, final Callback callback) throws Exception {

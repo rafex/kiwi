@@ -3,23 +3,15 @@ package dev.rafex.kiwi.services;
 import java.sql.SQLException;
 import java.util.UUID;
 
-import org.eclipse.jetty.server.Request;
-import org.eclipse.jetty.server.Response;
-import org.eclipse.jetty.util.Callback;
 import org.postgresql.util.PSQLException;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-
 import dev.rafex.kiwi.db.LocationRepository;
-import dev.rafex.kiwi.dtos.CreateLocationRequest;
 import dev.rafex.kiwi.errors.KiwiError;
-import dev.rafex.kiwi.http.HttpUtil;
 import dev.rafex.kiwi.logging.Log;
 
 public class LocationServices {
 
     private final LocationRepository repo;
-    private final ObjectMapper om = new ObjectMapper();
 
     public LocationServices(final LocationRepository repo) {
         this.repo = repo;

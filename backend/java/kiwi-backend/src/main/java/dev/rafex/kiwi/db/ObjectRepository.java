@@ -118,7 +118,6 @@ public class ObjectRepository {
         }
     }
 
-    // TODO falta implementar
     public List<FuzzyRow> fuzzy(final String text, final int limit) throws SQLException {
         try (var c = ds.getConnection(); var ps = c.prepareStatement("SELECT object_id, name, score FROM api_fuzzy_search(?, ?)")) {
             ps.setString(1, text);

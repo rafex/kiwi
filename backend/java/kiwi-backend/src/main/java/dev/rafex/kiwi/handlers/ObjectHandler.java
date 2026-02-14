@@ -50,7 +50,7 @@ public class ObjectHandler extends Handler.Abstract {
                 if (parts.length == 4) {
                     try {
                         final var objectId = UUID.fromString(parts[2]);
-                        return move(request, response, callback, objectId);
+                        return moveLocation(request, response, callback, objectId);
                     } catch (final IllegalArgumentException e) {
                         HttpUtil.badRequest(response, callback, "invalid UUID in path");
                         return true;
@@ -201,7 +201,7 @@ public class ObjectHandler extends Handler.Abstract {
         }
     }
 
-    private boolean move(final Request request, final Response response, final Callback callback, final UUID objectId) {
+    private boolean moveLocation(final Request request, final Response response, final Callback callback, final UUID objectId) {
 
         try {
             Log.info(getClass(), "Handling object move request");
@@ -210,14 +210,14 @@ public class ObjectHandler extends Handler.Abstract {
             final var body = new String(bytes, StandardCharsets.UTF_8);
             final var r = om.readValue(body, MoveObjectRequest.class);
 
-            if (r.getNewLocationId() == null || r.getNewLocationId().isBlank()) {
+            if (r.newLocationId() == null || r.newLocationId().isBlank()) {
                 HttpUtil.badRequest(response, callback, "newLocationId is required");
                 return true;
             }
 
             UUID newLocationId;
             try {
-                newLocationId = UUID.fromString(r.getNewLocationId());
+                newLocationId = UUID.fromString(r.newLocationId());
             } catch (final IllegalArgumentException e) {
                 HttpUtil.badRequest(response, callback, "invalid UUID in newLocationId");
                 return true;
@@ -263,22 +263,22 @@ public class ObjectHandler extends Handler.Abstract {
             final var r = om.readValue(body, CreateObjectRequest.class);
 
             // validaciones mínimas
-            if (r.getName() == null || r.getName().isBlank()) {
+            if (r.name() == null || r.name().isBlank()) {
                 HttpUtil.badRequest(response, callback, "name is required");
                 return true;
             }
-            if (r.getLocationId() == null || r.getLocationId().isBlank()) {
+            if (r.locationId() == null || r.locationId().isBlank()) {
                 HttpUtil.badRequest(response, callback, "locationId is required");
                 return true;
             }
 
             final var objectId = UUID.randomUUID();
-            final var locationId = UUID.fromString(r.getLocationId());
+            final var locationId = UUID.fromString(r.locationId());
 
-            final var tags = r.getTags() == null ? null : r.getTags().toArray(new String[0]);
-            final var metadataJson = r.getMetadata() == null ? null : om.writeValueAsString(r.getMetadata());
+            final var tags = r.tags() == null ? null : r.tags().toArray(new String[0]);
+            final var metadataJson = r.metadata() == null ? null : om.writeValueAsString(r.metadata());
 
-            services.create(objectId, r.getName(), r.getDescription(), r.getType(), tags, metadataJson, locationId);
+            services.create(objectId, r.name(), r.description(), r.type(), tags, metadataJson, locationId);
 
             HttpUtil.json(response, callback, 201, "{\"object_id\":\"" + objectId + "\"}");
             return true;

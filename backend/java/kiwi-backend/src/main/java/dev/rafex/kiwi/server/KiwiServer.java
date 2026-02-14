@@ -9,6 +9,7 @@ import org.eclipse.jetty.server.handler.PathMappingsHandler;
 import org.eclipse.jetty.util.thread.QueuedThreadPool;
 
 import dev.rafex.kiwi.handlers.HelloHandler;
+import dev.rafex.kiwi.handlers.LocationHandler;
 import dev.rafex.kiwi.handlers.NotFoundHandler;
 import dev.rafex.kiwi.handlers.ObjectHandler;
 
@@ -34,8 +35,7 @@ public final class KiwiServer {
         final var routes = new PathMappingsHandler();
         routes.addMapping(PathSpec.from("/hello"), new HelloHandler());
         routes.addMapping(PathSpec.from("/objects/*"), new ObjectHandler());
-        // routes.addMapping(PathSpec.from("/locations/*"), new
-        // LocationHandler());
+        routes.addMapping(PathSpec.from("/locations/*"), new LocationHandler());
         routes.addMapping(PathSpec.from("/*"), new NotFoundHandler()); // fallback (según versión/impl)
 
         server.setHandler(routes);

@@ -1,5 +1,6 @@
 package dev.rafex.kiwi.services;
 
+import java.sql.SQLException;
 import java.util.UUID;
 
 import org.eclipse.jetty.server.Request;
@@ -11,6 +12,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import dev.rafex.kiwi.db.LocationRepository;
 import dev.rafex.kiwi.dtos.CreateLocationRequest;
+import dev.rafex.kiwi.errors.KiwiError;
 import dev.rafex.kiwi.http.HttpUtil;
 import dev.rafex.kiwi.logging.Log;
 
@@ -23,45 +25,19 @@ public class LocationServices {
         this.repo = repo;
     }
 
-    public boolean create(final Request request, final Response response, final Callback callback) {
+    public void create(final UUID locationId, final String name, final UUID parentId) throws KiwiError {
         try {
-            final var body = Request.asInputStream(request).readAllBytes();
-            final var r = om.readValue(body, CreateLocationRequest.class);
-
-            if (r.getName() == null || r.getName().isBlank()) {
-                HttpUtil.badRequest(response, callback, "name is required");
-                return true;
-            }
-
-            UUID parentId = null;
-            if (r.getParentLocationId() != null && !r.getParentLocationId().isBlank()) {
-                parentId = UUID.fromString(r.getParentLocationId());
-            }
-
-            final var locationId = UUID.randomUUID();
-            repo.createLocation(locationId, r.getName().trim(), parentId);
-
-            HttpUtil.json(response, callback, 201, "{\"location_id\":\"" + locationId + "\"}");
-            return true;
-
-        } catch (final IllegalArgumentException e) {
-            HttpUtil.badRequest(response, callback, "invalid UUID in parentLocationId");
-            return true;
-
+            repo.createLocation(locationId, name, parentId);
         } catch (final PSQLException e) {
+            Log.debug(getClass(), "DB error creating location: {} ", e.getMessage());
             // FK violation: parent_location_id no existe
             if ("23503".equals(e.getSQLState())) {
-                HttpUtil.badRequest(response, callback, "parentLocationId does not exist");
-                return true;
+                throw new KiwiError("E-001", "newLocationId does not exist", e);
             }
-            Log.debug(getClass(), "DB error creating location: {} ", e.getMessage());
-            HttpUtil.json(response, callback, 500, "{\"error\":\"db_error\"}");
-            return true;
 
-        } catch (final Exception e) {
-            Log.debug(getClass(), "Error creating location: {}", e.getMessage());
-            HttpUtil.json(response, callback, 500, "{\"error\":\"internal_error\"}");
-            return true;
+        } catch (final SQLException e) {
+            Log.error(getClass(), "Error creating location in DB", e);
+            throw new KiwiError("E-002", "Error creating location in DB", e);
         }
     }
 }

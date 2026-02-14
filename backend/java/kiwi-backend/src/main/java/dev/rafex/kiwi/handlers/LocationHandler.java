@@ -1,8 +1,7 @@
 package dev.rafex.kiwi.handlers;
 
+import java.util.Map;
 import java.util.UUID;
-
-import javax.sql.DataSource;
 
 import org.eclipse.jetty.server.Handler;
 import org.eclipse.jetty.server.Request;
@@ -14,19 +13,23 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import dev.rafex.kiwi.db.Db;
 import dev.rafex.kiwi.db.LocationRepository;
 import dev.rafex.kiwi.dtos.CreateLocationRequest;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import dev.rafex.kiwi.errors.KiwiError;
 import dev.rafex.kiwi.http.HttpUtil;
 import dev.rafex.kiwi.json.JsonUtil;
-import dev.rafex.kiwi.logging.Log;
 import dev.rafex.kiwi.services.LocationServices;
 
 public class LocationHandler extends Handler.Abstract {
 
-    private final DataSource dataSource = Db.dataSource();
-    private final LocationRepository repo = new LocationRepository(dataSource);
-    private final LocationServices services = new LocationServices(repo);
-
+    private static final Logger LOG = LoggerFactory.getLogger(LocationHandler.class);
+    private final LocationServices services;
     private final ObjectMapper om = JsonUtil.MAPPER;
+
+    public LocationHandler(final LocationServices services) {
+        this.services = services;
+    }
 
     @Override
     public boolean handle(final Request request, final Response response, final Callback callback) throws Exception {
@@ -34,7 +37,7 @@ public class LocationHandler extends Handler.Abstract {
         final var path = request.getHttpURI().getPath();
 
         if ("POST".equals(method) && "/locations".equals(path)) {
-            Log.info(getClass(), "Handling object creation request");
+            LOG.info("Handling object creation request");
             return create(request, response, callback);
         }
         return false;
@@ -58,7 +61,7 @@ public class LocationHandler extends Handler.Abstract {
             final var locationId = UUID.randomUUID();
             services.create(locationId, r.name().trim(), parentId);
 
-            HttpUtil.json(response, callback, 201, "{\"location_id\":\"" + locationId + "\"}");
+            HttpUtil.json(response, callback, 201, Map.of("location_id", locationId));
             return true;
 
         } catch (final IllegalArgumentException e) {
@@ -66,12 +69,12 @@ public class LocationHandler extends Handler.Abstract {
             return true;
 
         } catch (final KiwiError e) {
-            HttpUtil.json(response, callback, 500, "{\"error\":\"db_error\"}");
+            HttpUtil.json(response, callback, 500, Map.of("error", "db_error"));
             return true;
 
         } catch (final Exception e) {
-            Log.debug(getClass(), "Error creating location: {}", e.getMessage());
-            HttpUtil.json(response, callback, 500, "{\"error\":\"internal_error\"}");
+            LOG.debug("Error creating location: {}", e.getMessage());
+            HttpUtil.json(response, callback, 500, Map.of("error", "internal_error"));
             return true;
         }
     }

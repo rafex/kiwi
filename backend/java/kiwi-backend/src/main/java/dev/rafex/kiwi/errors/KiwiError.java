@@ -1,9 +1,11 @@
 package dev.rafex.kiwi.errors;
 
-import dev.rafex.kiwi.logging.Log;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class KiwiError extends Exception {
 
+    private static final Logger LOG = LoggerFactory.getLogger(KiwiError.class);
     private static final long serialVersionUID = 1L;
 
     private final String code;
@@ -13,25 +15,25 @@ public class KiwiError extends Exception {
     public KiwiError(final String code, final String message) {
         super(message);
         this.code = code;
-        Log.error(getClass(), "KiwiError [{}]: {}", code, message);
+        LOG.error("KiwiError [{}]: {}", code, message);
     }
 
     public KiwiError(final String code, final String message, final Object... args) {
         super(format(message, args));
         this.code = code;
-        Log.error(getClass(), "KiwiError [{}]: {}", code, format(message, args));
+        LOG.error("KiwiError [{}]: {}", code, format(message, args));
     }
 
     public KiwiError(final String code, final String message, final Throwable cause) {
         super(message, cause);
         this.code = code;
-        Log.error(getClass(), "KiwiError [{}]: {}", cause, code, message);
+        LOG.error("KiwiError [{}]: {}", code, message, cause);
     }
 
     public KiwiError(final String code, final String message, final Throwable cause, final Object... args) {
         super(format(message, args), cause);
         this.code = code;
-        Log.error(getClass(), "KiwiError [{}]: {}", cause, code, format(message, args));
+        LOG.error("KiwiError [{}]: {}", code, format(message, args), cause);
     }
 
     /* ===================== GETTERS ===================== */

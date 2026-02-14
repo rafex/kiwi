@@ -1,23 +1,28 @@
 package dev.rafex.kiwi.handlers;
 
+import org.eclipse.jetty.server.Handler;
 import org.eclipse.jetty.server.Request;
 import org.eclipse.jetty.server.Response;
 import org.eclipse.jetty.util.Callback;
 
 import dev.rafex.kiwi.http.HttpUtil;
 import dev.rafex.kiwi.logging.Log;
+import dev.rafex.kiwi.services.HelloServices;
 
-public class HelloHandler {
+public class HelloHandler extends Handler.Abstract.NonBlocking {
 
-	public boolean handle(final Request request, final Response response, final Callback callback) throws Exception {
+    private final HelloServices services = new HelloServices();
 
-		Log.debug(getClass(), "GET /hello");
+    @Override
+    public boolean handle(final Request request, final Response response, final Callback callback) throws Exception {
 
-		response.setStatus(200);
-		response.getHeaders().put("content-type", "application/json; charset=utf-8");
+        Log.debug(getClass(), "GET /hello");
 
-		HttpUtil.ok(response, callback, "{\"name\":\"kiwi\",\"status\":\"ok\"}");
+        response.setStatus(200);
+        response.getHeaders().put("content-type", "application/json; charset=utf-8");
 
-		return true;
-	}
+        HttpUtil.ok(response, callback, services.sayHello());
+        return true;
+    }
+
 }

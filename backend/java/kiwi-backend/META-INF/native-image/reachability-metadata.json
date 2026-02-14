@@ -281,7 +281,7 @@
       "type": "com.zaxxer.hikari.util.ConcurrentBag$IConcurrentBagEntry[]"
     },
     {
-      "type": "dev.rafex.kiwi.handlers.dto.CreateLocationRequest",
+      "type": "dev.rafex.kiwi.services.dto.CreateLocationRequest",
       "methods": [
         {
           "name": "<init>",
@@ -296,7 +296,7 @@
       ]
     },
     {
-      "type": "dev.rafex.kiwi.handlers.dto.CreateObjectRequest",
+      "type": "dev.rafex.kiwi.services.dto.CreateObjectRequest",
       "methods": [
         {
           "name": "<init>",

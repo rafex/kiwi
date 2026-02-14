@@ -16,9 +16,9 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import dev.rafex.kiwi.db.Db;
 import dev.rafex.kiwi.db.ObjectRepository;
+import dev.rafex.kiwi.dtos.CreateObjectRequest;
+import dev.rafex.kiwi.dtos.MoveObjectRequest;
 import dev.rafex.kiwi.errors.KiwiError;
-import dev.rafex.kiwi.handlers.dto.CreateObjectRequest;
-import dev.rafex.kiwi.handlers.dto.MoveObjectRequest;
 import dev.rafex.kiwi.http.HttpUtil;
 import dev.rafex.kiwi.logging.Log;
 import dev.rafex.kiwi.services.ObjectServices;
@@ -95,7 +95,9 @@ public class ObjectHandler extends Handler.Abstract {
             final var locationId = parseUuidOrNull(locationParam);
             final var limit = parseLimit(limitParam, 20, 1, 200);
 
-            final var out = services.search(q.trim(), tags, locationId, limit, om);
+            final var out = om.createObjectNode();
+            final var search = services.search(q.trim(), tags, locationId, limit);
+            out.set("items", om.valueToTree(search));
 
             HttpUtil.ok(response, callback, om.writeValueAsString(out));
             return true;

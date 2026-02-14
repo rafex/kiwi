@@ -1,4 +1,4 @@
-package dev.rafex.kiwi.handlers.dto;
+package dev.rafex.kiwi.dtos;
 
 public class MoveObjectRequest {
 

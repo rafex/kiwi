@@ -10,7 +10,7 @@ import org.postgresql.util.PSQLException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import dev.rafex.kiwi.db.LocationRepository;
-import dev.rafex.kiwi.handlers.dto.CreateLocationRequest;
+import dev.rafex.kiwi.dtos.CreateLocationRequest;
 import dev.rafex.kiwi.http.HttpUtil;
 import dev.rafex.kiwi.logging.Log;
 

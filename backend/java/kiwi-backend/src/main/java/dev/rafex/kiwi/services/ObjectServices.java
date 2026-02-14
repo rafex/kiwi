@@ -1,14 +1,14 @@
 package dev.rafex.kiwi.services;
 
 import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
 import org.postgresql.util.PSQLException;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ObjectNode;
-
 import dev.rafex.kiwi.db.ObjectRepository;
+import dev.rafex.kiwi.dtos.SearchItemDto;
 import dev.rafex.kiwi.errors.KiwiError;
 import dev.rafex.kiwi.logging.Log;
 
@@ -46,25 +46,21 @@ public class ObjectServices {
 
     }
 
-    public ObjectNode search(final String trim, final String[] tags, final UUID locationId, final int limit, final ObjectMapper objectMapper) {
+    public List search(final String trim, final String[] tags, final UUID locationId, final int limit) {
 
-        final var out = objectMapper.createObjectNode();
-        final var items = out.putArray("items");
+        final var itemsList = new ArrayList<SearchItemDto>();
         try {
             final var rows = repo.search(trim, tags, locationId, limit);
-
+            itemsList.ensureCapacity(rows.size());
+            
             for (final var r : rows) {
-                final var it = objectMapper.createObjectNode();
-                it.put("object_id", r.objectId().toString());
-                it.put("name", r.name());
-                it.put("rank", r.rank());
-                items.add(it);
+                itemsList.add(new SearchItemDto(r.objectId(), r.name(), r.rank()));
             }
 
         } catch (final SQLException e) {
             Log.error(getClass(), "Error searching for objects", e);
         }
-        return out;
+        return itemsList;
     }
 
 }

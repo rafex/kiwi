@@ -2,13 +2,15 @@ package dev.rafex.kiwi.db;
 
 import javax.sql.DataSource;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
 
-import dev.rafex.kiwi.logging.Log;
-
 public final class Db {
 
+	private static final Logger LOG = LoggerFactory.getLogger(Db.class);
 	private static final HikariDataSource DS = create();
 
 	private static HikariDataSource create() {
@@ -22,7 +24,7 @@ public final class Db {
 		cfg.setMinimumIdle(2);
 		cfg.setPoolName("kiwi-pool");
 
-		Log.info(Db.class, "Database connected: " + System.getenv("DB_URL"));
+		LOG.info("Database connected: {}", System.getenv("DB_URL"));
 
 		return new HikariDataSource(cfg);
 	}

@@ -7,13 +7,16 @@ import java.util.UUID;
 
 import org.postgresql.util.PSQLException;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import dev.rafex.kiwi.db.ObjectRepository;
 import dev.rafex.kiwi.dtos.SearchItemDto;
 import dev.rafex.kiwi.errors.KiwiError;
-import dev.rafex.kiwi.logging.Log;
 
 public class ObjectServices {
 
+    private static final Logger LOG = LoggerFactory.getLogger(ObjectServices.class);
     private final ObjectRepository repo;
 
     public ObjectServices(final ObjectRepository repo) {
@@ -25,7 +28,7 @@ public class ObjectServices {
         try {
             repo.createObject(objectId, name, description, type, tags, metadataJson, locationId);
         } catch (final SQLException e) {
-            Log.error(getClass(), "Error creating object in DB", e);
+            LOG.error("Error creating object in DB", e);
             throw new KiwiError("E-003", "Error creating object in DB", e);
         }
     }
@@ -37,10 +40,10 @@ public class ObjectServices {
             if ("23503".equals(e.getSQLState())) {
                 throw new KiwiError("E-001", "newLocationId does not exist", e);
             }
-            Log.error(getClass(), "DB error moving object", e);
+            LOG.error("DB error moving object", e);
 
         } catch (final SQLException e) {
-            Log.error(getClass(), "Error moving object", e);
+            LOG.error("Error moving object", e);
             throw new KiwiError("E-002", "SQLException", e);
         }
 
@@ -58,7 +61,7 @@ public class ObjectServices {
             }
 
         } catch (final SQLException e) {
-            Log.error(getClass(), "Error searching for objects", e);
+            LOG.error("Error searching for objects", e);
         }
         return itemsList;
     }

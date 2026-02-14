@@ -3,9 +3,8 @@ package dev.rafex.kiwi.handlers;
 import java.io.IOException;
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
+import java.util.Map;
 import java.util.UUID;
-
-import javax.sql.DataSource;
 
 import org.eclipse.jetty.server.Handler;
 import org.eclipse.jetty.server.Request;
@@ -15,22 +14,26 @@ import org.eclipse.jetty.util.Callback;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import dev.rafex.kiwi.db.Db;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import dev.rafex.kiwi.db.ObjectRepository;
 import dev.rafex.kiwi.dtos.CreateObjectRequest;
 import dev.rafex.kiwi.dtos.MoveObjectRequest;
 import dev.rafex.kiwi.errors.KiwiError;
 import dev.rafex.kiwi.http.HttpUtil;
 import dev.rafex.kiwi.json.JsonUtil;
-import dev.rafex.kiwi.logging.Log;
 import dev.rafex.kiwi.services.ObjectServices;
 
 public class ObjectHandler extends Handler.Abstract {
 
-    private final DataSource dataSource = Db.dataSource();
-    private final ObjectRepository objectRepo = new ObjectRepository(dataSource);
+    private static final Logger LOG = LoggerFactory.getLogger(ObjectHandler.class);
+    private final ObjectServices services;
     private final ObjectMapper om = JsonUtil.MAPPER;
 
-    private final ObjectServices services = new ObjectServices(objectRepo);
+    public ObjectHandler(final ObjectServices services) {
+        this.services = services;
+    }
 
     @Override
     public boolean handle(final Request request, final Response response, final Callback callback) {
@@ -39,7 +42,7 @@ public class ObjectHandler extends Handler.Abstract {
             final var path = request.getHttpURI().getPath();
 
             if ("POST".equals(method) && "/objects".equals(path)) {
-                Log.info(getClass(), "Handling object creation request");
+                LOG.info("Handling object creation request");
                 return create(request, response, callback);
             }
 
@@ -63,15 +66,11 @@ public class ObjectHandler extends Handler.Abstract {
                 return search(request, response, callback);
             }
 
-            response.setStatus(404);
-            response.getHeaders().put("content-type", "application/json; charset=utf-8");
-            final var body = "{\"error\":\"not_found\"}".getBytes(StandardCharsets.UTF_8);
-            response.write(true, java.nio.ByteBuffer.wrap(body), callback);
-            callback.succeeded();
+            HttpUtil.notFound(response, callback);
             return true;
         } catch (final Throwable t) {
 
-            Log.error(getClass(), "Error handling request", t);
+            LOG.error("Error handling request", t);
 
             response.setStatus(500);
             callback.failed(t);
@@ -96,11 +95,9 @@ public class ObjectHandler extends Handler.Abstract {
             final var locationId = parseUuidOrNull(locationParam);
             final var limit = parseLimit(limitParam, 20, 1, 200);
 
-            final var out = om.createObjectNode();
             final var search = services.search(q.trim(), tags, locationId, limit);
-            out.set("items", om.valueToTree(search));
 
-            HttpUtil.ok(response, callback, om.writeValueAsString(out));
+            HttpUtil.ok(response, callback, Map.of("items", search));
             return true;
 
         } catch (final IllegalArgumentException e) {
@@ -108,8 +105,8 @@ public class ObjectHandler extends Handler.Abstract {
             return true;
 
         } catch (final Exception e) {
-            Log.error(getClass(), "Error searching objects", e);
-            HttpUtil.json(response, callback, 500, "{\"error\":\"internal_error\"}");
+            LOG.error("Error searching objects", e);
+            HttpUtil.json(response, callback, 500, Map.of("error", "internal_error"));
             return true;
         }
     }
@@ -205,7 +202,7 @@ public class ObjectHandler extends Handler.Abstract {
     private boolean moveLocation(final Request request, final Response response, final Callback callback, final UUID objectId) {
 
         try {
-            Log.info(getClass(), "Handling object move request");
+            LOG.info("Handling object move request");
 
             final var bytes = Request.asInputStream(request).readAllBytes();
             final var body = new String(bytes, StandardCharsets.UTF_8);
@@ -243,15 +240,15 @@ public class ObjectHandler extends Handler.Abstract {
                 yield true;
             }
             default -> {
-                Log.error(getClass(), "KiwiError moving object", e);
-                HttpUtil.json(response, callback, 400, "{\"error\":\"" + e.getCode() + "\"}");
+                LOG.error("KiwiError moving object: {}", e.getCode(), e);
+                HttpUtil.json(response, callback, 400, Map.of("error", e.getCode()));
                 yield true;
             }
             };
 
         } catch (final IOException e1) {
-            Log.error(getClass(), "KiwiError moving object", e1);
-            HttpUtil.json(response, callback, 400, "{\"error\":\"" + e1.getMessage() + "\"}");
+            LOG.error("KiwiError moving object", e1);
+            HttpUtil.json(response, callback, 400, Map.of("error", "io_error", "message", e1.getMessage()));
             return true;
         }
     }
@@ -281,20 +278,20 @@ public class ObjectHandler extends Handler.Abstract {
 
             services.create(objectId, r.name(), r.description(), r.type(), tags, metadataJson, locationId);
 
-            HttpUtil.json(response, callback, 201, "{\"object_id\":\"" + objectId + "\"}");
+            HttpUtil.json(response, callback, 201, Map.of("object_id", objectId));
             return true;
 
         } catch (final KiwiError e) {
-            Log.error(getClass(), "KiwiError creating object", e);
-            HttpUtil.json(response, callback, 400, "{\"error\":\"" + e.getCode() + "\"}");
+            LOG.error("KiwiError creating object", e);
+            HttpUtil.json(response, callback, 400, Map.of("error", e.getCode()));
             return true;
         } catch (final IllegalArgumentException e) {
-            Log.error(getClass(), "Invalid UUID format", e);
+            LOG.error("Invalid UUID format", e);
             HttpUtil.badRequest(response, callback, "invalid UUID");
             return true;
         } catch (final Exception e) {
-            Log.error(getClass(), "Error creating object", e);
-            HttpUtil.json(response, callback, 500, "{\"error\":\"internal_error\"}");
+            LOG.error("Error creating object", e);
+            HttpUtil.json(response, callback, 500, Map.of("error", "internal_error"));
             return true;
         }
     }

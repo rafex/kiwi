@@ -53,7 +53,6 @@ public class ObjectRepository {
         }
     }
 
-    // TODO falta implementar
     public void updateTags(final UUID objectId, final String[] tags) throws SQLException {
         try (var c = ds.getConnection(); var ps = c.prepareStatement("SELECT api_update_tags(?::uuid, ?::text[])")) {
             ps.setObject(1, objectId);
@@ -66,7 +65,6 @@ public class ObjectRepository {
         }
     }
 
-    // TODO falta implementar
     public void updateText(final UUID objectId, final String name, final String description) throws SQLException {
         try (var c = ds.getConnection(); var ps = c.prepareStatement("SELECT api_update_text(?::uuid, ?, ?)")) {
             ps.setObject(1, objectId);
@@ -107,7 +105,6 @@ public class ObjectRepository {
         }
     }
 
-    // TODO falta implementar
     public List<FuzzyRow> fuzzy(final String text, final int limit) throws SQLException {
         try (var c = ds.getConnection(); var ps = c.prepareStatement("SELECT object_id, name, score FROM api_fuzzy_search(?, ?)")) {
             ps.setString(1, text);
@@ -123,7 +120,6 @@ public class ObjectRepository {
         }
     }
 
-    // TODO falta implementar
     public boolean locationExists(final UUID locationId) throws SQLException {
         try (var c = ds.getConnection(); var ps = c.prepareStatement("SELECT 1 FROM locations WHERE location_id = ?::uuid")) {
             ps.setObject(1, locationId);

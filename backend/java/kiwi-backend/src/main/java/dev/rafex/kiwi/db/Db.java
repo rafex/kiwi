@@ -26,6 +26,13 @@ public final class Db {
         if (dbUrl == null || dbUrl.isBlank()) {
             throw new IllegalStateException("DB_URL environment variable is not set or is empty");
         }
+        
+        if (dbUser != null && dbUser.isBlank()) {
+            Log.warn(Db.class, "DB_USER is set but empty, ignoring");
+        }
+        if (dbPassword != null && dbPassword.isBlank()) {
+            Log.warn(Db.class, "DB_PASSWORD is set but empty, ignoring");
+        }
 
         cfg.setJdbcUrl(dbUrl);
 

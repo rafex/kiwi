@@ -30,7 +30,7 @@ help:
 
 exec:
 	@echo "Running: "
-	$(MVN) -q exec:java -Dexec.mainClass="dev.rafex.kiwi.App" -Dexec.args="--log=DEBUG"
+	$(MVN) -q exec:java -Dexec.mainClass="dev.rafex.kiwi.App" -Dexec.args="--log=DEBUG" -Dexec.jvmArgs="-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5005"
 
 build:
 	$(MVN) -q -DskipTests package

@@ -1,0 +1,15 @@
+# Glowroot embedded database
+*.h2.db
+*.mv.db
+*.trace.db
+
+# Logs
+*.log
+
+# Temp files
+tmp/
+temp/
+
+# OS files
+.DS_Store
+Thumbs.db

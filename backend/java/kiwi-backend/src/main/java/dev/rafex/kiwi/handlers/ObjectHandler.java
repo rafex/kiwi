@@ -49,49 +49,28 @@ public class ObjectHandler extends Handler.Abstract {
                 return create(request, response, callback);
             }
 
-            // POST /objects/{id}/move
-            if ("PATCH".equals(method) && path.startsWith("/objects/") && path.endsWith("/move")) {
-                // /objects/{uuid}/move -> uuid starts at 9, ends before last 5 chars
+            if ("PATCH".equals(method) && path.startsWith("/objects/")) {
                 final var uuidStart = 9; // "/objects/".length()
-                final var uuidEnd = path.length() - 5; // "/move".length()
-                if (uuidEnd > uuidStart) {
+                final var lastSlash = path.lastIndexOf('/');
+                if (lastSlash > uuidStart) {
+                    final var suffix = path.substring(lastSlash); // "/move", "/tags", "/text"
+                    final var uuidStr = path.substring(uuidStart, lastSlash);
+                    final UUID objectId;
                     try {
-                        final var objectId = UUID.fromString(path.substring(uuidStart, uuidEnd));
-                        return moveLocation(request, response, callback, objectId);
+                        objectId = UUID.fromString(uuidStr);
                     } catch (final IllegalArgumentException e) {
                         HttpUtil.badRequest(response, callback, "invalid UUID in path");
                         return true;
                     }
-                }
-            }
-
-            if ("PATCH".equals(method) && path.startsWith("/objects/") && path.endsWith("/tags")) {
-                // /objects/{uuid}/tags -> uuid starts at 9, ends before last 5 chars
-                final var uuidStart = 9; // "/objects/".length()
-                final var uuidEnd = path.length() - 5; // "/tags".length()
-                if (uuidEnd > uuidStart) {
-                    try {
-                        final var objectId = UUID.fromString(path.substring(uuidStart, uuidEnd));
-                        return updateTags(request, response, callback, objectId);
-                    } catch (final IllegalArgumentException e) {
-                        HttpUtil.badRequest(response, callback, "invalid UUID in path");
-                        return true;
+                    return switch (suffix) {
+                    case "/move" -> moveLocation(request, response, callback, objectId);
+                    case "/tags" -> updateTags(request, response, callback, objectId);
+                    case "/text" -> updateText(request, response, callback, objectId);
+                    default -> {
+                        HttpUtil.notFound(response, callback);
+                        yield true;
                     }
-                }
-            }
-
-            if ("PATCH".equals(method) && path.startsWith("/objects/") && path.endsWith("/text")) {
-                // /objects/{uuid}/text -> uuid starts at 9, ends before last 5 chars
-                final var uuidStart = 9; // "/objects/".length()
-                final var uuidEnd = path.length() - 5; // "/text".length()
-                if (uuidEnd > uuidStart) {
-                    try {
-                        final var objectId = UUID.fromString(path.substring(uuidStart, uuidEnd));
-                        return updateText(request, response, callback, objectId);
-                    } catch (final IllegalArgumentException e) {
-                        HttpUtil.badRequest(response, callback, "invalid UUID in path");
-                        return true;
-                    }
+                    };
                 }
             }
 
@@ -261,9 +240,9 @@ public class ObjectHandler extends Handler.Abstract {
             }
             };
 
-        } catch (final IOException e1) {
-            Log.error(getClass(), "KiwiError moving object", e1);
-            HttpUtil.json(response, callback, 400, "{\"error\":\"" + e1.getMessage() + "\"}");
+        } catch (final IOException e) {
+            Log.error(getClass(), "Error moving object", e);
+            HttpUtil.badRequest(response, callback, "invalid request body");
             return true;
         }
     }

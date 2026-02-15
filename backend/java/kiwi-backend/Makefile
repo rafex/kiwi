@@ -4,6 +4,7 @@ SHELL := /bin/bash
 
 MVN ?= ./mvnw
 JAR ?= target/kiwi-backend-1.0-SNAPSHOT-jar-with-dependencies.jar
+GLOWROOT_AGENT_JAR ?= ../observability/glowroot/glowroot.jar
 BIN ?= kiwi-backend.bin
 GRAAL_CONFIG_DIR ?= graal-config
 RES_DIR ?= META-INF/native-image
@@ -15,7 +16,7 @@ DB_USER ?=
 DB_PASSWORD ?=
 DB_URL ?=
 
-.PHONY: help exec build agent sync-meta native run-native clean-native image run-image
+.PHONY: help exec build agent sync-meta native run-native clean-native image run-image glowroot glowroot-build
 
 help:
 	@echo "Targets:"
@@ -29,11 +30,27 @@ help:
 	@echo "  make clean-native -> remove native binary and temp config"
 
 exec:
-	@echo "Running: "
-	$(MVN) -q exec:java -Dexec.mainClass="dev.rafex.kiwi.App" -Dexec.args="--log=DEBUG" -Dexec.jvmArgs="-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5005"
+	@echo "Running: exec:java with remote debugging on port 5005 (suspend=n means it won't wait for a debugger to attach)"
+	$(MVN) -q exec:java \
+		-Dexec.args="--log=INFO" \
+		-Dexec.jvmArgs='-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5005'
+
+glowroot:
+	@echo "Running with Glowroot agent:"
+	java \
+	  -javaagent:$(GLOWROOT_AGENT_JAR) \
+	  -jar $(JAR) \
+	  --log=DEBUG
+
+glowroot-build: build
+	@echo "Compiling with Glowroot agent for profiling:"
+	java \
+	  -javaagent:$(GLOWROOT_AGENT_JAR) \
+	  -jar $(JAR) \
+	  --log=DEBUG
 
 build:
-	$(MVN) -q -DskipTests package
+	$(MVN) -q -DskipTests clean package
 	@test -f "$(JAR)" || (echo "Jar not found: $(JAR)"; ls -la target; exit 1)
 
 agent: build

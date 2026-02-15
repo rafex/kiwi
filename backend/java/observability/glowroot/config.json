@@ -125,14 +125,17 @@
     },
     {
       "properties": {
-        "captureRequestHeaders": [ ],
+        "captureRequestHeaders": [
+          "*"
+        ],
         "maskRequestHeaders": [
-          "Authorization"
+          "Authorization",
+          "*"
         ],
         "captureRequestRemoteAddr": false,
         "captureRequestRemoteHost": false,
         "captureResponseHeaders": [ ],
-        "traceErrorOn4xxResponseCode": false
+        "traceErrorOn4xxResponseCode": true
       },
       "id": "java-http-server"
     },
@@ -149,15 +152,15 @@
         ],
         "captureBindParametersExcludes": [ ],
         "captureResultSetNavigate": true,
-        "captureResultSetGet": false,
-        "captureConnectionPoolLeaks": false,
+        "captureResultSetGet": true,
+        "captureConnectionPoolLeaks": true,
         "captureConnectionPoolLeakDetails": false,
         "captureGetConnection": true,
-        "captureConnectionClose": false,
-        "capturePreparedStatementCreation": false,
-        "captureStatementClose": false,
-        "captureTransactionLifecycleTraceEntries": false,
-        "captureConnectionLifecycleTraceEntries": false,
+        "captureConnectionClose": true,
+        "capturePreparedStatementCreation": true,
+        "captureStatementClose": true,
+        "captureTransactionLifecycleTraceEntries": true,
+        "captureConnectionLifecycleTraceEntries": true,
         "stackTraceThresholdMillis": 1000.0
       },
       "id": "jdbc"
@@ -233,6 +236,19 @@
       "alreadyInTransactionBehavior": "capture-trace-entry",
       "traceEntryMessageTemplate": "{{0.httpURI.path}}",
       "timerName": "jetty handler"
+    },
+    {
+      "className": "dev.rafex.kiwi.services.ObjectServices",
+      "methodName": "search",
+      "methodParameterTypes": [
+        ".."
+      ],
+      "order": 0,
+      "captureKind": "trace-entry",
+      "transactionType": "Services",
+      "transactionNameTemplate": "ObjectServices:Search",
+      "traceEntryMessageTemplate": "{{this.class.name}}.{{methodName}}",
+      "timerName": "Search"
     }
   ]
 }

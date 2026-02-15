@@ -42,6 +42,13 @@
 	<dependencies>
 
 		<dependency>
+			<groupId>org.glowroot</groupId>
+			<artifactId>glowroot-agent-api</artifactId>
+			<version>0.14.0-beta.3</version>
+			<scope>provided</scope>
+		</dependency>
+
+		<dependency>
 			<groupId>org.slf4j</groupId>
 			<artifactId>slf4j-jdk14</artifactId>
 			<version>2.0.17</version>
@@ -54,7 +61,7 @@
 			<artifactId>jetty-server</artifactId>
 		</dependency>
 
-<!-- 
+		<!-- 
 		<dependency>
 			<groupId>org.eclipse.jetty</groupId>
 			<artifactId>jetty-servlet</artifactId>

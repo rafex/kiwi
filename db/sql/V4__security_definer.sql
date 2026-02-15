@@ -51,6 +51,10 @@ ALTER FUNCTION public.api_fuzzy_search(text, int)
   SECURITY DEFINER
   SET search_path = public;
 
+ALTER FUNCTION public.api_create_location(uuid, text, uuid)
+  SECURITY DEFINER
+  SET search_path = public;
+
 
 -- Permisos: el usuario app solo ejecuta
 GRANT EXECUTE ON FUNCTION public.api_create_object(uuid, text, text, text, text[], jsonb, uuid) TO kiwi_app;
@@ -60,3 +64,5 @@ GRANT EXECUTE ON FUNCTION public.api_update_text(uuid, text, text) TO kiwi_app;
 GRANT EXECUTE ON FUNCTION public.update_object_search_vector(uuid) TO kiwi_app;
 GRANT EXECUTE ON FUNCTION public.api_search_objects(text, text[], uuid, int) TO kiwi_app;
 GRANT EXECUTE ON FUNCTION public.api_fuzzy_search(text, int) TO kiwi_app;
+GRANT EXECUTE ON FUNCTION public.api_create_location(uuid, text, uuid) TO kiwi_app;
+ 

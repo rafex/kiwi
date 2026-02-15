@@ -8,6 +8,7 @@ import org.eclipse.jetty.server.ServerConnector;
 import org.eclipse.jetty.server.handler.PathMappingsHandler;
 import org.eclipse.jetty.util.thread.QueuedThreadPool;
 
+import dev.rafex.kiwi.handlers.GlowrootNamingHandler;
 import dev.rafex.kiwi.handlers.HelloHandler;
 import dev.rafex.kiwi.handlers.LocationHandler;
 import dev.rafex.kiwi.handlers.NotFoundHandler;
@@ -41,7 +42,8 @@ public final class KiwiServer {
         routes.addMapping(PathSpec.from("/locations/*"), new LocationHandler());
         routes.addMapping(PathSpec.from("/*"), new NotFoundHandler()); // fallback (según versión/impl)
 
-        server.setHandler(routes);
+        server.setHandler(new GlowrootNamingHandler(routes));
+        // server.setHandler(routes);
 
         LOG.info("Starting Kiwi backend on port " + port);
         server.start();

@@ -15,3 +15,9 @@ temp/
 Thumbs.db
 
 *.zip
+
+data/
+logs/
+LICENSE
+NOTICE
+lib/

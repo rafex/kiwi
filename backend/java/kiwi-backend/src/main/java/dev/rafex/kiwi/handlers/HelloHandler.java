@@ -13,6 +13,9 @@ public class HelloHandler extends Handler.Abstract.NonBlocking {
 
     private final HelloServices services = new HelloServices();
 
+    // @Instrumentation.Transaction(transactionType = "Web", transactionName =
+    // "{{0.method}} {{0.httpURI.path}}", traceHeadline = "{{0.method}}
+    // {{0.httpURI.path}}", timer = "jetty-handler")
     @Override
     public boolean handle(final Request request, final Response response, final Callback callback) throws Exception {
 

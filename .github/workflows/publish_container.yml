@@ -2,7 +2,6 @@ name: Build and Publish Container
 
 on:
   push:
-    branches: [ "main" ]
     tags: [ 'v*' ]
   workflow_dispatch:
 
@@ -11,8 +10,35 @@ permissions:
   packages: write
 
 jobs:
+  check_paths:
+    runs-on: ubuntu-latest
+    outputs:
+      changed: ${{ steps.check.outputs.changed }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Check for changes in backend/java/kiwi*
+        id: check
+        run: |
+          if [ "${GITHUB_EVENT_NAME}" = "workflow_dispatch" ]; then
+            echo "Detected manual run (workflow_dispatch); allowing build."
+            echo "changed=true" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+          PARENT=$(git rev-parse "${GITHUB_SHA}^" 2>/dev/null || true)
+          if [ -z "$PARENT" ]; then
+            git diff --name-only ${GITHUB_SHA} | grep -E '^backend/java/kiwi' > /dev/null && echo "changed=true" >> $GITHUB_OUTPUT || echo "changed=false" >> $GITHUB_OUTPUT
+          else
+            git diff --name-only $PARENT ${GITHUB_SHA} | grep -E '^backend/java/kiwi' > /dev/null && echo "changed=true" >> $GITHUB_OUTPUT || echo "changed=false" >> $GITHUB_OUTPUT
+          fi
+
   build-and-push:
     name: Build and push to GHCR
+    needs: check_paths
+    if: ${{ github.event_name == 'workflow_dispatch' || needs.check_paths.outputs.changed == 'true' }}
     runs-on: ubuntu-latest
 
     steps:

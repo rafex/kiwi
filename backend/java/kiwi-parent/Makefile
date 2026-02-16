@@ -5,18 +5,18 @@ SHELL := /bin/bash
 MVN ?= ./mvnw
 JAR_JETTY ?= kiwi-transport-jetty/target/kiwi-transport-jetty-0.1.0-SNAPSHOT-jar-with-dependencies.jar
 GLOWROOT_AGENT_JAR ?= ../observability/glowroot/glowroot.jar
-BIN ?= kiwi-backend.bin
+BIN ?= kiwi-jetty.bin
 GRAAL_CONFIG_DIR ?= graal-config
-RES_DIR ?= META-INF/native-image
-IMAGE ?= kiwi-backend:latest
+RES_DIR ?= kiwi-transport-jetty/META-INF/native-image
+IMAGE ?= kiwi-jetty:latest
 PORT ?= 8080
-CONTAINER_NAME ?= kiwi-backend-run
+CONTAINER_NAME ?= kiwi-jetty-run
 CONTAINER_TOOL ?= podman
 DB_USER ?=
 DB_PASSWORD ?=
 DB_URL ?=
 
-.PHONY: help exec build build-without-tests agent sync-meta native run-native clean-native image run-image glowroot-jetty glowroot-jetty-build
+.PHONY: help exec-jetty build build-without-tests agent sync-meta native run-native clean-native image run-image glowroot-jetty glowroot-jetty-build
 
 help:
 	@echo "Targets:"
@@ -31,7 +31,7 @@ help:
 
 exec-jetty:
 	@echo "Running: exec:java with remote debugging on port 5005 (suspend=n means it won't wait for a debugger to attach)"
-	$(MVN) -q exec:java \
+	$(MVN) -f kiwi-transport-jetty/pom.xml -q exec:java \
 		-Dexec.args="--log=INFO" \
 		-Dexec.jvmArgs='-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5005'
 

@@ -6,13 +6,13 @@ import java.util.UUID;
 import dev.rafex.kiwi.errors.KiwiError;
 import dev.rafex.kiwi.logging.Log;
 import dev.rafex.kiwi.repository.LocationRepository;
-import dev.rafex.kiwi.services.LocationServices;
+import dev.rafex.kiwi.services.LocationService;
 
-public class LocationServicesImpl implements LocationServices {
+public class LocationServiceImpl implements LocationService {
 
     private final LocationRepository repo;
 
-    public LocationServicesImpl(final LocationRepository repo) {
+    public LocationServiceImpl(final LocationRepository repo) {
         this.repo = repo;
     }
 

@@ -29,8 +29,8 @@ import dev.rafex.kiwi.json.JsonUtil;
 import dev.rafex.kiwi.logging.Log;
 import dev.rafex.kiwi.repository.ObjectRepository;
 import dev.rafex.kiwi.repository.impl.ObjectRepositoryImpl;
-import dev.rafex.kiwi.services.ObjectServices;
-import dev.rafex.kiwi.services.impl.ObjectServicesImpl;
+import dev.rafex.kiwi.services.ObjectService;
+import dev.rafex.kiwi.services.impl.ObjectServiceImpl;
 
 public class ObjectHandler extends Handler.Abstract {
 
@@ -38,7 +38,7 @@ public class ObjectHandler extends Handler.Abstract {
     private final ObjectRepository objectRepo = new ObjectRepositoryImpl(dataSource);
     private final ObjectMapper om = JsonUtil.MAPPER;
 
-    private final ObjectServices services = new ObjectServicesImpl(objectRepo);
+    private final ObjectService services = new ObjectServiceImpl(objectRepo);
 
     @Override
     public boolean handle(final Request request, final Response response, final Callback callback) {

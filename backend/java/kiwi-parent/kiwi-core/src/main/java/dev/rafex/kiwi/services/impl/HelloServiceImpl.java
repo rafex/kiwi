@@ -3,9 +3,9 @@ package dev.rafex.kiwi.services.impl;
 import java.util.Map;
 
 import dev.rafex.kiwi.logging.Log;
-import dev.rafex.kiwi.services.HelloServices;
+import dev.rafex.kiwi.services.HelloService;
 
-public class HelloServicesImpl implements HelloServices {
+public class HelloServiceImpl implements HelloService {
 
     @Override
     public Map<String, String> sayHello(final String name) {

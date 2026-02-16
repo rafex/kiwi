@@ -19,14 +19,14 @@ import dev.rafex.kiwi.json.JsonUtil;
 import dev.rafex.kiwi.logging.Log;
 import dev.rafex.kiwi.repository.LocationRepository;
 import dev.rafex.kiwi.repository.impl.LocationRepositoryImpl;
-import dev.rafex.kiwi.services.LocationServices;
-import dev.rafex.kiwi.services.impl.LocationServicesImpl;
+import dev.rafex.kiwi.services.LocationService;
+import dev.rafex.kiwi.services.impl.LocationServiceImpl;
 
 public class LocationHandler extends Handler.Abstract {
 
     private final DataSource dataSource = Db.dataSource();
     private final LocationRepository repo = new LocationRepositoryImpl(dataSource);
-    private final LocationServices services = new LocationServicesImpl(repo);
+    private final LocationService services = new LocationServiceImpl(repo);
 
     private final ObjectMapper om = JsonUtil.MAPPER;
 

@@ -7,7 +7,7 @@ import dev.rafex.kiwi.errors.KiwiError;
 import dev.rafex.kiwi.models.FuzzyItem;
 import dev.rafex.kiwi.models.SearchItem;
 
-public interface ObjectServices {
+public interface ObjectService {
 
     void create(UUID objectId, String name, String description, String type, String[] tags, String metadataJson, UUID locationId) throws Exception;
 

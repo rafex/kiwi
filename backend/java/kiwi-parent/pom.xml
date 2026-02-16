@@ -45,6 +45,7 @@
 		<module>kiwi-common</module>
 		<module>kiwi-core</module>
 		<module>kiwi-infra-postgres</module>
+		<module>kiwi-bootstrap</module>
 		<module>kiwi-transport-jetty</module>
 		<module>kiwi-transport-grpc</module>
 		<module>kiwi-transport-rabbitmq</module>

@@ -10,13 +10,13 @@ import dev.rafex.kiwi.logging.Log;
 import dev.rafex.kiwi.models.FuzzyItem;
 import dev.rafex.kiwi.models.SearchItem;
 import dev.rafex.kiwi.repository.ObjectRepository;
-import dev.rafex.kiwi.services.ObjectServices;
+import dev.rafex.kiwi.services.ObjectService;
 
-public class ObjectServicesImpl implements ObjectServices {
+public class ObjectServiceImpl implements ObjectService {
 
     private final ObjectRepository repo;
 
-    public ObjectServicesImpl(final ObjectRepository repo) {
+    public ObjectServiceImpl(final ObjectRepository repo) {
         this.repo = repo;
     }
 

@@ -8,12 +8,12 @@ import org.eclipse.jetty.util.Callback;
 import dev.rafex.kiwi.http.HttpUtil;
 import dev.rafex.kiwi.json.JsonUtil;
 import dev.rafex.kiwi.logging.Log;
-import dev.rafex.kiwi.services.HelloServices;
-import dev.rafex.kiwi.services.impl.HelloServicesImpl;
+import dev.rafex.kiwi.services.HelloService;
+import dev.rafex.kiwi.services.impl.HelloServiceImpl;
 
 public class HelloHandler extends Handler.Abstract.NonBlocking {
 
-    private final HelloServices services = new HelloServicesImpl();
+    private final HelloService services = new HelloServiceImpl();
 
     // @Instrumentation.Transaction(transactionType = "Web", transactionName =
     // "{{0.method}} {{0.httpURI.path}}", traceHeadline = "{{0.method}}

@@ -10,9 +10,39 @@
 	<packaging>pom</packaging>
 
 	<name>kiwi-parent</name>
+	
+	<inceptionYear>2026</inceptionYear>
+  <organization>
+    <name>rafex</name>
+    <url>https://rafex.dev</url>
+  </organization>
+  <licenses>
+    <license>
+      <name>EPL-2.0</name>
+      <url>https://www.eclipse.org/legal/epl-2.0/</url>
+      <distribution>repo</distribution>
+    </license>
+    <license>
+      <name>Apache-2.0</name>
+      <url>https://www.apache.org/licenses/LICENSE-2.0.txt</url>
+      <distribution>repo</distribution>
+    </license>
+  </licenses>
+  
+  <developers>
+    <developer>
+      <id>rafex</id>
+      <name>Raúl González</name>
+      <email>rafex@rafex.dev</email>
+      <organization>rafex s.a. de c.v.</organization>
+      <organizationUrl>https://rafex.dev</organizationUrl>
+      <timezone>-6</timezone>
+    </developer>
+  </developers>
 
 	<modules>
 		<module>kiwi-ports</module>
+        <module>kiwi-common</module>
 		<module>kiwi-core</module>
 		<module>kiwi-infra-postgres</module>
 		<module>kiwi-transport-jetty</module>
@@ -32,7 +62,7 @@
 		<glowroot.agent.api.version>0.14.0-beta.3</glowroot.agent.api.version>
 		<slf4j.version>2.0.17</slf4j.version>
 		<jakarta.servlet.version>6.0.0</jakarta.servlet.version>
-		<junit.jupiter.version>5.11.4</junit.jupiter.version>
+		<junit.version>6.0.3</junit.version>
 		<mockito.version>5.14.2</mockito.version>
 		<assertj.version>3.26.3</assertj.version>
 		<hikaricp.version>5.1.0</hikaricp.version>
@@ -42,7 +72,7 @@
 		<maven.clean.plugin.version>3.3.2</maven.clean.plugin.version>
 		<maven.resources.plugin.version>3.3.1</maven.resources.plugin.version>
 		<maven.compiler.plugin.version>3.13.0</maven.compiler.plugin.version>
-		<maven.surefire.plugin.version>3.2.5</maven.surefire.plugin.version>
+		<maven.surefire.plugin.version>3.5.4</maven.surefire.plugin.version>
 		<maven.jar.plugin.version>3.4.2</maven.jar.plugin.version>
 		<maven.assembly.plugin.version>3.7.1</maven.assembly.plugin.version>
 		<maven.install.plugin.version>3.1.2</maven.install.plugin.version>
@@ -71,11 +101,11 @@
 			<dependency>
 				<groupId>org.junit</groupId>
 				<artifactId>junit-bom</artifactId>
-				<version>${junit.jupiter.version}</version>
+				<version>${junit.version}</version>
 				<type>pom</type>
 				<scope>import</scope>
 			</dependency>
-			
+
 			<dependency>
 				<groupId>org.glowroot</groupId>
 				<artifactId>glowroot-agent-api</artifactId>
@@ -217,6 +247,5 @@
 			</plugins>
 		</pluginManagement>
 	</build>
-
 
 </project>

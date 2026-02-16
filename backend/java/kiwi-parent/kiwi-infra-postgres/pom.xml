@@ -1,20 +1,67 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0"
-         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-  <modelVersion>4.0.0</modelVersion>
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
 
-  <parent>
-    <groupId>dev.rafex.kiwi</groupId>
-    <artifactId>kiwi-parent</artifactId>
-    <version>1.0-SNAPSHOT</version>
-    <relativePath>../pom.xml</relativePath>
-  </parent>
+	<parent>
+		<groupId>dev.rafex.kiwi</groupId>
+		<artifactId>kiwi-parent</artifactId>
+		<version>1.0-SNAPSHOT</version>
+		<relativePath>../pom.xml</relativePath>
+	</parent>
 
-  <artifactId>kiwi-infra-postgres</artifactId>
-  <name>kiwi-infra-postgres</name>
-  
-  <build>
+	<artifactId>kiwi-infra-postgres</artifactId>
+	<name>kiwi-infra-postgres</name>
+
+	<dependencies>
+		<dependency>
+			<groupId>dev.rafex.kiwi</groupId>
+			<artifactId>kiwi-common</artifactId>
+			<version>${project.version}</version>
+		</dependency>
+	
+		<!-- PostgreSQL JDBC -->
+		<dependency>
+			<groupId>org.postgresql</groupId>
+			<artifactId>postgresql</artifactId>
+		</dependency>
+
+		<!-- JUnit Jupiter -->
+		<dependency>
+			<groupId>org.junit.jupiter</groupId>
+			<artifactId>junit-jupiter-api</artifactId>
+			<scope>test</scope>
+		</dependency>
+
+		<dependency>
+			<groupId>org.junit.jupiter</groupId>
+			<artifactId>junit-jupiter-engine</artifactId>
+			<scope>test</scope>
+		</dependency>
+
+		<!-- Mockito (mocks) -->
+		<dependency>
+			<groupId>org.mockito</groupId>
+			<artifactId>mockito-core</artifactId>
+			<scope>test</scope>
+		</dependency>
+
+		<!-- Opcional: Assertions más cómodas -->
+		<dependency>
+			<groupId>org.assertj</groupId>
+			<artifactId>assertj-core</artifactId>
+			<scope>test</scope>
+		</dependency>
+
+		<dependency>
+			<groupId>com.zaxxer</groupId>
+			<artifactId>HikariCP</artifactId>
+		</dependency>
+		
+	</dependencies>
+
+	<build>
 		<plugins>
 			<plugin>
 				<groupId>org.codehaus.mojo</groupId>
@@ -35,7 +82,7 @@
 			<plugin>
 				<artifactId>maven-compiler-plugin</artifactId>
 				<configuration>
-					<release>21</release>
+					<release>${java.version}</release>
 				</configuration>
 			</plugin>
 
@@ -47,35 +94,11 @@
 				</configuration>
 			</plugin>
 
-
 			<!-- Jar packaging -->
 			<!-- Jar: (opcional) añade Main-Class al manifest del jar
 				"normal" -->
 			<plugin>
 				<artifactId>maven-jar-plugin</artifactId>
-			</plugin>
-
-			<!-- Fat jar con dependencias -->
-			<plugin>
-				<artifactId>maven-assembly-plugin</artifactId>
-				<configuration>
-					<!-- Genera el jar "jar-with-dependencies" -->
-					<descriptorRefs>
-						<descriptorRef>jar-with-dependencies</descriptorRef>
-					</descriptorRefs>
-
-					<!-- Evita el sufijo "assembly" en el nombre -->
-					<appendAssemblyId>true</appendAssemblyId>
-				</configuration>
-				<executions>
-					<execution>
-						<id>make-assembly</id>
-						<phase>package</phase>
-						<goals>
-							<goal>single</goal>
-						</goals>
-					</execution>
-				</executions>
 			</plugin>
 
 			<!-- Install -->
@@ -98,5 +121,5 @@
 			</plugin>
 		</plugins>
 	</build>
-	
+
 </project>

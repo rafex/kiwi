@@ -11,16 +11,11 @@
 		<relativePath>../pom.xml</relativePath>
 	</parent>
 
-	<artifactId>kiwi-ports</artifactId>
-	<name>kiwi-ports</name>
+	<artifactId>kiwi-common</artifactId>
+	<name>kiwi-common</name>
 
 	<build>
 		<plugins>
-			<plugin>
-				<groupId>org.codehaus.mojo</groupId>
-				<artifactId>exec-maven-plugin</artifactId>
-			</plugin>
-
 			<!-- Clean lifecycle -->
 			<plugin>
 				<artifactId>maven-clean-plugin</artifactId>
@@ -35,7 +30,7 @@
 			<plugin>
 				<artifactId>maven-compiler-plugin</artifactId>
 				<configuration>
-					<release>${java.version}</release>
+					<release>21</release>
 				</configuration>
 			</plugin>
 
@@ -46,6 +41,7 @@
 					<useModulePath>false</useModulePath>
 				</configuration>
 			</plugin>
+
 
 			<!-- Jar packaging -->
 			<!-- Jar: (opcional) añade Main-Class al manifest del jar
@@ -73,6 +69,6 @@
 				<artifactId>maven-project-info-reports-plugin</artifactId>
 			</plugin>
 		</plugins>
-	</build>
 
+	</build>
 </project>

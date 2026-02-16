@@ -35,7 +35,7 @@
 			<plugin>
 				<artifactId>maven-compiler-plugin</artifactId>
 				<configuration>
-					<release>21</release>
+					<release>${java.version}</release>
 				</configuration>
 			</plugin>
 
@@ -47,35 +47,11 @@
 				</configuration>
 			</plugin>
 
-
 			<!-- Jar packaging -->
 			<!-- Jar: (opcional) añade Main-Class al manifest del jar
 				"normal" -->
 			<plugin>
 				<artifactId>maven-jar-plugin</artifactId>
-			</plugin>
-
-			<!-- Fat jar con dependencias -->
-			<plugin>
-				<artifactId>maven-assembly-plugin</artifactId>
-				<configuration>
-					<!-- Genera el jar "jar-with-dependencies" -->
-					<descriptorRefs>
-						<descriptorRef>jar-with-dependencies</descriptorRef>
-					</descriptorRefs>
-
-					<!-- Evita el sufijo "assembly" en el nombre -->
-					<appendAssemblyId>true</appendAssemblyId>
-				</configuration>
-				<executions>
-					<execution>
-						<id>make-assembly</id>
-						<phase>package</phase>
-						<goals>
-							<goal>single</goal>
-						</goals>
-					</execution>
-				</executions>
 			</plugin>
 
 			<!-- Install -->

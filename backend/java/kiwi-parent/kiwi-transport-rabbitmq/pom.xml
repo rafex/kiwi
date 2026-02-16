@@ -12,5 +12,7 @@
   </parent>
 
   <artifactId>kiwi-transport-rabbitmq</artifactId>
+  <version>0.1.0-SNAPSHOT</version>
+  
   <name>kiwi-transport-rabbitmq</name>
 </project>

@@ -12,19 +12,21 @@ import org.eclipse.jetty.util.Callback;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import dev.rafex.kiwi.db.Db;
-import dev.rafex.kiwi.db.LocationRepository;
 import dev.rafex.kiwi.dtos.CreateLocationRequest;
 import dev.rafex.kiwi.errors.KiwiError;
 import dev.rafex.kiwi.http.HttpUtil;
 import dev.rafex.kiwi.json.JsonUtil;
 import dev.rafex.kiwi.logging.Log;
+import dev.rafex.kiwi.repository.LocationRepository;
+import dev.rafex.kiwi.repository.impl.LocationRepositoryImpl;
 import dev.rafex.kiwi.services.LocationServices;
+import dev.rafex.kiwi.services.impl.LocationServicesImpl;
 
 public class LocationHandler extends Handler.Abstract {
 
     private final DataSource dataSource = Db.dataSource();
-    private final LocationRepository repo = new LocationRepository(dataSource);
-    private final LocationServices services = new LocationServices(repo);
+    private final LocationRepository repo = new LocationRepositoryImpl(dataSource);
+    private final LocationServices services = new LocationServicesImpl(repo);
 
     private final ObjectMapper om = JsonUtil.MAPPER;
 

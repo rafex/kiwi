@@ -1,4 +1,4 @@
-package dev.rafex.kiwi.db;
+package dev.rafex.kiwi.repository.impl;
 
 import java.sql.SQLException;
 import java.sql.Types;
@@ -6,13 +6,17 @@ import java.util.UUID;
 
 import javax.sql.DataSource;
 
-public class LocationRepository {
+import dev.rafex.kiwi.repository.LocationRepository;
+
+public class LocationRepositoryImpl implements LocationRepository {
+
     private final DataSource ds;
 
-    public LocationRepository(final DataSource ds) {
+    public LocationRepositoryImpl(final DataSource ds) {
         this.ds = ds;
     }
 
+    @Override
     public void createLocation(final UUID locationId, final String name, final UUID parentLocationId) throws SQLException {
         try (var c = ds.getConnection(); var ps = c.prepareStatement("SELECT api_create_location(?::uuid, ?, ?::uuid)")) {
 
@@ -30,6 +34,7 @@ public class LocationRepository {
     }
 
     // TODO falta implementar
+    @Override
     public boolean locationExists(final UUID locationId) throws SQLException {
         try (var c = ds.getConnection(); var ps = c.prepareStatement("SELECT 1 FROM locations WHERE location_id = ?::uuid")) {
             ps.setObject(1, locationId);
@@ -38,4 +43,5 @@ public class LocationRepository {
             }
         }
     }
+
 }

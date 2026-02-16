@@ -1,4 +1,4 @@
-package dev.rafex.kiwi.db;
+package dev.rafex.kiwi.repository.impl;
 
 import java.sql.SQLException;
 import java.sql.Types;
@@ -8,16 +8,19 @@ import java.util.UUID;
 
 import javax.sql.DataSource;
 
-public class ObjectRepository {
+import dev.rafex.kiwi.repository.ObjectRepository;
+
+public class ObjectRepositoryImpl implements ObjectRepository {
 
     private final DataSource ds;
 
-    public ObjectRepository(final DataSource ds) {
+    public ObjectRepositoryImpl(final DataSource ds) {
         this.ds = ds;
     }
 
     // --- Commands (RETURNS void) ---
 
+    @Override
     public void createObject(final UUID objectId, final String name, final String description, final String type, final String[] tags, final String metadataJson,
             final UUID locationId) throws SQLException {
         try (var c = ds.getConnection(); var ps = c.prepareStatement("SELECT api_create_object(?::uuid, ?, ?, ?, ?::text[], ?::jsonb, ?::uuid)")) {
@@ -45,6 +48,7 @@ public class ObjectRepository {
         }
     }
 
+    @Override
     public void moveObject(final UUID objectId, final UUID newLocationId) throws SQLException {
         try (var c = ds.getConnection(); var ps = c.prepareStatement("SELECT api_move_object(?::uuid, ?::uuid)")) {
             ps.setObject(1, objectId);
@@ -53,6 +57,7 @@ public class ObjectRepository {
         }
     }
 
+    @Override
     public void updateTags(final UUID objectId, final String[] tags) throws SQLException {
         try (var c = ds.getConnection(); var ps = c.prepareStatement("SELECT api_update_tags(?::uuid, ?::text[])")) {
             ps.setObject(1, objectId);
@@ -65,6 +70,7 @@ public class ObjectRepository {
         }
     }
 
+    @Override
     public void updateText(final UUID objectId, final String name, final String description) throws SQLException {
         try (var c = ds.getConnection(); var ps = c.prepareStatement("SELECT api_update_text(?::uuid, ?, ?)")) {
             ps.setObject(1, objectId);
@@ -75,6 +81,7 @@ public class ObjectRepository {
     }
 
     // actualiza metadata JSONB
+    @Override
     public void updateMetadata(final UUID objectId, final String metadataJson) throws SQLException {
         try (var c = ds.getConnection(); var ps = c.prepareStatement("SELECT api_update_metadata(?::uuid, ?::jsonb)")) {
             ps.setObject(1, objectId);
@@ -89,6 +96,7 @@ public class ObjectRepository {
 
     // --- Queries (RETURNS TABLE) ---
 
+    @Override
     public List<SearchRow> search(final String query, final String[] tags, final UUID locationId, final int limit) throws SQLException {
         try (var c = ds.getConnection(); var ps = c.prepareStatement("SELECT object_id, name, rank FROM api_search_objects(?, ?::text[], ?::uuid, ?)")) {
 
@@ -118,6 +126,7 @@ public class ObjectRepository {
         }
     }
 
+    @Override
     public List<FuzzyRow> fuzzy(final String text, final int limit) throws SQLException {
         try (var c = ds.getConnection(); var ps = c.prepareStatement("SELECT object_id, name, score FROM api_fuzzy_search(?, ?)")) {
             ps.setString(1, text);
@@ -131,12 +140,6 @@ public class ObjectRepository {
                 return out;
             }
         }
-    }
-
-    public record SearchRow(UUID objectId, String name, float rank) {
-    }
-
-    public record FuzzyRow(UUID objectId, String name, float score) {
     }
 
 }

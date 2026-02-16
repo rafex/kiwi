@@ -17,7 +17,6 @@ import org.eclipse.jetty.util.UrlEncoded;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import dev.rafex.kiwi.db.Db;
-import dev.rafex.kiwi.db.ObjectRepository;
 import dev.rafex.kiwi.dtos.CreateObjectRequest;
 import dev.rafex.kiwi.dtos.FuzzyResponse;
 import dev.rafex.kiwi.dtos.MoveObjectRequest;
@@ -28,15 +27,18 @@ import dev.rafex.kiwi.errors.KiwiError;
 import dev.rafex.kiwi.http.HttpUtil;
 import dev.rafex.kiwi.json.JsonUtil;
 import dev.rafex.kiwi.logging.Log;
+import dev.rafex.kiwi.repository.ObjectRepository;
+import dev.rafex.kiwi.repository.impl.ObjectRepositoryImpl;
 import dev.rafex.kiwi.services.ObjectServices;
+import dev.rafex.kiwi.services.impl.ObjectServicesImpl;
 
 public class ObjectHandler extends Handler.Abstract {
 
     private final DataSource dataSource = Db.dataSource();
-    private final ObjectRepository objectRepo = new ObjectRepository(dataSource);
+    private final ObjectRepository objectRepo = new ObjectRepositoryImpl(dataSource);
     private final ObjectMapper om = JsonUtil.MAPPER;
 
-    private final ObjectServices services = new ObjectServices(objectRepo);
+    private final ObjectServices services = new ObjectServicesImpl(objectRepo);
 
     @Override
     public boolean handle(final Request request, final Response response, final Callback callback) {

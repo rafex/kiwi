@@ -1,0 +1,222 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+
+	<groupId>dev.rafex.kiwi</groupId>
+	<artifactId>kiwi-parent</artifactId>
+	<version>1.0-SNAPSHOT</version>
+	<packaging>pom</packaging>
+
+	<name>kiwi-parent</name>
+
+	<modules>
+		<module>kiwi-ports</module>
+		<module>kiwi-core</module>
+		<module>kiwi-infra-postgres</module>
+		<module>kiwi-transport-jetty</module>
+		<module>kiwi-transport-grpc</module>
+		<module>kiwi-transport-rabbitmq</module>
+	</modules>
+
+	<properties>
+		<java.version>21</java.version>
+		<maven.compiler.release>${java.version}</maven.compiler.release>
+		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+
+		<!-- Dependency versions -->
+		<jetty.version>12.1.6</jetty.version>
+		<jackson.version>2.21.0</jackson.version>
+		<postgresql.version>42.7.9</postgresql.version>
+		<glowroot.agent.api.version>0.14.0-beta.3</glowroot.agent.api.version>
+		<slf4j.version>2.0.17</slf4j.version>
+		<jakarta.servlet.version>6.0.0</jakarta.servlet.version>
+		<junit.jupiter.version>5.11.4</junit.jupiter.version>
+		<mockito.version>5.14.2</mockito.version>
+		<assertj.version>3.26.3</assertj.version>
+		<hikaricp.version>5.1.0</hikaricp.version>
+
+		<!-- Plugin versions -->
+		<exec.maven.plugin.version>3.6.3</exec.maven.plugin.version>
+		<maven.clean.plugin.version>3.3.2</maven.clean.plugin.version>
+		<maven.resources.plugin.version>3.3.1</maven.resources.plugin.version>
+		<maven.compiler.plugin.version>3.13.0</maven.compiler.plugin.version>
+		<maven.surefire.plugin.version>3.2.5</maven.surefire.plugin.version>
+		<maven.jar.plugin.version>3.4.2</maven.jar.plugin.version>
+		<maven.assembly.plugin.version>3.7.1</maven.assembly.plugin.version>
+		<maven.install.plugin.version>3.1.2</maven.install.plugin.version>
+		<maven.deploy.plugin.version>3.1.2</maven.deploy.plugin.version>
+		<maven.site.plugin.version>4.0.0-M13</maven.site.plugin.version>
+		<maven.project.info.reports.plugin.version>3.5.0</maven.project.info.reports.plugin.version>
+
+	</properties>
+
+	<dependencyManagement>
+		<dependencies>
+			<dependency>
+				<groupId>org.eclipse.jetty</groupId>
+				<artifactId>jetty-bom</artifactId>
+				<version>${jetty.version}</version>
+				<type>pom</type>
+				<scope>import</scope>
+			</dependency>
+			<dependency>
+				<groupId>com.fasterxml.jackson</groupId>
+				<artifactId>jackson-bom</artifactId>
+				<version>${jackson.version}</version>
+				<type>pom</type>
+				<scope>import</scope>
+			</dependency>
+			<dependency>
+				<groupId>org.junit</groupId>
+				<artifactId>junit-bom</artifactId>
+				<version>${junit.jupiter.version}</version>
+				<type>pom</type>
+				<scope>import</scope>
+			</dependency>
+			
+			<dependency>
+				<groupId>org.glowroot</groupId>
+				<artifactId>glowroot-agent-api</artifactId>
+				<version>${glowroot.agent.api.version}</version>
+			</dependency>
+
+			<dependency>
+				<groupId>org.slf4j</groupId>
+				<artifactId>slf4j-jdk14</artifactId>
+				<version>${slf4j.version}</version>
+			</dependency>
+
+			<!-- Servlet API (provided by container / Jetty at runtime) -->
+			<dependency>
+				<groupId>jakarta.servlet</groupId>
+				<artifactId>jakarta.servlet-api</artifactId>
+				<version>${jakarta.servlet.version}</version>
+			</dependency>
+
+			<!-- JSON -->
+			<dependency>
+				<groupId>com.fasterxml.jackson.core</groupId>
+				<artifactId>jackson-databind</artifactId>
+			</dependency>
+
+			<!-- PostgreSQL JDBC -->
+			<dependency>
+				<groupId>org.postgresql</groupId>
+				<artifactId>postgresql</artifactId>
+				<version>${postgresql.version}</version>
+			</dependency>
+
+			<!-- Testing (JUnit 5) -->
+			<dependency>
+				<groupId>org.junit.jupiter</groupId>
+				<artifactId>junit-jupiter</artifactId>
+
+			</dependency>
+
+			<!-- Mockito (mocks) -->
+			<dependency>
+				<groupId>org.mockito</groupId>
+				<artifactId>mockito-core</artifactId>
+				<version>${mockito.version}</version>
+
+			</dependency>
+
+			<!-- Opcional: Assertions más cómodas -->
+			<dependency>
+				<groupId>org.assertj</groupId>
+				<artifactId>assertj-core</artifactId>
+				<version>${assertj.version}</version>
+			</dependency>
+
+			<dependency>
+				<groupId>com.zaxxer</groupId>
+				<artifactId>HikariCP</artifactId>
+				<version>${hikaricp.version}</version>
+			</dependency>
+		</dependencies>
+	</dependencyManagement>
+
+	<build>
+		<pluginManagement>
+			<plugins>
+				<plugin>
+					<groupId>org.codehaus.mojo</groupId>
+					<artifactId>exec-maven-plugin</artifactId>
+					<version>${exec.maven.plugin.version}</version>
+				</plugin>
+
+				<!-- Clean lifecycle -->
+				<plugin>
+					<artifactId>maven-clean-plugin</artifactId>
+					<version>${maven.clean.plugin.version}</version>
+				</plugin>
+
+				<!-- Resources -->
+				<plugin>
+					<artifactId>maven-resources-plugin</artifactId>
+					<version>${maven.resources.plugin.version}</version>
+				</plugin>
+
+				<!-- Compiler (Java 21) -->
+				<plugin>
+					<artifactId>maven-compiler-plugin</artifactId>
+					<version>${maven.compiler.plugin.version}</version>
+					<configuration>
+						<release>${java.version}</release>
+					</configuration>
+				</plugin>
+
+				<!-- Tests -->
+				<plugin>
+					<artifactId>maven-surefire-plugin</artifactId>
+					<version>${maven.surefire.plugin.version}</version>
+					<configuration>
+						<useModulePath>false</useModulePath>
+					</configuration>
+				</plugin>
+
+
+				<!-- Jar packaging -->
+				<!-- Jar: (opcional) añade Main-Class al manifest del jar
+				"normal" -->
+				<plugin>
+					<artifactId>maven-jar-plugin</artifactId>
+					<version>${maven.jar.plugin.version}</version>
+				</plugin>
+
+				<!-- Fat jar con dependencias -->
+				<plugin>
+					<artifactId>maven-assembly-plugin</artifactId>
+					<version>${maven.assembly.plugin.version}</version>
+				</plugin>
+
+				<!-- Install -->
+				<plugin>
+					<artifactId>maven-install-plugin</artifactId>
+					<version>${maven.install.plugin.version}</version>
+				</plugin>
+
+				<!-- Deploy -->
+				<plugin>
+					<artifactId>maven-deploy-plugin</artifactId>
+					<version>${maven.deploy.plugin.version}</version>
+				</plugin>
+
+				<!-- Site lifecycle (optional, legacy-ish) -->
+				<plugin>
+					<artifactId>maven-site-plugin</artifactId>
+					<version>${maven.site.plugin.version}</version>
+				</plugin>
+
+				<plugin>
+					<artifactId>maven-project-info-reports-plugin</artifactId>
+					<version>${maven.project.info.reports.plugin.version}</version>
+				</plugin>
+			</plugins>
+		</pluginManagement>
+	</build>
+
+
+</project>

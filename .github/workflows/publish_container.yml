@@ -53,7 +53,7 @@ jobs:
           architecture: x64
           cache: maven
       - name: Run the Maven verify phase
-        working-directory: backend/java/kiwi-backend
+        working-directory: backend/java/kiwi-parent
         run: make build
 
       - name: Set up QEMU
@@ -72,8 +72,8 @@ jobs:
       - name: Build and push (sha tag)
         uses: docker/build-push-action@v4
         with:
-          context: backend/java/kiwi-backend
-          file: backend/java/kiwi-backend/Dockerfile
+          context: backend/java/kiwi-parent
+          file: backend/java/kiwi-parent/Dockerfile
           push: true
           platforms: linux/amd64,linux/arm64
           tags: |
@@ -83,16 +83,16 @@ jobs:
         if: github.ref == 'refs/heads/main'
         uses: docker/build-push-action@v4
         with:
-          context: backend/java/kiwi-backend
-          file: backend/java/kiwi-backend/Dockerfile
+          context: backend/java/kiwi-parent
+          file: backend/java/kiwi-parent/Dockerfile
           push: true
           platforms: linux/amd64,linux/arm64
           tags: |
-            ghcr.io/${{ github.repository_owner }}/kiwi-backend:latest
+            ghcr.io/${{ github.repository_owner }}/kiwi-jetty-backend:latest
           cache-from: |
-            type=registry,ref=ghcr.io/${{ github.repository_owner }}/kiwi-backend:${{ github.sha }}
+            type=registry,ref=ghcr.io/${{ github.repository_owner }}/kiwi-jetty-backend:${{ github.sha }}
 
       - name: Publish visibility note
         run: |
-          echo "Image pushed to ghcr.io/${{ github.repository_owner }}/kiwi-backend"
+          echo "Image pushed to ghcr.io/${{ github.repository_owner }}/kiwi-jetty-backend"
           echo "Make the package public in GitHub Packages UI if you want anonymous pulls."

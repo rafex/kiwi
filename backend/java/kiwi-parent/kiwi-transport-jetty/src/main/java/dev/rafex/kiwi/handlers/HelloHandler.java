@@ -6,6 +6,7 @@ import org.eclipse.jetty.server.Response;
 import org.eclipse.jetty.util.Callback;
 
 import dev.rafex.kiwi.http.HttpUtil;
+import dev.rafex.kiwi.json.JsonUtil;
 import dev.rafex.kiwi.logging.Log;
 import dev.rafex.kiwi.services.HelloServices;
 import dev.rafex.kiwi.services.impl.HelloServicesImpl;
@@ -22,7 +23,7 @@ public class HelloHandler extends Handler.Abstract.NonBlocking {
 
         Log.debug(getClass(), "GET /hello");
 
-        HttpUtil.ok(response, callback, services.sayHello());
+        HttpUtil.ok(response, callback, JsonUtil.toJson(services.sayHello()));
         return true;
     }
 

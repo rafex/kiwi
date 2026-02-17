@@ -19,6 +19,28 @@ public class UserRepositoryImpl implements UserRepository {
         this.ds = ds;
     }
 
+    @Override
+    public void createUser(final UUID userId, final String username, final byte[] passwordHash, final byte[] salt,
+            final int iterations) throws SQLException {
+
+        final var sql = """
+                INSERT INTO users (user_id,username, password_hash, salt, iterations, status, created_at, updated_at)
+                VALUES (?,?, ?, ?, ?, 'active', NOW(), NOW())
+                """;
+
+        try (var c = ds.getConnection(); var ps = c.prepareStatement(sql)) {
+
+            ps.setObject(1, userId);
+            ps.setString(2, username);
+            ps.setBytes(3, passwordHash);
+            ps.setBytes(4, salt);
+            ps.setInt(5, iterations);
+
+            ps.executeUpdate();
+        }
+
+    }
+
     /** Para login: trae hash/salt/iterations y status */
     @Override
     public Optional<UserRow> findByUsername(final String username) throws SQLException {
@@ -83,4 +105,5 @@ public class UserRepositoryImpl implements UserRepository {
         final var roles = findRoleNamesByUserId(user.userId());
         return Optional.of(new UserWithRoles(user, roles));
     }
+
 }

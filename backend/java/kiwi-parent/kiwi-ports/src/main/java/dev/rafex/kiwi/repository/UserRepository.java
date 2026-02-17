@@ -8,6 +8,9 @@ import java.util.UUID;
 
 public interface UserRepository {
 
+    void createUser(final UUID userId, String username, byte[] passwordHash, byte[] salt, int iterations)
+            throws SQLException;
+
     Optional<UserRow> findByUsername(String username) throws SQLException;
 
     List<String> findRoleNamesByUserId(UUID userId) throws SQLException;

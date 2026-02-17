@@ -7,6 +7,7 @@ import java.util.UUID;
 
 import javax.sql.DataSource;
 
+import dev.rafex.kiwi.logging.Log;
 import dev.rafex.kiwi.repository.RoleRepository;
 
 public class RoleRepositoryImpl implements RoleRepository {
@@ -39,6 +40,53 @@ public class RoleRepositoryImpl implements RoleRepository {
                         rs.getObject("updated_at", Instant.class)));
             }
         }
+    }
+
+    @Override
+    public UUID ensureRole(final String name, final String description) throws SQLException {
+        // 1) intenta encontrarlo
+        final var sel = "SELECT role_id FROM roles WHERE name = ?";
+        try (var c = ds.getConnection(); var ps = c.prepareStatement(sel)) {
+            ps.setString(1, name);
+            try (var rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getObject(1, UUID.class);
+                }
+            }
+        } catch (final SQLException e) {
+            Log.error(getClass(), "Error al buscar rol por nombre", e);
+        }
+
+        // 2) si no existe, créalo
+        final var roleId = UUID.randomUUID();
+        final var ins = """
+                INSERT INTO roles (role_id, name, description, status)
+                VALUES (?, ?, ?, 'active')
+                """;
+        try (var c = ds.getConnection(); var ps = c.prepareStatement(ins)) {
+            ps.setObject(1, roleId);
+            ps.setString(2, name);
+            ps.setString(3, description);
+            ps.executeUpdate();
+        } catch (final SQLException e) {
+            Log.error(getClass(), e, "Error al crear rol {}:{}", name, description);
+            // Puede ser un error de concurrencia (otro proceso creó el mismo rol al mismo
+            // tiempo)
+            // Intenta encontrarlo de nuevo
+            try (var c = ds.getConnection(); var ps = c.prepareStatement(sel)) {
+                ps.setString(1, name);
+                try (var rs = ps.executeQuery()) {
+                    if (rs.next()) {
+                        return rs.getObject(1, UUID.class);
+                    }
+                }
+            } catch (final SQLException ex) {
+                Log.error(getClass(), ex, "Error al buscar rol por nombre después de fallo de inserción {}:{}", name,
+                        description);
+            }
+        }
+
+        return roleId;
     }
 
     @Override

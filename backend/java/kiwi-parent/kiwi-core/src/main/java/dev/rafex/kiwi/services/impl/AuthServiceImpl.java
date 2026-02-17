@@ -10,11 +10,11 @@ import dev.rafex.kiwi.services.AuthService;
 
 public final class AuthServiceImpl implements AuthService {
 
-    private final UserRepository userRepo;
+    private final UserRepository repository;
     private final PasswordHasherPBKDF2 hasher;
 
     public AuthServiceImpl(final UserRepository userRepo, final PasswordHasherPBKDF2 hasher) {
-        this.userRepo = Objects.requireNonNull(userRepo);
+        this.repository = Objects.requireNonNull(userRepo);
         this.hasher = Objects.requireNonNull(hasher);
     }
 
@@ -25,7 +25,7 @@ public final class AuthServiceImpl implements AuthService {
         }
 
         try {
-            final var userOpt = userRepo.findByUsername(username);
+            final var userOpt = repository.findByUsername(username);
             if (userOpt.isEmpty()) {
                 return AuthResult.bad("bad_credentials");
             }
@@ -45,7 +45,7 @@ public final class AuthServiceImpl implements AuthService {
             }
 
             // roles (activos)
-            final var roles = userRepo.findRoleNamesByUserId(user.userId());
+            final var roles = repository.findRoleNamesByUserId(user.userId());
 
             return AuthResult.ok(user.userId(), user.username(), roles);
 

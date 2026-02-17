@@ -1,11 +1,9 @@
 package dev.rafex.kiwi.handlers;
 
 import java.nio.charset.StandardCharsets;
-import java.security.MessageDigest;
 import java.util.Base64;
 import java.util.Map;
 import java.util.Objects;
-import java.util.UUID;
 
 import org.eclipse.jetty.http.HttpStatus;
 import org.eclipse.jetty.io.Content;
@@ -19,26 +17,22 @@ import com.fasterxml.jackson.databind.JsonNode;
 import dev.rafex.kiwi.http.HttpUtil;
 import dev.rafex.kiwi.json.JsonUtil;
 import dev.rafex.kiwi.security.JwtService;
+import dev.rafex.kiwi.services.AuthService;
 
 public final class LoginHandler extends Handler.Abstract.NonBlocking {
 
     private final JwtService jwt;
+    private final AuthService authService;
     private final long ttlSeconds;
-    private final String expectedUser;
-    private final String expectedPass;
 
-    public LoginHandler(final JwtService jwt) {
-        this(jwt, Long.parseLong(System.getenv().getOrDefault("JWT_TTL_SECONDS", "3600")),
-                System.getenv().getOrDefault("KIWI_USER", "rafex"),
-                System.getenv().getOrDefault("KIWI_PASS", UUID.randomUUID().toString()));
+    public LoginHandler(final JwtService jwt, final AuthService authService) {
+        this(jwt, authService, Long.parseLong(System.getenv().getOrDefault("JWT_TTL_SECONDS", "3600")));
     }
 
-    public LoginHandler(final JwtService jwt, final long ttlSeconds, final String expectedUser,
-            final String expectedPass) {
+    public LoginHandler(final JwtService jwt, final AuthService authService, final long ttlSeconds) {
         this.jwt = Objects.requireNonNull(jwt);
+        this.authService = Objects.requireNonNull(authService);
         this.ttlSeconds = ttlSeconds;
-        this.expectedUser = Objects.requireNonNull(expectedUser);
-        this.expectedPass = Objects.requireNonNull(expectedPass);
     }
 
     @Override
@@ -48,7 +42,7 @@ public final class LoginHandler extends Handler.Abstract.NonBlocking {
             return true;
         }
 
-        // 1) Intenta Basic Auth: Authorization: Basic base64(user:pass)
+        // 1) Intenta Basic Auth
         final var authz = request.getHeaders().get("authorization");
         if (authz != null && authz.regionMatches(true, 0, "Basic ", 0, "Basic ".length())) {
             final var creds = decodeBasic(authz.substring("Basic ".length()).trim());
@@ -56,19 +50,10 @@ public final class LoginHandler extends Handler.Abstract.NonBlocking {
                 HttpUtil.unauthorized(response, callback, "bad_basic_auth");
                 return true;
             }
-
-            if (!safeEquals(expectedUser, creds.user) || !safeEquals(expectedPass, creds.pass)) {
-                HttpUtil.unauthorized(response, callback, "bad_credentials");
-                return true;
-            }
-
-            return okToken(response, callback, creds.user);
+            return authenticateAndMint(response, callback, creds.user, creds.pass);
         }
 
-        // 2) Si no hay Basic, intenta body JSON: {"username":"...","password":"..."}
-        // Nota: para “mínimo viable”, leemos el body como String. Si luego quieres 100%
-        // async,
-        // lo cambiamos a Content.Source + callback.
+        // 2) JSON body: {"username":"...","password":"..."}
         final String body;
         try {
             body = Content.Source.asString(request, StandardCharsets.UTF_8);
@@ -98,32 +83,49 @@ public final class LoginHandler extends Handler.Abstract.NonBlocking {
             return true;
         }
 
-        if (!safeEquals(expectedUser, user) || !safeEquals(expectedPass, pass)) {
-            HttpUtil.unauthorized(response, callback, "bad_credentials");
+        return authenticateAndMint(response, callback, user, pass);
+    }
+
+    private boolean authenticateAndMint(final Response response, final Callback callback, final String username,
+            final String password) throws Exception {
+
+        // Nota: pasamos char[] para poder limpiarlo dentro de AuthServiceImpl
+        final var result = authService.authenticate(username, password.toCharArray());
+
+        if (!result.ok()) {
+            // Mantén esto simple (evita user enumeration). "user_disabled" sí es útil
+            // diferenciar.
+            final var code = result.code() != null ? result.code() : "bad_credentials";
+
+            if ("user_disabled".equals(code)) {
+                HttpUtil.json(response, callback, HttpStatus.FORBIDDEN_403,
+                        Map.of("error", "forbidden", "code", "user_disabled"));
+            } else if ("bad_credentials".equals(code)) {
+                HttpUtil.unauthorized(response, callback, "bad_credentials");
+            } else {
+                HttpUtil.json(response, callback, HttpStatus.UNAUTHORIZED_401,
+                        Map.of("error", "unauthorized", "code", code));
+            }
             return true;
         }
 
-        return okToken(response, callback, user);
-    }
+        // Recomendación: sub = userId (estable)
+        final var subject = result.userId().toString();
 
-    private boolean okToken(final Response response, final Callback callback, final String user) {
-        final var token = jwt.mint(user, ttlSeconds);
+        // Si tu JwtService actual solo soporta mint(sub, ttl), deja esto así.
+        // Si lo extiendes para roles/username, aquí es donde lo pasas.
+        final var token = jwt.mint(subject, ttlSeconds);
 
-        HttpUtil.ok(response, callback,
-                Map.of("token_type", "Bearer", "access_token", token, "expires_in", ttlSeconds));
+        HttpUtil.ok(response, callback, Map.of("token_type", "Bearer", "access_token", token, "expires_in", ttlSeconds
+        // si quieres devolver roles al cliente:
+        // "roles", result.roles()
+        ));
         return true;
     }
 
     private static String text(final JsonNode node, final String field) {
         final var v = node.get(field);
         return v != null && v.isTextual() ? v.asText() : null;
-    }
-
-    private static boolean safeEquals(final String a, final String b) {
-        // comparación en tiempo constante (minimiza timing leaks)
-        final var ba = a.getBytes(StandardCharsets.UTF_8);
-        final var bb = b.getBytes(StandardCharsets.UTF_8);
-        return MessageDigest.isEqual(ba, bb);
     }
 
     private record BasicCreds(String user, String pass) {

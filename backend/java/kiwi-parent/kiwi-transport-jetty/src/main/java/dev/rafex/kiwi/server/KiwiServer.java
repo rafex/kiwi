@@ -44,6 +44,7 @@ public final class KiwiServer {
 
         final var objectService = container.objectService();
         final var locationService = container.locationService();
+        final var authService = container.authService();
 
         // JWT config
         final var jwt = new JwtService(JsonUtil.MAPPER, System.getenv().getOrDefault("JWT_ISS", "dev.rafex.kiwi"),
@@ -53,7 +54,7 @@ public final class KiwiServer {
         final var routes = new PathMappingsHandler();
         routes.addMapping(PathSpec.from("/hello"), new HelloHandler());
         routes.addMapping(PathSpec.from("/health"), new HealthHandler());
-        routes.addMapping(PathSpec.from("/auth/login"), new LoginHandler(jwt));
+        routes.addMapping(PathSpec.from("/auth/login"), new LoginHandler(jwt, authService));
         routes.addMapping(PathSpec.from("/objects/*"), new ObjectHandler(objectService));
         routes.addMapping(PathSpec.from("/locations/*"), new LocationHandler(locationService));
         routes.addMapping(PathSpec.from("/*"), new NotFoundHandler()); // fallback (según versión/impl)

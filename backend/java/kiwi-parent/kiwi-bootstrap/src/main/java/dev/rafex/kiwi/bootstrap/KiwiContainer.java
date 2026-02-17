@@ -11,10 +11,15 @@ import dev.rafex.kiwi.repository.LocationRepository;
 // infra (postgres impl)
 // =====================================================
 import dev.rafex.kiwi.repository.ObjectRepository;
+import dev.rafex.kiwi.repository.UserRepository;
 import dev.rafex.kiwi.repository.impl.LocationRepositoryImpl;
 import dev.rafex.kiwi.repository.impl.ObjectRepositoryImpl;
+import dev.rafex.kiwi.repository.impl.UserRepositoryImpl;
+import dev.rafex.kiwi.security.PasswordHasherPBKDF2;
+import dev.rafex.kiwi.services.AuthService;
 import dev.rafex.kiwi.services.LocationService;
 import dev.rafex.kiwi.services.ObjectService;
+import dev.rafex.kiwi.services.impl.AuthServiceImpl;
 import dev.rafex.kiwi.services.impl.LocationServiceImpl;
 import dev.rafex.kiwi.services.impl.ObjectServiceImpl;
 
@@ -29,16 +34,21 @@ public final class KiwiContainer {
      * replaces the default.
      */
     public record Overrides(Optional<Supplier<KiwiConfig>> config, Optional<Supplier<DataSource>> dataSource,
+            Optional<Supplier<PasswordHasherPBKDF2>> passwordHasher,
             Optional<Supplier<ObjectRepository>> objectRepository, Optional<Supplier<ObjectService>> objectService,
             Optional<Supplier<LocationRepository>> locationRepository,
-            Optional<Supplier<LocationService>> locationService) {
+            Optional<Supplier<LocationService>> locationService, Optional<Supplier<UserRepository>> userRepository,
+            Optional<Supplier<AuthService>> authService) {
         public Overrides {
             config = config != null ? config : Optional.empty();
             dataSource = dataSource != null ? dataSource : Optional.empty();
+            passwordHasher = passwordHasher != null ? passwordHasher : Optional.empty();
             objectRepository = objectRepository != null ? objectRepository : Optional.empty();
             objectService = objectService != null ? objectService : Optional.empty();
             locationRepository = locationRepository != null ? locationRepository : Optional.empty();
             locationService = locationService != null ? locationService : Optional.empty();
+            userRepository = userRepository != null ? userRepository : Optional.empty();
+            authService = authService != null ? authService : Optional.empty();
         }
 
         public static Builder builder() {
@@ -48,13 +58,21 @@ public final class KiwiContainer {
         public static final class Builder {
             private Supplier<KiwiConfig> config;
             private Supplier<DataSource> dataSource;
+            private Supplier<PasswordHasherPBKDF2> passwordHasher;
             private Supplier<ObjectRepository> objectRepository;
             private Supplier<ObjectService> objectService;
             private Supplier<LocationRepository> locationRepository;
             private Supplier<LocationService> locationService;
+            private Supplier<UserRepository> userRepository;
+            private Supplier<AuthService> authService;
 
             public Builder config(final Supplier<KiwiConfig> v) {
                 config = v;
+                return this;
+            }
+
+            public Builder passwordHasher(final Supplier<PasswordHasherPBKDF2> v) {
+                passwordHasher = v;
                 return this;
             }
 
@@ -73,10 +91,32 @@ public final class KiwiContainer {
                 return this;
             }
 
+            public Builder locationRepository(final Supplier<LocationRepository> v) {
+                locationRepository = v;
+                return this;
+            }
+
+            public Builder locationService(final Supplier<LocationService> v) {
+                locationService = v;
+                return this;
+            }
+
+            public Builder userRepository(final Supplier<UserRepository> v) {
+                userRepository = v;
+                return this;
+            }
+
+            public Builder authService(final Supplier<AuthService> v) {
+                authService = v;
+                return this;
+            }
+
             public Overrides build() {
                 return new Overrides(Optional.ofNullable(config), Optional.ofNullable(dataSource),
-                        Optional.ofNullable(objectRepository), Optional.ofNullable(objectService),
-                        Optional.ofNullable(locationRepository), Optional.ofNullable(locationService));
+                        Optional.ofNullable(passwordHasher), Optional.ofNullable(objectRepository),
+                        Optional.ofNullable(objectService), Optional.ofNullable(locationRepository),
+                        Optional.ofNullable(locationService), Optional.ofNullable(userRepository),
+                        Optional.ofNullable(authService));
             }
         }
     }
@@ -89,6 +129,9 @@ public final class KiwiContainer {
     private final Lazy<ObjectService> objectService;
     private final Lazy<LocationRepository> locationRepository;
     private final Lazy<LocationService> locationService;
+    private final Lazy<UserRepository> userRepository;
+    private final Lazy<PasswordHasherPBKDF2> passwordHasher;
+    private final Lazy<AuthService> authService;
 
     public KiwiContainer() {
         this(Overrides.builder().build());
@@ -99,6 +142,8 @@ public final class KiwiContainer {
 
         config = new Lazy<>(select(overrides.config(), KiwiConfig::fromEnv));
         dataSource = new Lazy<>(select(overrides.dataSource(), () -> DataSourceFactory.create(config())));
+        passwordHasher = new Lazy<>(select(overrides.passwordHasher(), () -> PasswordHasherFactory.create(config())));
+
         objectRepository = new Lazy<>(
                 select(overrides.objectRepository(), () -> new ObjectRepositoryImpl(dataSource())));
         objectService = new Lazy<>(select(overrides.objectService(), () -> new ObjectServiceImpl(objectRepository())));
@@ -106,6 +151,9 @@ public final class KiwiContainer {
                 select(overrides.locationRepository(), () -> new LocationRepositoryImpl(dataSource())));
         locationService = new Lazy<>(
                 select(overrides.locationService(), () -> new LocationServiceImpl(locationRepository())));
+        userRepository = new Lazy<>(select(overrides.userRepository(), () -> new UserRepositoryImpl(dataSource())));
+        authService = new Lazy<>(
+                select(overrides.authService(), () -> new AuthServiceImpl(userRepository(), passwordHasher())));
     }
 
     // ---- Public accessors ----
@@ -116,6 +164,10 @@ public final class KiwiContainer {
 
     public DataSource dataSource() {
         return dataSource.get();
+    }
+
+    public PasswordHasherPBKDF2 passwordHasher() {
+        return passwordHasher.get();
     }
 
     public ObjectRepository objectRepository() {
@@ -134,6 +186,14 @@ public final class KiwiContainer {
         return locationService.get();
     }
 
+    public UserRepository userRepository() {
+        return userRepository.get();
+    }
+
+    public AuthService authService() {
+        return authService.get();
+    }
+
     /**
      * Warm up critical graph nodes so the first request doesn't pay init costs.
      * Also helps fail-fast on bad config or DB connectivity.
@@ -141,10 +201,13 @@ public final class KiwiContainer {
     public void warmup() {
         config();
         dataSource();
+        passwordHasher();
         objectRepository();
         locationRepository();
         objectService();
         locationService();
+        userRepository();
+        authService();
     }
 
     private static <T> Supplier<T> select(final Optional<Supplier<T>> override, final Supplier<T> def) {
@@ -153,15 +216,48 @@ public final class KiwiContainer {
 
     // ======= Minimal placeholders (replace with your real ones) =======
     public static final class KiwiConfig {
+        private static final String ENV_HASH_BYTES = "KIWI_PASSWORD_HASH_BYTES";
+        private static final int DEFAULT_HASH_BYTES = 32;
+
+        private final int passwordHashBytes;
+
+        private KiwiConfig(final int passwordHashBytes) {
+            if (passwordHashBytes < 16) {
+                throw new IllegalArgumentException("passwordHashBytes demasiado pequeño");
+            }
+            this.passwordHashBytes = passwordHashBytes;
+        }
+
         public static KiwiConfig fromEnv() {
             // Validate env vars here (fail fast)
-            return new KiwiConfig();
+            final var rawHashBytes = System.getenv(ENV_HASH_BYTES);
+            final int hashBytes;
+            if (rawHashBytes == null || rawHashBytes.isBlank()) {
+                hashBytes = DEFAULT_HASH_BYTES;
+            } else {
+                try {
+                    hashBytes = Integer.parseInt(rawHashBytes.trim());
+                } catch (final NumberFormatException e) {
+                    throw new IllegalArgumentException("Invalid " + ENV_HASH_BYTES + ": " + rawHashBytes, e);
+                }
+            }
+            return new KiwiConfig(hashBytes);
+        }
+
+        public int passwordHashBytes() {
+            return passwordHashBytes;
         }
     }
 
     public static final class DataSourceFactory {
         public static DataSource create(final KiwiConfig cfg) {
             return Db.dataSource();
+        }
+    }
+
+    public static final class PasswordHasherFactory {
+        public static PasswordHasherPBKDF2 create(final KiwiConfig cfg) {
+            return new PasswordHasherPBKDF2(cfg.passwordHashBytes());
         }
     }
 }

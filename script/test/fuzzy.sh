@@ -12,12 +12,14 @@ Q=""
 TAGS=""
 LOCATION_ID=""
 LIMIT=""
+TOKEN="${TOKEN:-}"
 
 usage() {
 	cat <<EOF >&2
-Uso: $0 -q NAME [-n LIMIT] [-u BASE_URL]
+Uso: $0 -q NAME -T TOKEN [-n LIMIT] [-u BASE_URL]
 
 	-q NAME         Texto para búsqueda fuzzy en el campo `name` (requerido)
+	-T TOKEN        Token Bearer (o usar variable de entorno TOKEN)
 	-n LIMIT        Límite de resultados (int)
 	-u BASE_URL     URL base del servidor (por defecto: $BASE_URL)
 	-h              Muestra esta ayuda
@@ -25,11 +27,12 @@ EOF
 	exit 2
 }
 
-while getopts "q:n:u:h" opt; do
+while getopts "q:n:u:T:h" opt; do
 	case "$opt" in
 		q) Q="$OPTARG" ;;
 		n) LIMIT="$OPTARG" ;;
 		u) BASE_URL="$OPTARG" ;;
+		T) TOKEN="$OPTARG" ;;
 		h) usage ;;
 		*) usage ;;
 	esac
@@ -40,18 +43,23 @@ if [ -z "${Q}" ]; then
 	usage
 fi
 
-# Construir comando curl con encoding de parámetros para /objects/fuzzy
-CURL_CMD="curl --silent --show-error --get --write-out '\n%{http_code}' --header 'Accept: application/json' --data-urlencode \"name=${Q}\""
-if [ -n "${LIMIT}" ]; then
-	CURL_CMD="$CURL_CMD --data-urlencode \"limit=${LIMIT}\""
+if [ -z "$TOKEN" ]; then
+	echo "Error: token requerido. Usa -T TOKEN o exporta TOKEN." >&2
+	usage
 fi
 
-CURL_CMD="$CURL_CMD '${BASE_URL%/}/objects/fuzzy'"
+if [ -n "${LIMIT}" ]; then
+	response=$(api_get_bearer "$TOKEN" /objects/fuzzy "name=${Q}" "limit=${LIMIT}") || {
+		echo "Error: fallo al conectarse a ${BASE_URL}" >&2
+		exit 3
+	}
+else
+	response=$(api_get_bearer "$TOKEN" /objects/fuzzy "name=${Q}") || {
+		echo "Error: fallo al conectarse a ${BASE_URL}" >&2
+		exit 3
+	}
+fi
 
-response=$(eval "$CURL_CMD") || {
-	echo "Error: fallo al conectarse a ${BASE_URL}" >&2
-	exit 3
-}
 
 # separar cuerpo y código HTTP
 http_code=$(printf '%s' "$response" | tail -n1)

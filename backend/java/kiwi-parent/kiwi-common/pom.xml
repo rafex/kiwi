@@ -14,6 +14,15 @@
 	<artifactId>kiwi-common</artifactId>
 	<version>0.1.0-SNAPSHOT</version>
 	<name>kiwi-common</name>
+	
+	<dependencies>
+		<dependency>
+			<groupId>com.fasterxml.jackson.core</groupId>
+			<artifactId>jackson-databind</artifactId>
+			<version>${jackson.version}</version>
+			<scope>provided</scope>
+		</dependency>
+	</dependencies>
 
 	<build>
 		<plugins>

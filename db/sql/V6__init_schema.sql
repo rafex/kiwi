@@ -15,12 +15,45 @@ CREATE TYPE object_status AS ENUM (
   'archived'
 );
 
+CREATE TYPE users_status AS ENUM (
+  'active',
+  'inactive',
+  'deleted',
+  'archived'
+);
+
+CREATE TYPE roles_status AS ENUM (
+  'active',
+  'inactive',
+  'archived'
+);
+
 CREATE TYPE event_type AS ENUM (
   'CREATED',
   'UPDATED',
   'MOVED',
   'TAGGED',
   'STATUS_CHANGED'
+);
+
+CREATE TABLE users (
+  user_id uuid primary key,
+  username text unique not null,
+  password_hash bytea not null,
+  salt bytea not null,
+  iterations int not null,
+  status users_status NOT NULL DEFAULT 'active',
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE TABLE roles (
+  role_id uuid primary key,
+  name TEXT NOT NULL,
+  description TEXT,
+  status roles_status NOT NULL DEFAULT 'active',
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
 -- =========================

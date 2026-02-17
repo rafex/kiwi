@@ -2,7 +2,7 @@
 set -euo pipefail
 
 # -------- Config --------
-FLYWAY_IMAGE="${FLYWAY_IMAGE:-docker.io/flyway/flyway:10}"
+FLYWAY_IMAGE="${FLYWAY_IMAGE:-docker.io/flyway/flyway:12-alpine}"
 
 # Script lives in kiwi/db
 SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
@@ -39,18 +39,53 @@ if [[ ! -f "$CONF_FILE" ]]; then
 fi
 
 # -------- Container runtime --------
-if command -v podman >/dev/null 2>&1; then
-  RUNTIME="podman"
+OS_NAME="$(uname -s | tr '[:upper:]' '[:lower:]')"
+
+# Allow explicit selection
+if [[ -n "${FLYWAY_RUNTIME:-}" ]]; then
+  RUNTIME="$FLYWAY_RUNTIME"
 else
-  RUNTIME="docker"
+  # Default selection:
+  # - macOS: prefer docker (podman machine mounts may not include /Users by default)
+  # - others: prefer podman if present
+  if [[ "$OS_NAME" == "darwin"* ]]; then
+    if command -v docker >/dev/null 2>&1; then
+      RUNTIME="docker"
+    elif command -v podman >/dev/null 2>&1; then
+      RUNTIME="podman"
+    else
+      echo "ERROR: neither docker nor podman found in PATH" >&2
+      exit 4
+    fi
+  else
+    if command -v podman >/dev/null 2>&1; then
+      RUNTIME="podman"
+    elif command -v docker >/dev/null 2>&1; then
+      RUNTIME="docker"
+    else
+      echo "ERROR: neither docker nor podman found in PATH" >&2
+      exit 4
+    fi
+  fi
 fi
 
 # -------- Network mode --------
-NET_ARGS="--network host"
+# For remote DB connections this is unnecessary; also "--network host" is not supported
+# in Docker Desktop on macOS. Keep it configurable.
+declare -a NET_ARGS
+NET_ARGS=()
+if [[ -n "${FLYWAY_NET_ARGS:-}" ]]; then
+  # shellcheck disable=SC2206
+  NET_ARGS=(${FLYWAY_NET_ARGS})
+else
+  if [[ "$OS_NAME" != "darwin"* ]]; then
+    NET_ARGS=(--network host)
+  fi
+fi
 
 # -------- Run Flyway --------
 exec "$RUNTIME" run --rm \
-  $NET_ARGS \
+  "${NET_ARGS[@]+${NET_ARGS[@]}}" \
   -e FLYWAY_URL \
   -e FLYWAY_USER \
   -e FLYWAY_PASSWORD \

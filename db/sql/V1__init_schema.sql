@@ -38,7 +38,7 @@ CREATE TYPE event_type AS ENUM (
 
 CREATE TABLE users (
   user_id uuid primary key,
-  username text unique not null,
+  username TEXT NOT NULL UNIQUE,
   password_hash bytea not null,
   salt bytea not null,
   iterations int not null,
@@ -49,12 +49,25 @@ CREATE TABLE users (
 
 CREATE TABLE roles (
   role_id uuid primary key,
-  name TEXT NOT NULL,
+  name TEXT NOT NULL UNIQUE,
   description TEXT,
   status roles_status NOT NULL DEFAULT 'active',
   created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
+
+CREATE TABLE user_roles (
+  user_id UUID NOT NULL REFERENCES users(user_id) ON DELETE CASCADE,
+  role_id UUID NOT NULL REFERENCES roles(role_id) ON DELETE CASCADE,
+  assigned_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  PRIMARY KEY (user_id, role_id)
+);
+
+CREATE INDEX idx_user_roles_user
+ON user_roles(user_id);
+
+CREATE INDEX idx_user_roles_role
+ON user_roles(role_id);
 
 -- =========================
 -- Ubicaciones (jerárquicas)

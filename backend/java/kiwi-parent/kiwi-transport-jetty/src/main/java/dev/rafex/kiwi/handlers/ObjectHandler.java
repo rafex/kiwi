@@ -5,8 +5,6 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.UUID;
 
-import javax.sql.DataSource;
-
 import org.eclipse.jetty.server.Handler;
 import org.eclipse.jetty.server.Request;
 import org.eclipse.jetty.server.Response;
@@ -16,7 +14,6 @@ import org.eclipse.jetty.util.UrlEncoded;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import dev.rafex.kiwi.db.Db;
 import dev.rafex.kiwi.dtos.CreateObjectRequest;
 import dev.rafex.kiwi.dtos.FuzzyResponse;
 import dev.rafex.kiwi.dtos.MoveObjectRequest;
@@ -27,18 +24,17 @@ import dev.rafex.kiwi.errors.KiwiError;
 import dev.rafex.kiwi.http.HttpUtil;
 import dev.rafex.kiwi.json.JsonUtil;
 import dev.rafex.kiwi.logging.Log;
-import dev.rafex.kiwi.repository.ObjectRepository;
-import dev.rafex.kiwi.repository.impl.ObjectRepositoryImpl;
 import dev.rafex.kiwi.services.ObjectService;
-import dev.rafex.kiwi.services.impl.ObjectServiceImpl;
 
 public class ObjectHandler extends Handler.Abstract {
 
-    private final DataSource dataSource = Db.dataSource();
-    private final ObjectRepository objectRepo = new ObjectRepositoryImpl(dataSource);
-    private final ObjectMapper om = JsonUtil.MAPPER;
+    private final ObjectService service;
+    private final ObjectMapper om;
 
-    private final ObjectService services = new ObjectServiceImpl(objectRepo);
+    public ObjectHandler(final ObjectService service) {
+        this.service = service;
+        om = JsonUtil.MAPPER;
+    }
 
     @Override
     public boolean handle(final Request request, final Response response, final Callback callback) {
@@ -114,7 +110,7 @@ public class ObjectHandler extends Handler.Abstract {
             final var locationId = parseUuidOrNull(locationParam);
             final var limit = parseLimit(limitParam, 20, 1, 200);
 
-            final var search = services.search(q.trim(), tags, locationId, limit);
+            final var search = service.search(q.trim(), tags, locationId, limit);
 
             HttpUtil.ok(response, callback, om.writeValueAsString(new SearchResponse(search)));
             return true;
@@ -198,7 +194,8 @@ public class ObjectHandler extends Handler.Abstract {
         }
     }
 
-    private boolean moveLocation(final Request request, final Response response, final Callback callback, final UUID objectId) {
+    private boolean moveLocation(final Request request, final Response response, final Callback callback,
+            final UUID objectId) {
 
         try {
             Log.info(getClass(), "Handling object move request");
@@ -218,7 +215,7 @@ public class ObjectHandler extends Handler.Abstract {
                 return true;
             }
 
-            services.move(objectId, newLocationId);
+            service.move(objectId, newLocationId);
 
             // 204 No Content
             HttpUtil.ok_noContent(response, callback);
@@ -270,7 +267,7 @@ public class ObjectHandler extends Handler.Abstract {
             final var tags = r.tags() == null ? null : r.tags().toArray(new String[0]);
             final var metadataJson = r.metadata() == null ? null : om.writeValueAsString(r.metadata());
 
-            services.create(objectId, r.name(), r.description(), r.type(), tags, metadataJson, locationId);
+            service.create(objectId, r.name(), r.description(), r.type(), tags, metadataJson, locationId);
 
             HttpUtil.json(response, callback, 201, "{\"object_id\":\"" + objectId + "\"}");
             return true;
@@ -290,7 +287,8 @@ public class ObjectHandler extends Handler.Abstract {
         }
     }
 
-    private boolean updateTags(final Request request, final Response response, final Callback callback, final UUID objectId) {
+    private boolean updateTags(final Request request, final Response response, final Callback callback,
+            final UUID objectId) {
         try {
             Log.info(getClass(), "Handling object tag update request");
 
@@ -302,7 +300,7 @@ public class ObjectHandler extends Handler.Abstract {
             }
 
             final var tags = r.tags().toArray(String[]::new);
-            services.updateTags(objectId, tags);
+            service.updateTags(objectId, tags);
 
             // 204 No Content
             HttpUtil.ok_noContent(response, callback);
@@ -319,7 +317,8 @@ public class ObjectHandler extends Handler.Abstract {
         }
     }
 
-    private boolean updateText(final Request request, final Response response, final Callback callback, final UUID objectId) {
+    private boolean updateText(final Request request, final Response response, final Callback callback,
+            final UUID objectId) {
 
         try {
             Log.info(getClass(), "Handling object text update request");
@@ -331,7 +330,7 @@ public class ObjectHandler extends Handler.Abstract {
                 return true;
             }
 
-            services.updateText(objectId, r.name(), r.description());
+            service.updateText(objectId, r.name(), r.description());
 
             // 204 No Content
             HttpUtil.ok_noContent(response, callback);
@@ -360,7 +359,7 @@ public class ObjectHandler extends Handler.Abstract {
                 return true;
             }
 
-            final var search = services.fuzzy(name, 20);
+            final var search = service.fuzzy(name, 20);
 
             HttpUtil.ok(response, callback, om.writeValueAsString(new FuzzyResponse(search)));
 

@@ -2,8 +2,6 @@ package dev.rafex.kiwi.handlers;
 
 import java.util.UUID;
 
-import javax.sql.DataSource;
-
 import org.eclipse.jetty.server.Handler;
 import org.eclipse.jetty.server.Request;
 import org.eclipse.jetty.server.Response;
@@ -11,24 +9,22 @@ import org.eclipse.jetty.util.Callback;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import dev.rafex.kiwi.db.Db;
 import dev.rafex.kiwi.dtos.CreateLocationRequest;
 import dev.rafex.kiwi.errors.KiwiError;
 import dev.rafex.kiwi.http.HttpUtil;
 import dev.rafex.kiwi.json.JsonUtil;
 import dev.rafex.kiwi.logging.Log;
-import dev.rafex.kiwi.repository.LocationRepository;
-import dev.rafex.kiwi.repository.impl.LocationRepositoryImpl;
 import dev.rafex.kiwi.services.LocationService;
-import dev.rafex.kiwi.services.impl.LocationServiceImpl;
 
 public class LocationHandler extends Handler.Abstract {
 
-    private final DataSource dataSource = Db.dataSource();
-    private final LocationRepository repo = new LocationRepositoryImpl(dataSource);
-    private final LocationService services = new LocationServiceImpl(repo);
+    private final LocationService service;
+    private final ObjectMapper om;
 
-    private final ObjectMapper om = JsonUtil.MAPPER;
+    public LocationHandler(final LocationService services) {
+        service = services;
+        om = JsonUtil.MAPPER;
+    }
 
     @Override
     public boolean handle(final Request request, final Response response, final Callback callback) throws Exception {
@@ -58,7 +54,7 @@ public class LocationHandler extends Handler.Abstract {
             }
 
             final var locationId = UUID.randomUUID();
-            services.create(locationId, r.name().trim(), parentId);
+            service.create(locationId, r.name().trim(), parentId);
 
             HttpUtil.json(response, callback, 201, "{\"location_id\":\"" + locationId + "\"}");
             return true;

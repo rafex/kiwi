@@ -6,6 +6,7 @@ import java.util.logging.Handler;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import dev.rafex.kiwi.bootstrap.KiwiBootstrap;
 import dev.rafex.kiwi.server.KiwiServer;
 
 public class App {
@@ -23,28 +24,36 @@ public class App {
         configureLogging(args);
 
         LOG.info("Starting Kiwi backend...");
-        KiwiServer.start();
+
+        try (var runtime = KiwiBootstrap.start()) {
+
+            final var container = runtime.container();
+
+            KiwiServer.start(container);
+
+            // Si tu server hace .join(), este hilo queda bloqueado aquí
+        }
     }
 
     private static void configureLogging(final String[] args) {
 
         // 1) Fuente: env var LOG_LEVEL (default INFO)
-        String levelStr = System.getenv().getOrDefault("LOG_LEVEL", "INFO");
+        var levelStr = System.getenv().getOrDefault("LOG_LEVEL", "INFO");
 
         // 2) Override por CLI: --log=DEBUG
-        for (String arg : args) {
+        for (final String arg : args) {
             if (arg != null && arg.startsWith("--log=")) {
                 levelStr = arg.substring("--log=".length());
                 break;
             }
         }
 
-        final Level level = parseAllowedLevel(levelStr);
+        final var level = parseAllowedLevel(levelStr);
 
         // Config root logger + handlers
-        final Logger root = Logger.getLogger("");
+        final var root = Logger.getLogger("");
         root.setLevel(level);
-        for (Handler h : root.getHandlers()) {
+        for (final Handler h : root.getHandlers()) {
             h.setLevel(level);
         }
 
@@ -56,19 +65,20 @@ public class App {
             return Level.INFO;
         }
 
-        final String v = levelStr.trim().toUpperCase(Locale.ROOT);
+        final var v = levelStr.trim().toUpperCase(Locale.ROOT);
 
         return switch (v) {
-            case "DEBUG" -> Level.FINE;
-            case "INFO"  -> Level.INFO;
-            case "WARN"  -> Level.WARNING;
-            case "ERROR" -> Level.SEVERE;
-            default -> {
-                // validación fuerte: si te pasan un valor inválido, lo fuerzas a INFO y lo avisas
-                System.err.println("[kiwi] Invalid LOG_LEVEL/--log value: '" + levelStr
-                        + "'. Allowed: DEBUG, INFO, WARN, ERROR. Defaulting to INFO.");
-                yield Level.INFO;
-            }
+        case "DEBUG" -> Level.FINE;
+        case "INFO" -> Level.INFO;
+        case "WARN" -> Level.WARNING;
+        case "ERROR" -> Level.SEVERE;
+        default -> {
+            // validación fuerte: si te pasan un valor inválido, lo fuerzas a INFO y lo
+            // avisas
+            System.err.println("[kiwi] Invalid LOG_LEVEL/--log value: '" + levelStr
+                    + "'. Allowed: DEBUG, INFO, WARN, ERROR. Defaulting to INFO.");
+            yield Level.INFO;
+        }
         };
     }
 }

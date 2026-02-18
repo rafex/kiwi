@@ -17,6 +17,8 @@ public interface UserRepository {
 
     Optional<UserWithRoles> findByUsernameWithRoles(String username) throws SQLException;
 
+    int countUsers() throws SQLException;
+
     public record UserRow(UUID userId, String username, byte[] passwordHash, byte[] salt, int iterations, String status,
             Instant createdAt, Instant updatedAt) {
     }

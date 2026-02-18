@@ -9,6 +9,8 @@ public interface UserProvisioningService {
     CreateUserResult createUser(final String username, final char[] password, final List<String> roles)
             throws SQLException;
 
+    boolean existsAnyUser() throws SQLException;
+
     public record CreateUserResult(boolean ok, UUID userId, String code) {
         public static CreateUserResult ok(final UUID userId) {
             return new CreateUserResult(true, userId, null);

@@ -4,6 +4,8 @@ import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.time.Instant;
 import java.util.Base64;
+import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
@@ -15,7 +17,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 public final class JwtService {
 
-    public record AuthContext(String sub, long exp, String iss, String aud) {
+    public record AuthContext(String sub, long exp, String iss, String aud, List<String> roles) {
     }
 
     public record VerifyResult(boolean ok, AuthContext ctx, String code) {
@@ -49,13 +51,24 @@ public final class JwtService {
         this.secret = secret.getBytes(StandardCharsets.UTF_8);
     }
 
+    /** Backwards-compatible: token sin roles. */
     public String mint(final String sub, final long ttlSeconds) {
+        return mint(sub, List.of(), ttlSeconds);
+    }
+
+    /** Token con roles (claim: "roles": ["admin","writer"]) */
+    public String mint(final String sub, final Collection<String> roles, final long ttlSeconds) {
         final var now = Instant.now().getEpochSecond();
         final var exp = now + ttlSeconds;
 
         final var headerJson = "{\"alg\":\"HS256\",\"typ\":\"JWT\"}";
-        final var payloadJson = "{\"sub\":\"" + escapeJson(sub) + "\"," + "\"iss\":\"" + escapeJson(iss) + "\","
-                + "\"aud\":\"" + escapeJson(aud) + "\"," + "\"iat\":" + now + "," + "\"exp\":" + exp + "}";
+
+        // roles JSON (sin depender de JsonUtil)
+        final var rolesJson = rolesToJsonArray(roles);
+
+        final var payloadJson = "{" + "\"sub\":\"" + escapeJson(sub) + "\"," + "\"iss\":\"" + escapeJson(iss) + "\","
+                + "\"aud\":\"" + escapeJson(aud) + "\"," + "\"iat\":" + now + "," + "\"exp\":" + exp + ","
+                + "\"roles\":" + rolesJson + "}";
 
         final var h = b64u(headerJson.getBytes(StandardCharsets.UTF_8));
         final var p = b64u(payloadJson.getBytes(StandardCharsets.UTF_8));
@@ -97,6 +110,7 @@ public final class JwtService {
             final var issGot = asString(payload.get("iss"));
             final var audGot = asString(payload.get("aud"));
             final var exp = asLong(payload.get("exp"));
+            final var roles = asStringList(payload.get("roles"));
 
             if (sub == null || sub.isBlank()) {
                 return VerifyResult.bad("missing_sub");
@@ -114,8 +128,8 @@ public final class JwtService {
                 return VerifyResult.bad("bad_aud");
             }
 
-            return VerifyResult.ok(new AuthContext(sub, exp, issGot, audGot));
-        } catch (Exception e) {
+            return VerifyResult.ok(new AuthContext(sub, exp, issGot, audGot, roles));
+        } catch (final Exception e) {
             return VerifyResult.bad("verify_exception");
         }
     }
@@ -125,7 +139,7 @@ public final class JwtService {
             final var mac = Mac.getInstance("HmacSHA256");
             mac.init(new SecretKeySpec(secret, "HmacSHA256"));
             return mac.doFinal(data);
-        } catch (Exception e) {
+        } catch (final Exception e) {
             throw new IllegalStateException("HMAC failed", e);
         }
     }
@@ -146,14 +160,58 @@ public final class JwtService {
         if (o == null) {
             return null;
         }
-        if (o instanceof Number n) {
+        if (o instanceof final Number n) {
             return n.longValue();
         }
         try {
             return Long.parseLong(String.valueOf(o));
-        } catch (NumberFormatException e) {
+        } catch (final NumberFormatException e) {
             return null;
         }
+    }
+
+    @SuppressWarnings("unchecked")
+    private static List<String> asStringList(final Object o) {
+        if (o == null) {
+            return List.of();
+        }
+
+        // JSON array -> jackson lo deja como List<?> normalmente
+        if (o instanceof final List<?> list) {
+            return list.stream().filter(Objects::nonNull).map(String::valueOf).filter(s -> !s.isBlank()).toList();
+        }
+
+        // si viene como "admin" (string) por alguna razón
+        final var s = String.valueOf(o);
+        if (s.isBlank()) {
+            return List.of();
+        }
+        return List.of(s);
+    }
+
+    private static String rolesToJsonArray(final Collection<String> roles) {
+        if (roles == null || roles.isEmpty()) {
+            return "[]";
+        }
+        final var sb = new StringBuilder();
+        sb.append('[');
+        var first = true;
+        for (final var r : roles) {
+            if (r == null) {
+                continue;
+            }
+            final var v = r.trim();
+            if (v.isEmpty()) {
+                continue;
+            }
+            if (!first) {
+                sb.append(',');
+            }
+            sb.append('"').append(escapeJson(v)).append('"');
+            first = false;
+        }
+        sb.append(']');
+        return sb.toString();
     }
 
     // sin depender de JsonUtil aquí

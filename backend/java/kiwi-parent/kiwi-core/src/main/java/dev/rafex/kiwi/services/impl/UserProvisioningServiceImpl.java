@@ -89,4 +89,12 @@ public class UserProvisioningServiceImpl implements UserProvisioningService {
         }
     }
 
+    @Override
+    public boolean existsAnyUser() throws SQLException {
+
+        final var countUsers = userRepo.countUsers();
+
+        return countUsers > 0;
+    }
+
 }

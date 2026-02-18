@@ -9,6 +9,7 @@ import org.eclipse.jetty.server.handler.PathMappingsHandler;
 import org.eclipse.jetty.util.thread.QueuedThreadPool;
 
 import dev.rafex.kiwi.bootstrap.KiwiContainer;
+import dev.rafex.kiwi.handlers.CreateUserHandler;
 import dev.rafex.kiwi.handlers.GlowrootNamingHandler;
 import dev.rafex.kiwi.handlers.HealthHandler;
 import dev.rafex.kiwi.handlers.HelloHandler;
@@ -45,6 +46,7 @@ public final class KiwiServer {
         final var objectService = container.objectService();
         final var locationService = container.locationService();
         final var authService = container.authService();
+        final var provisioning = container.userProvisioningService();
 
         // JWT config
         final var jwt = new JwtService(JsonUtil.MAPPER, System.getenv().getOrDefault("JWT_ISS", "dev.rafex.kiwi"),
@@ -59,10 +61,21 @@ public final class KiwiServer {
         routes.addMapping(PathSpec.from("/locations/*"), new LocationHandler(locationService));
         routes.addMapping(PathSpec.from("/*"), new NotFoundHandler()); // fallback (según versión/impl)
 
+        final var env = System.getenv().getOrDefault("ENVIRONMENT", "unknown");
+        final var enabledUserProvisioning = "true"
+                .equalsIgnoreCase(System.getenv().getOrDefault("ENABLE_USER_PROVISIONING", "false"));
+        final var sandbox = "work02".equalsIgnoreCase(env) || "sandbox".equalsIgnoreCase(env)
+                || "dev".equalsIgnoreCase(env);
+
+        if (enabledUserProvisioning && sandbox) {
+            routes.addMapping(PathSpec.from("/admin/users"), new CreateUserHandler(provisioning));
+        }
+
         // Wrapper: /hello público, /objects y /locations protegidos (ajústalo a tu
         // gusto)
-        final var auth = new JwtAuthHandler(routes, jwt).publicPath("GET", "/auth/login").publicPath("GET", "/hello")
-                .publicPath("GET", "/health").protectedPrefix("/objects/*").protectedPrefix("/locations/*");
+        final var auth = new JwtAuthHandler(routes, jwt).publicPath("POST", "/admin/users")
+                .publicPath("GET", "/auth/login").publicPath("GET", "/hello").publicPath("GET", "/health")
+                .protectedPrefix("/objects/*").protectedPrefix("/locations/*");
 
         server.setHandler(new GlowrootNamingHandler(auth));
 

@@ -37,6 +37,7 @@ public final class LoginHandler extends Handler.Abstract.NonBlocking {
 
     @Override
     public boolean handle(final Request request, final Response response, final Callback callback) throws Exception {
+
         if (!"POST".equalsIgnoreCase(request.getMethod())) {
             HttpUtil.json(response, callback, HttpStatus.METHOD_NOT_ALLOWED_405, Map.of("error", "method_not_allowed"));
             return true;
@@ -111,10 +112,12 @@ public final class LoginHandler extends Handler.Abstract.NonBlocking {
 
         // Recomendación: sub = userId (estable)
         final var subject = result.userId().toString();
+        final var roles = result.roles(); // si quieres incluir roles en el token, aquí es donde los obtienes (si no los
+                                          // tienes ya en el contexto de autenticación)
 
         // Si tu JwtService actual solo soporta mint(sub, ttl), deja esto así.
         // Si lo extiendes para roles/username, aquí es donde lo pasas.
-        final var token = jwt.mint(subject, ttlSeconds);
+        final var token = jwt.mint(subject, roles, ttlSeconds);
 
         HttpUtil.ok(response, callback, Map.of("token_type", "Bearer", "access_token", token, "expires_in", ttlSeconds
         // si quieres devolver roles al cliente:

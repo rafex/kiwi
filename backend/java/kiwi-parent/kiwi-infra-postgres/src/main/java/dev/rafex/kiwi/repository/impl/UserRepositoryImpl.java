@@ -1,7 +1,6 @@
 package dev.rafex.kiwi.repository.impl;
 
 import java.sql.SQLException;
-import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -61,8 +60,8 @@ public class UserRepositoryImpl implements UserRepository {
 
                 return Optional.of(new UserRow(rs.getObject("user_id", UUID.class), rs.getString("username"),
                         rs.getBytes("password_hash"), rs.getBytes("salt"), rs.getInt("iterations"),
-                        rs.getString("status"), rs.getObject("created_at", Instant.class),
-                        rs.getObject("updated_at", Instant.class)));
+                        rs.getString("status"), rs.getTimestamp("created_at").toInstant(),
+                        rs.getTimestamp("updated_at").toInstant()));
             }
         }
     }
@@ -104,6 +103,16 @@ public class UserRepositoryImpl implements UserRepository {
         final var user = userOpt.get();
         final var roles = findRoleNamesByUserId(user.userId());
         return Optional.of(new UserWithRoles(user, roles));
+    }
+
+    @Override
+    public int countUsers() throws SQLException {
+        try (var c = ds.getConnection();
+                var ps = c.prepareStatement("SELECT count(*) FROM users");
+                var rs = ps.executeQuery()) {
+            rs.next();
+            return rs.getInt(1);
+        }
     }
 
 }

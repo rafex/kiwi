@@ -11,17 +11,21 @@ import dev.rafex.kiwi.repository.LocationRepository;
 // infra (postgres impl)
 // =====================================================
 import dev.rafex.kiwi.repository.ObjectRepository;
+import dev.rafex.kiwi.repository.RoleRepository;
 import dev.rafex.kiwi.repository.UserRepository;
 import dev.rafex.kiwi.repository.impl.LocationRepositoryImpl;
 import dev.rafex.kiwi.repository.impl.ObjectRepositoryImpl;
+import dev.rafex.kiwi.repository.impl.RoleRepositoryImpl;
 import dev.rafex.kiwi.repository.impl.UserRepositoryImpl;
 import dev.rafex.kiwi.security.PasswordHasherPBKDF2;
 import dev.rafex.kiwi.services.AuthService;
 import dev.rafex.kiwi.services.LocationService;
 import dev.rafex.kiwi.services.ObjectService;
+import dev.rafex.kiwi.services.UserProvisioningService;
 import dev.rafex.kiwi.services.impl.AuthServiceImpl;
 import dev.rafex.kiwi.services.impl.LocationServiceImpl;
 import dev.rafex.kiwi.services.impl.ObjectServiceImpl;
+import dev.rafex.kiwi.services.impl.UserProvisioningServiceImpl;
 
 /**
  * Zero-deps container (Java 21): - Centralizes wiring - Supports overrides
@@ -38,7 +42,8 @@ public final class KiwiContainer {
             Optional<Supplier<ObjectRepository>> objectRepository, Optional<Supplier<ObjectService>> objectService,
             Optional<Supplier<LocationRepository>> locationRepository,
             Optional<Supplier<LocationService>> locationService, Optional<Supplier<UserRepository>> userRepository,
-            Optional<Supplier<AuthService>> authService) {
+            Optional<Supplier<RoleRepository>> roleRepository, Optional<Supplier<AuthService>> authService,
+            Optional<Supplier<UserProvisioningService>> userProvisioningService) {
         public Overrides {
             config = config != null ? config : Optional.empty();
             dataSource = dataSource != null ? dataSource : Optional.empty();
@@ -48,7 +53,9 @@ public final class KiwiContainer {
             locationRepository = locationRepository != null ? locationRepository : Optional.empty();
             locationService = locationService != null ? locationService : Optional.empty();
             userRepository = userRepository != null ? userRepository : Optional.empty();
+            roleRepository = roleRepository != null ? roleRepository : Optional.empty();
             authService = authService != null ? authService : Optional.empty();
+            userProvisioningService = userProvisioningService != null ? userProvisioningService : Optional.empty();
         }
 
         public static Builder builder() {
@@ -64,7 +71,9 @@ public final class KiwiContainer {
             private Supplier<LocationRepository> locationRepository;
             private Supplier<LocationService> locationService;
             private Supplier<UserRepository> userRepository;
+            private Supplier<RoleRepository> roleRepository;
             private Supplier<AuthService> authService;
+            private Supplier<UserProvisioningService> userProvisioningService;
 
             public Builder config(final Supplier<KiwiConfig> v) {
                 config = v;
@@ -106,8 +115,18 @@ public final class KiwiContainer {
                 return this;
             }
 
+            public Builder roleRepository(final Supplier<RoleRepository> v) {
+                roleRepository = v;
+                return this;
+            }
+
             public Builder authService(final Supplier<AuthService> v) {
                 authService = v;
+                return this;
+            }
+
+            public Builder userProvisioningService(final Supplier<UserProvisioningService> v) {
+                userProvisioningService = v;
                 return this;
             }
 
@@ -116,7 +135,8 @@ public final class KiwiContainer {
                         Optional.ofNullable(passwordHasher), Optional.ofNullable(objectRepository),
                         Optional.ofNullable(objectService), Optional.ofNullable(locationRepository),
                         Optional.ofNullable(locationService), Optional.ofNullable(userRepository),
-                        Optional.ofNullable(authService));
+                        Optional.ofNullable(roleRepository), Optional.ofNullable(authService),
+                        Optional.ofNullable(userProvisioningService));
             }
         }
     }
@@ -130,8 +150,10 @@ public final class KiwiContainer {
     private final Lazy<LocationRepository> locationRepository;
     private final Lazy<LocationService> locationService;
     private final Lazy<UserRepository> userRepository;
+    private final Lazy<RoleRepository> roleRepository;
     private final Lazy<PasswordHasherPBKDF2> passwordHasher;
     private final Lazy<AuthService> authService;
+    private final Lazy<UserProvisioningService> userProvisioningService;
 
     public KiwiContainer() {
         this(Overrides.builder().build());
@@ -152,8 +174,11 @@ public final class KiwiContainer {
         locationService = new Lazy<>(
                 select(overrides.locationService(), () -> new LocationServiceImpl(locationRepository())));
         userRepository = new Lazy<>(select(overrides.userRepository(), () -> new UserRepositoryImpl(dataSource())));
+        roleRepository = new Lazy<>(select(overrides.roleRepository(), () -> new RoleRepositoryImpl(dataSource())));
         authService = new Lazy<>(
                 select(overrides.authService(), () -> new AuthServiceImpl(userRepository(), passwordHasher())));
+        userProvisioningService = new Lazy<>(select(overrides.userProvisioningService(),
+                () -> new UserProvisioningServiceImpl(userRepository(), roleRepository(), passwordHasher())));
     }
 
     // ---- Public accessors ----
@@ -190,8 +215,16 @@ public final class KiwiContainer {
         return userRepository.get();
     }
 
+    public RoleRepository roleRepository() {
+        return roleRepository.get();
+    }
+
     public AuthService authService() {
         return authService.get();
+    }
+
+    public UserProvisioningService userProvisioningService() {
+        return userProvisioningService.get();
     }
 
     /**
@@ -207,7 +240,9 @@ public final class KiwiContainer {
         objectService();
         locationService();
         userRepository();
+        roleRepository();
         authService();
+        userProvisioningService();
     }
 
     private static <T> Supplier<T> select(final Optional<Supplier<T>> override, final Supplier<T> def) {

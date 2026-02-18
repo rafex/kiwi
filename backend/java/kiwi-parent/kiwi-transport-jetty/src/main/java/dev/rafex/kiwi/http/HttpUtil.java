@@ -75,4 +75,9 @@ public final class HttpUtil {
 
     }
 
+    public static void forbidden(final Response response, final Callback callback, final String code) {
+        json(response, callback, HttpStatus.FORBIDDEN_403,
+                Map.of("error", "forbidden", "code", code, "timestamp", Instant.now().toString()));
+    }
+
 }

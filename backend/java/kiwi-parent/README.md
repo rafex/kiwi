@@ -18,6 +18,13 @@ Este proyecto define:
 - `kiwi-transport-jetty`: transporte HTTP con Jetty embebido.
 - `kiwi-transport-grpc`: placeholder para transporte gRPC.
 - `kiwi-transport-rabbitmq`: placeholder para transporte RabbitMQ.
+- `kiwi-tools`: utilidades ejecutables de soporte.
+
+## Documentación técnica
+
+Consulta la documentación central del backend Java en `../docs`:
+
+- `../docs/README.md`
 
 ## Cómo funciona el Makefile
 

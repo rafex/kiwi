@@ -1,21 +1,24 @@
-# kiwi-transport-grpc
+# kiwi-tools
 
-Módulo reservado para transporte gRPC.
+Módulo de utilidades ejecutables para tareas operativas y soporte.
 
-Actualmente su `pom.xml` está en estado base y funciona como placeholder para la implementación futura.
+## Dependencias
 
-## Objetivo del módulo
+- `kiwi-core`
+- `kiwi-infra-postgres`
 
-- Exponer capacidades de `kiwi-core` por gRPC.
-- Mantener desacoplada la lógica de negocio del protocolo de transporte.
+## Punto de entrada
+
+Define `main.class=dev.rafex.kiwi.tools.Main` en su `pom.xml`.
 
 ## Relación con Makefile
 
-Aunque no tiene objetivos específicos en el `Makefile`, se compila dentro del build multi-módulo:
+No tiene targets dedicados en el `Makefile` principal, pero se compila dentro del build multi-módulo:
 
 - `make build`
 - `make build-without-tests`
 
-Compilación aislada:
+Compilación/ejecución aislada:
 
-- `../mvnw -pl kiwi-transport-grpc -am clean package`
+- `../mvnw -pl kiwi-tools -am clean package`
+- `../mvnw -pl kiwi-tools -am exec:java`

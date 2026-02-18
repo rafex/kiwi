@@ -49,6 +49,7 @@
 		<module>kiwi-transport-jetty</module>
 		<module>kiwi-transport-grpc</module>
 		<module>kiwi-transport-rabbitmq</module>
+		<module>kiwi-tools</module>
 	</modules>
 
 	<properties>

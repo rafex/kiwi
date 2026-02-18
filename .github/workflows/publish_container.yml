@@ -83,8 +83,8 @@ jobs:
         if: github.ref == 'refs/heads/main'
         uses: docker/build-push-action@v4
         with:
-          context: backend/java/kiwi-parent
-          file: backend/java/kiwi-parent/Dockerfile
+          context: backend/java
+          file: backend/java/Dockerfile
           push: true
           platforms: linux/amd64,linux/arm64
           tags: |

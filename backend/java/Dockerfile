@@ -10,10 +10,14 @@ RUN apt-get update && apt-get install -y --no-install-recommends ca-certificates
 
 WORKDIR /app
 
+
+COPY observability/glowroot /app/glowroot
+
+RUN chown -R kiwi:kiwi /app/glowroot
 # Copy the fat JAR produced by the build
 # Ensure you run 'make build' before building this image so target/ exists
-COPY kiwi-transport-jetty/target/kiwi-transport-jetty-0.1.0-SNAPSHOT-jar-with-dependencies.jar /app/app.jar
-
+COPY kiwi-parent/kiwi-transport-jetty/target/kiwi-transport-jetty-0.1.0-SNAPSHOT-jar-with-dependencies.jar /app/app.jar
+RUN chown kiwi:kiwi /app/app.jar
 # Copy launcher script
 COPY start-kiwi.sh /usr/local/bin/start-kiwi.sh
 
@@ -28,6 +32,7 @@ ENV DB_URL=""
 
 # Expose service port
 EXPOSE 8080
+EXPOSE 4000
 
 # Run as non-root user
 USER kiwi

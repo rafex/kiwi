@@ -18,4 +18,11 @@ fi
 
 echo "[start-kiwi] Starting kiwi-backend (DB_URL=${DB_URL:+<provided>})"
 
-exec java $JAVA_OPTS -jar /app/app.jar "$@"
+exec java \
+  -XX:+UseContainerSupport \
+  -XX:MaxRAMPercentage=70.0 \
+  -XX:+ExitOnOutOfMemoryError \
+  $JAVA_OPTS \
+  -javaagent:/app/glowroot/glowroot.jar \
+  -jar /app/app.jar \
+  "$@"

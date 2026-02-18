@@ -12,11 +12,8 @@ IMAGE ?= kiwi-jetty:latest
 PORT ?= 8080
 CONTAINER_NAME ?= kiwi-jetty-run
 CONTAINER_TOOL ?= podman
-DB_USER ?=
-DB_PASSWORD ?=
-DB_URL ?=
 
-.PHONY: help exec-jetty build build-without-tests agent sync-meta native run-native clean-native image run-image glowroot-jetty glowroot-jetty-build
+.PHONY: help exec-jetty build build-without-tests agent sync-meta native run-native clean-native glowroot-jetty glowroot-jetty-build
 
 help:
 	@echo "Targets:"
@@ -24,8 +21,6 @@ help:
 	@echo "  make agent        -> run app with native-image-agent (generates $(GRAAL_CONFIG_DIR)/)"
 	@echo "  make sync-meta    -> copy metadata/config into $(RES_DIR) and rebuild jar"
 	@echo "  make native       -> build native image $(BIN)"
-	@echo "  make image        -> build a container image with $(CONTAINER_TOOL) (uses Dockerfile)"
-	@echo "  make run-image    -> run the container image with $(CONTAINER_TOOL) (PORT configurable, default 8080)"
 	@echo "  make run-native   -> run ./$(BIN)"
 	@echo "  make clean-native -> remove native binary and temp config"
 
@@ -84,37 +79,3 @@ clean-native:
 	# remove exact bin and any march-specific variants (e.g. kiwi-backend-x86-64-v2.bin)
 	rm -f $(BIN) $(basename $(BIN))* || true
 	rm -rf "$(GRAAL_CONFIG_DIR)"
-
-image:
-	@echo "Checking for fat JAR: $(JAR_JETTY)"
-	@if [ -f "$(JAR_JETTY)" ]; then \
-		echo "Found JAR: $(JAR_JETTY)"; \
-		echo "Building container image: $(IMAGE)"; \
-		$(CONTAINER_TOOL) build -t "$(IMAGE)" -f Dockerfile .; \
-	else \
-		echo "No JAR found at $(JAR_JETTY). Please run 'make build' first." >&2; exit 1; \
-	fi
-	
-run-image: image
-	@echo "Running container $(CONTAINER_NAME), mapping host port $(PORT) -> container 8080"
-	-@$(CONTAINER_TOOL) rm -f "$(CONTAINER_NAME)" 2>/dev/null || true
-	@env_args=""; \
-	# prefer Make variables, otherwise fall back to shell environment variables
-	if [ -n "$(DB_USER)" ]; then \
-		env_args="$$env_args -e DB_USER=$(DB_USER)"; \
-	elif [ -n "$$DB_USER" ]; then \
-		env_args="$$env_args -e DB_USER=$$DB_USER"; \
-	fi; \
-	if [ -n "$(DB_PASSWORD)" ]; then \
-		env_args="$$env_args -e DB_PASSWORD=$(DB_PASSWORD)"; \
-	elif [ -n "$$DB_PASSWORD" ]; then \
-		env_args="$$env_args -e DB_PASSWORD=$$DB_PASSWORD"; \
-	fi; \
-	if [ -n "$(DB_URL)" ]; then \
-		env_args="$$env_args -e DB_URL=$(DB_URL)"; \
-	elif [ -n "$$DB_URL" ]; then \
-		env_args="$$env_args -e DB_URL=$$DB_URL"; \
-	fi; \
-	echo "Using env: $$env_args"; \
-	$(CONTAINER_TOOL) run -d --name "$(CONTAINER_NAME)" $$env_args -p "$(PORT):8080" "$(IMAGE)"
-

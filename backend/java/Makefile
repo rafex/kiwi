@@ -4,6 +4,7 @@ SHELL := /bin/bash
 
 JAR_JETTY ?= kiwi-parent/kiwi-transport-jetty/target/kiwi-transport-jetty-0.1.0-SNAPSHOT-jar-with-dependencies.jar
 IMAGE ?= kiwi-jetty:latest
+PUBLISHED_IMAGE ?= ghcr.io/rafex/kiwi-jetty-backend:latest
 PORT ?= 8080
 GLOWROOT_PORT ?= 4000
 CONTAINER_NAME ?= kiwi-jetty-run
@@ -19,15 +20,16 @@ KIWI_USER ?= rafex
 KIWI_PASS ?=
 ENVIRONMENT ?= work02
 
-.PHONY: help image run-image
+.PHONY: help image run-image run-publish-image run-image-from-current
 
 help:
 	@echo "Targets:"
 	@echo "  make image      -> build container image ($(IMAGE))"
 	@echo "  make run-image  -> run container and pass app env vars"
+	@echo "  make run-publish-image -> pull and run published image ($(PUBLISHED_IMAGE))"
 	@echo ""
 	@echo "Common overrides:"
-	@echo "  IMAGE, PORT, GLOWROOT_PORT, CONTAINER_NAME, CONTAINER_TOOL"
+	@echo "  IMAGE, PUBLISHED_IMAGE, PORT, GLOWROOT_PORT, CONTAINER_NAME, CONTAINER_TOOL"
 	@echo "  DB_USER, DB_PASSWORD, DB_URL"
 	@echo "  JWT_ISS, JWT_AUD, JWT_SECRET, JWT_TTL_SECONDS"
 	@echo "  KIWI_USER, KIWI_PASS, ENVIRONMENT"
@@ -42,7 +44,14 @@ image:
 		echo "No JAR found at $(JAR_JETTY). Please run 'make build' first." >&2; exit 1; \
 	fi
 	
-run-image: image
+run-image: image run-image-from-current
+
+run-publish-image:
+	@echo "Pulling published image $(PUBLISHED_IMAGE)"
+	@$(CONTAINER_TOOL) pull "$(PUBLISHED_IMAGE)"
+	@$(MAKE) --no-print-directory run-image-from-current IMAGE="$(PUBLISHED_IMAGE)"
+
+run-image-from-current:
 	@echo "Running container $(CONTAINER_NAME), mapping host ports $(PORT)->8080 and $(GLOWROOT_PORT)->4000"
 	-@$(CONTAINER_TOOL) rm -f "$(CONTAINER_NAME)" 2>/dev/null || true
 	@env_args=""; \

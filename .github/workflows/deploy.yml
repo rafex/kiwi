@@ -1,40 +1,59 @@
----
-name: CI/CD
+name: Deploy Kiwi Backend
 
 on:
   workflow_dispatch:
-    inputs:
-      logLevel:
-        description: 'Log level'
-        required: true
-        default: 'warning'
   push:
     branches:
       - main
     paths:
-      - 'charts/juego-aviones/**'
-      - 'juego-aviones/**'
-      - '.github/workflows/ci-cd.yml'
-
+      - 'helm/kiwi-backend/**'
+      - '.github/workflows/deploy.yml'
 
 jobs:
-  deploy-front:
+  deploy-backend:
     runs-on: ubuntu-latest
     env:
-      K3S_NAMESPACE: mvps  # Namespace donde se creará el secreto
+      K3S_NAMESPACE: mvps
+      RELEASE_NAME: kiwi-backend
+      CHART_PATH: ./helm/kiwi-backend
+      IMAGE_REPOSITORY: ghcr.io/rafex/kiwi-jetty-backend
+      IMAGE_TAG: latest
+      EXISTING_SECRET: kiwi-backend-secrets
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Configure Kubeconfig
+      - name: Configure kubeconfig
         run: |
           mkdir -p "$HOME/.kube"
           echo "${{ secrets.KUBE_CONFIG_DATA }}" | base64 -d > "$HOME/.kube/config"
+          chmod 600 "$HOME/.kube/config"
 
       - name: Install Helm
         uses: azure/setup-helm@v4
 
-      - name: Deploy juego-aviones chart
+      - name: Ensure namespace exists
         run: |
-          helm upgrade --install juego-aviones ./charts/juego-aviones \
-            --namespace ${{ env.K3S_NAMESPACE }}
+          kubectl get namespace "$K3S_NAMESPACE" >/dev/null 2>&1 || kubectl create namespace "$K3S_NAMESPACE"
+
+      - name: Validate required secret
+        run: |
+          kubectl -n "$K3S_NAMESPACE" get secret "$EXISTING_SECRET" >/dev/null
+
+      - name: Lint chart
+        run: |
+          helm lint "$CHART_PATH"
+
+      - name: Deploy Helm release
+        run: |
+          helm upgrade --install "$RELEASE_NAME" "$CHART_PATH" \
+            --namespace "$K3S_NAMESPACE" \
+            --set image.repository="$IMAGE_REPOSITORY" \
+            --set image.tag="$IMAGE_TAG" \
+            --set existingSecret="$EXISTING_SECRET" \
+            --wait --timeout 5m
+
+      - name: Show rollout status
+        run: |
+          kubectl -n "$K3S_NAMESPACE" rollout status deployment/"$RELEASE_NAME" --timeout=180s

@@ -3,10 +3,16 @@ FROM docker.io/eclipse-temurin:25.0.2_10-jre
 # Non-interactive
 ENV DEBIAN_FRONTEND=noninteractive
 
-# Create a user to run the app
-RUN apt-get update && apt-get install -y --no-install-recommends ca-certificates \
-	&& apt-get clean && rm -rf /var/lib/apt/lists/* \
-	&& useradd -r -s /usr/sbin/nologin -m -U kiwi || true
+# Create a non-root user (numeric UID/GID) to run the app
+ARG KIWI_UID=10001
+ARG KIWI_GID=10001
+
+RUN apt-get update \
+	&& apt-get install -y --no-install-recommends ca-certificates \
+	&& apt-get clean \
+	&& rm -rf /var/lib/apt/lists/* \
+	&& groupadd -g ${KIWI_GID} kiwi \
+	&& useradd -u ${KIWI_UID} -g ${KIWI_GID} -m -s /usr/sbin/nologin kiwi
 
 WORKDIR /app
 
@@ -36,8 +42,7 @@ EXPOSE 8080
 EXPOSE 4000
 
 # Run as non-root user
-USER kiwi
+USER 10001:10001
 
 # Start the wrapper script (will exec the jar)
 ENTRYPOINT ["/usr/local/bin/start-kiwi.sh"]
-

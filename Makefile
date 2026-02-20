@@ -54,19 +54,23 @@ define print_exports_from_env
 	done
 endef
 
-.PHONY: help
+.PHONY: help print_env install-githooks
 help:
 	echo "Targets:"
 	echo "  print_env   Print export commands from .env (use with eval)"
+	echo "  install-githooks   Configure git hooks path to .githooks"
 	echo ""
 	echo "Usage:"
 	echo "  eval \"\$$(make print_env)\""
 	echo ""
 
-.PHONY: print_env
 print_env:
 	$(call require_file,$(GITIGNORE))
 	$(call require_gitignore_contains_exact_line,$(ENV_GITIGNORE_ENTRY))
 	$(call require_file,$(ENV_FILE))
 	$(call require_env_vars_in_file)
 	$(call print_exports_from_env)
+
+install-githooks:
+	git config core.hooksPath .githooks
+	echo "Git hooks path configured: $$(git config --get core.hooksPath)"

@@ -1,0 +1,21 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "kiwi-backend.fullname" . }}
+  labels:
+    {{- include "kiwi-backend.labels" . | nindent 4 }}
+spec:
+  type: {{ .Values.service.type }}
+  ports:
+    - port: {{ .Values.service.port }}
+      targetPort: http
+      protocol: TCP
+      name: http
+    {{- if .Values.service.exposeGlowroot }}
+    - port: {{ .Values.service.glowrootPort }}
+      targetPort: glowroot
+      protocol: TCP
+      name: glowroot
+    {{- end }}
+  selector:
+    {{- include "kiwi-backend.selectorLabels" . | nindent 4 }}

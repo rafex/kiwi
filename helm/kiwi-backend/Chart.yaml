@@ -1,0 +1,6 @@
+apiVersion: v2
+name: kiwi-backend
+description: Helm chart para desplegar Kiwi backend (Jetty + Glowroot)
+type: application
+version: 0.1.0
+appVersion: "latest"

@@ -1,0 +1,40 @@
+---
+name: CI/CD
+
+on:
+  workflow_dispatch:
+    inputs:
+      logLevel:
+        description: 'Log level'
+        required: true
+        default: 'warning'
+  push:
+    branches:
+      - main
+    paths:
+      - 'charts/juego-aviones/**'
+      - 'juego-aviones/**'
+      - '.github/workflows/ci-cd.yml'
+
+
+jobs:
+  deploy-front:
+    runs-on: ubuntu-latest
+    env:
+      K3S_NAMESPACE: mvps  # Namespace donde se creará el secreto
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Configure Kubeconfig
+        run: |
+          mkdir -p "$HOME/.kube"
+          echo "${{ secrets.KUBE_CONFIG_DATA }}" | base64 -d > "$HOME/.kube/config"
+
+      - name: Install Helm
+        uses: azure/setup-helm@v4
+
+      - name: Deploy juego-aviones chart
+        run: |
+          helm upgrade --install juego-aviones ./charts/juego-aviones \
+            --namespace ${{ env.K3S_NAMESPACE }}

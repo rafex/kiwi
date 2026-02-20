@@ -1,0 +1,89 @@
+replicaCount: 2
+
+image:
+  repository: ghcr.io/rafex/kiwi-jetty-backend
+  pullPolicy: IfNotPresent
+  tag: "latest"
+
+imagePullSecrets: []
+nameOverride: ""
+fullnameOverride: ""
+
+serviceAccount:
+  create: true
+  automount: true
+  annotations: {}
+  name: ""
+
+podAnnotations: {}
+podLabels: {}
+
+podSecurityContext: {}
+
+podSecurityContext:
+  runAsNonRoot: true
+  runAsUser: 1000
+  runAsGroup: 1000
+  fsGroup: 1000
+  seccompProfile:
+    type: RuntimeDefault
+
+securityContext:
+  allowPrivilegeEscalation: false
+  readOnlyRootFilesystem: true
+  capabilities:
+    drop:
+      - ALL
+
+service:
+  type: ClusterIP
+  port: 8080
+  glowrootPort: 4000
+  exposeGlowroot: false
+
+resources:
+  requests:
+    cpu: 200m
+    memory: 256Mi
+  limits:
+    cpu: "1"
+    memory: 1Gi
+
+livenessProbe:
+  httpGet:
+    path: /health
+    port: http
+readinessProbe:
+  httpGet:
+    path: /health
+    port: http
+
+autoscaling:
+  enabled: true
+  minReplicas: 2
+  maxReplicas: 6
+  targetCPUUtilizationPercentage: 75
+
+env:
+  JWT_ISS: dev.rafex.kiwi
+  JWT_AUD: kiwi-backend
+  JWT_TTL_SECONDS: "3600"
+  ENVIRONMENT: production
+
+secretEnv:
+  DB_URL: ""
+  DB_USER: ""
+  DB_PASSWORD: ""
+  JWT_SECRET: ""
+  KIWI_USER: ""
+  KIWI_PASS: ""
+
+existingSecret: kiwi-backend-secrets
+
+extraEnv: []
+
+nodeSelector: {}
+
+tolerations: []
+
+affinity: {}

@@ -1,0 +1,5 @@
+1. Nombre del release: {{ .Release.Name }}
+2. Servicio:
+   kubectl get svc -n {{ .Release.Namespace }} {{ include "kiwi-backend.fullname" . }}
+3. Logs:
+   kubectl logs -n {{ .Release.Namespace }} deploy/{{ include "kiwi-backend.fullname" . }} -f

@@ -18,6 +18,7 @@ Este proyecto está licenciado bajo **Apache License 2.0**.
 
 - `backend/java`: backend Java multi-módulo (HTTP Jetty, seguridad JWT, observabilidad con Glowroot).
 - `db`: migraciones y utilidades Flyway para esquema y seguridad de base de datos.
+- `helm/kiwi-backend`: chart Helm para desplegar la imagen publicada en GHCR.
 - `script/test`: scripts shell para pruebas rápidas de endpoints.
 - `Makefile` raíz: utilidades para validar/exportar variables desde `.env`.
 
@@ -56,6 +57,7 @@ Este proyecto está licenciado bajo **Apache License 2.0**.
 - [README del backend Java](backend/java/README.md)
 - [Documentación técnica Java](backend/java/docs/README.md)
 - [README de base de datos (Flyway)](db/README.md)
+- [README del chart Helm](helm/kiwi-backend/README.md)
 
 ### Backend Java (módulos)
 

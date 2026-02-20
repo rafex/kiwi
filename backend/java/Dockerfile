@@ -10,10 +10,11 @@ RUN apt-get update && apt-get install -y --no-install-recommends ca-certificates
 
 WORKDIR /app
 
-
+RUN mkdir -p /app/glowroot /app/glowroot/tmp /app/glowroot/logs /app/glowroot/data
 COPY observability/glowroot /app/glowroot
 
 RUN chown -R kiwi:kiwi /app/glowroot
+
 # Copy the fat JAR produced by the build
 # Ensure you run 'make build' before building this image so target/ exists
 COPY kiwi-parent/kiwi-transport-jetty/target/kiwi-transport-jetty-0.1.0-SNAPSHOT-jar-with-dependencies.jar /app/app.jar

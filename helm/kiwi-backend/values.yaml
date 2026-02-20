@@ -34,7 +34,7 @@ service:
   type: ClusterIP
   port: 8080
   glowrootPort: 4000
-  exposeGlowroot: false
+  exposeGlowroot: true
 
 resources:
   requests:
@@ -47,11 +47,17 @@ resources:
 livenessProbe:
   httpGet:
     path: /health
-    port: http
+    port: 8080
 readinessProbe:
   httpGet:
     path: /health
-    port: http
+    port: 8080
+startupProbe:
+  httpGet:
+    path: /health
+    port: 8080
+  failureThreshold: 30
+  periodSeconds: 10
 
 autoscaling:
   enabled: true
@@ -95,4 +101,9 @@ ingress:
       paths:
         - path: /
           pathType: Prefix
+  glowroot:
+    enabled: true
+    host: kiwi.v1.rafex.cloud
+    path: /glowroot
+    pathType: Prefix
   tls: []

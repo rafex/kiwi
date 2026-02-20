@@ -40,4 +40,16 @@ spec:
                   number: {{ $.Values.service.port }}
           {{- end }}
     {{- end }}
+    {{- if and .Values.ingress.glowroot.enabled .Values.service.exposeGlowroot }}
+    - host: {{ .Values.ingress.glowroot.host | quote }}
+      http:
+        paths:
+          - path: {{ .Values.ingress.glowroot.path }}
+            pathType: {{ .Values.ingress.glowroot.pathType }}
+            backend:
+              service:
+                name: {{ include "kiwi-backend.fullname" . }}
+                port:
+                  number: {{ .Values.service.glowrootPort }}
+    {{- end }}
 {{- end }}

@@ -103,7 +103,7 @@ ingress:
           pathType: Prefix
   glowroot:
     enabled: true
-    host: glowroot.kiwi.v1.rafex.cloud
+    host: kiwi-glowroot.v1.rafex.cloud
     path: /
     pathType: Prefix
   tls: []

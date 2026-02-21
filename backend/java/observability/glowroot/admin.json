@@ -1,8 +1,7 @@
 {
   "users": [
     {
-      "username": "rafex",
-      "passwordHash": "0b6HsrQLR5jVVHG53LdF2w:HEpqjyYG/iPvnE6rrhQp2g:500000",
+      "username": "anonymous",
       "roles": [
         "Administrator"
       ]

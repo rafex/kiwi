@@ -34,7 +34,7 @@ service:
   type: ClusterIP
   port: 8080
   glowrootPort: 4000
-  exposeGlowroot: true
+  exposeGlowroot: false
 
 resources:
   requests:

@@ -25,7 +25,7 @@ podSecurityContext:
 
 securityContext:
   allowPrivilegeEscalation: false
-  readOnlyRootFilesystem: false
+  readOnlyRootFilesystem: true
   capabilities:
     drop:
       - ALL
@@ -82,6 +82,18 @@ secretEnv:
 existingSecret: kiwi-backend-secrets
 
 extraEnv: []
+
+glowroot:
+  persistence:
+    enabled: true
+
+volumeMounts:
+  - name: glowroot-data
+    mountPath: /app/glowroot/data
+
+volumes:
+  - name: glowroot-data
+    emptyDir: {}
 
 nodeSelector: {}
 

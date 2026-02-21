@@ -1,5 +1,8 @@
 # Kiwi
 
+[![Java Build (Makefile)](https://github.com/rafex/kiwi/actions/workflows/build_backend_java.yml/badge.svg)](https://github.com/rafex/kiwi/actions/workflows/build_backend_java.yml)
+[![Build and Publish Container](https://github.com/rafex/kiwi/actions/workflows/publish_container.yml/badge.svg)](https://github.com/rafex/kiwi/actions/workflows/publish_container.yml)
+
 Kiwi es un sistema de almacenamiento genérico orientado a registrar objetos, ubicaciones y eventos, con backend Java modular y persistencia en PostgreSQL gestionada con Flyway.
 
 ## Objetivo del proyecto

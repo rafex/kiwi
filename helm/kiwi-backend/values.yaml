@@ -90,12 +90,16 @@ glowroot:
 volumes:
   - name: tmp
     emptyDir: {}
+  - name: glowroot-logs
+    emptyDir: {}
   - name: glowroot-tmp
     emptyDir: {}
   - name: glowroot-data
     emptyDir: {}
 
 volumeMounts:
+  - name: glowroot-logs
+    mountPath: /app/glowroot/logs
   - name: glowroot-tmp
     mountPath: /app/glowroot/tmp
   - name: glowroot-data

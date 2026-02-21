@@ -87,13 +87,21 @@ glowroot:
   persistence:
     enabled: true
 
-volumeMounts:
-  - name: glowroot-data
-    mountPath: /app/glowroot/data
-
 volumes:
+  - name: tmp
+    emptyDir: {}
+  - name: glowroot-tmp
+    emptyDir: {}
   - name: glowroot-data
     emptyDir: {}
+
+volumeMounts:
+  - name: glowroot-tmp
+    mountPath: /app/glowroot/tmp
+  - name: glowroot-data
+    mountPath: /app/glowroot/data
+  - name: tmp
+    mountPath: /tmp
 
 nodeSelector: {}
 

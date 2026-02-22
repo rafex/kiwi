@@ -13,11 +13,12 @@ PORT ?= 8080
 CONTAINER_NAME ?= kiwi-jetty-run
 CONTAINER_TOOL ?= podman
 
-.PHONY: help exec-jetty build build-without-tests agent sync-meta native run-native clean-native glowroot-jetty glowroot-jetty-build
+.PHONY: help exec-jetty build build-without-tests quality agent sync-meta native run-native clean-native glowroot-jetty glowroot-jetty-build
 
 help:
 	@echo "Targets:"
 	@echo "  make build        -> mvn package (skipTests)"
+	@echo "  make quality      -> ./mvnw -Pquality clean verify"
 	@echo "  make agent        -> run app with native-image-agent (generates $(GRAAL_CONFIG_DIR)/)"
 	@echo "  make sync-meta    -> copy metadata/config into $(RES_DIR) and rebuild jar"
 	@echo "  make native       -> build native image $(BIN)"
@@ -49,6 +50,9 @@ build:
 
 build-without-tests:
 	$(MVN) -DskipTests clean package
+
+quality:
+	$(MVN) -Pquality clean verify
 
 agent: build-without-tests
 	rm -rf "$(GRAAL_CONFIG_DIR)"

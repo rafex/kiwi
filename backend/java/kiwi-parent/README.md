@@ -47,3 +47,19 @@ Comandos principales:
 1. `make build`
 2. `make exec-jetty` (desarrollo JVM) **o** `make native` (binario nativo)
 3. `make image` y `make run-image` para despliegue local con contenedor
+
+## Calidad de código y seguridad
+
+El parent incluye soporte para:
+
+- **ArchUnit** (vía dependencia de test `archunit-junit5`)
+- **Spotless** (formato)
+- **Checkstyle** (estático)
+- **OWASP Dependency Check** (vulnerabilidades en dependencias)
+
+Ejecución recomendada:
+
+- Perfil de calidad completo:
+	- `./mvnw -Pquality verify`
+- Formatear automáticamente:
+	- `./mvnw spotless:apply`

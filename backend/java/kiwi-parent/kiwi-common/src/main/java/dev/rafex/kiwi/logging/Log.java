@@ -1,3 +1,18 @@
+/*
+ * Copyright 2026 Raúl Eduardo González Argote
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package dev.rafex.kiwi.logging;
 
 import java.util.logging.Level;
@@ -5,153 +20,153 @@ import java.util.logging.Logger;
 
 public final class Log {
 
-    private Log() {
-    }
+	private Log() {
+	}
 
-    private static final ClassValue<Logger> LOGGERS = new ClassValue<>() {
-        @Override
-        protected Logger computeValue(final Class<?> clazz) {
-            return Logger.getLogger(clazz.getName());
-        }
-    };
+	private static final ClassValue<Logger> LOGGERS = new ClassValue<>() {
+		@Override
+		protected Logger computeValue(final Class<?> clazz) {
+			return Logger.getLogger(clazz.getName());
+		}
+	};
 
-    private static Logger get(final Class<?> clazz) {
-        return LOGGERS.get(clazz);
-    }
+	private static Logger get(final Class<?> clazz) {
+		return LOGGERS.get(clazz);
+	}
 
-    /* ===================== INFO ===================== */
+	/* ===================== INFO ===================== */
 
-    public static void info(final Class<?> clazz, final String msg) {
-        final var log = get(clazz);
-        if (!log.isLoggable(Level.INFO)) {
-            return;
-        }
-        log.info(msg);
-    }
+	public static void info(final Class<?> clazz, final String msg) {
+		final var log = get(clazz);
+		if (!log.isLoggable(Level.INFO)) {
+			return;
+		}
+		log.info(msg);
+	}
 
-    public static void info(final Class<?> clazz, final String msg, final Object... args) {
-        final var log = get(clazz);
-        if (!log.isLoggable(Level.INFO)) {
-            return;
-        }
-        log.info(format(msg, args));
-    }
+	public static void info(final Class<?> clazz, final String msg, final Object... args) {
+		final var log = get(clazz);
+		if (!log.isLoggable(Level.INFO)) {
+			return;
+		}
+		log.info(format(msg, args));
+	}
 
-    public static void info(final Class<?> clazz, final Throwable t, final String msg, final Object... args) {
-        final var log = get(clazz);
-        if (!log.isLoggable(Level.INFO)) {
-            return;
-        }
-        log.log(Level.INFO, format(msg, args), t);
-    }
+	public static void info(final Class<?> clazz, final Throwable t, final String msg, final Object... args) {
+		final var log = get(clazz);
+		if (!log.isLoggable(Level.INFO)) {
+			return;
+		}
+		log.log(Level.INFO, format(msg, args), t);
+	}
 
-    /* ===================== WARN ===================== */
+	/* ===================== WARN ===================== */
 
-    public static void warn(final Class<?> clazz, final String msg) {
-        final var log = get(clazz);
-        if (!log.isLoggable(Level.WARNING)) {
-            return;
-        }
-        log.warning(msg);
-    }
+	public static void warn(final Class<?> clazz, final String msg) {
+		final var log = get(clazz);
+		if (!log.isLoggable(Level.WARNING)) {
+			return;
+		}
+		log.warning(msg);
+	}
 
-    public static void warn(final Class<?> clazz, final String msg, final Object... args) {
-        final var log = get(clazz);
-        if (!log.isLoggable(Level.WARNING)) {
-            return;
-        }
-        log.warning(format(msg, args));
-    }
+	public static void warn(final Class<?> clazz, final String msg, final Object... args) {
+		final var log = get(clazz);
+		if (!log.isLoggable(Level.WARNING)) {
+			return;
+		}
+		log.warning(format(msg, args));
+	}
 
-    public static void warn(final Class<?> clazz, final Throwable t, final String msg, final Object... args) {
-        final var log = get(clazz);
-        if (!log.isLoggable(Level.WARNING)) {
-            return;
-        }
-        log.log(Level.WARNING, format(msg, args), t);
-    }
+	public static void warn(final Class<?> clazz, final Throwable t, final String msg, final Object... args) {
+		final var log = get(clazz);
+		if (!log.isLoggable(Level.WARNING)) {
+			return;
+		}
+		log.log(Level.WARNING, format(msg, args), t);
+	}
 
-    /* ===================== ERROR ===================== */
+	/* ===================== ERROR ===================== */
 
-    public static void error(final Class<?> clazz, final String msg) {
-        final var log = get(clazz);
-        if (!log.isLoggable(Level.SEVERE)) {
-            return;
-        }
-        log.severe(msg);
-    }
+	public static void error(final Class<?> clazz, final String msg) {
+		final var log = get(clazz);
+		if (!log.isLoggable(Level.SEVERE)) {
+			return;
+		}
+		log.severe(msg);
+	}
 
-    public static void error(final Class<?> clazz, final String msg, final Object... args) {
-        final var log = get(clazz);
-        if (!log.isLoggable(Level.SEVERE)) {
-            return;
-        }
-        log.severe(format(msg, args));
-    }
+	public static void error(final Class<?> clazz, final String msg, final Object... args) {
+		final var log = get(clazz);
+		if (!log.isLoggable(Level.SEVERE)) {
+			return;
+		}
+		log.severe(format(msg, args));
+	}
 
-    public static void error(final Class<?> clazz, final String msg, final Throwable t) {
-        final var log = get(clazz);
-        if (!log.isLoggable(Level.SEVERE)) {
-            return;
-        }
-        log.log(Level.SEVERE, msg, t);
-    }
+	public static void error(final Class<?> clazz, final String msg, final Throwable t) {
+		final var log = get(clazz);
+		if (!log.isLoggable(Level.SEVERE)) {
+			return;
+		}
+		log.log(Level.SEVERE, msg, t);
+	}
 
-    /**
-     * Firma clave para tu KiwiError: Log.error(getClass(), cause, "KiwiError [{}]:
-     * {}", code, message);
-     */
-    public static void error(final Class<?> clazz, final Throwable t, final String msg, final Object... args) {
-        final var log = get(clazz);
-        if (!log.isLoggable(Level.SEVERE)) {
-            return;
-        }
-        log.log(Level.SEVERE, format(msg, args), t);
-    }
+	/**
+	 * Firma clave para tu KiwiError: Log.error(getClass(), cause, "KiwiError [{}]:
+	 * {}", code, message);
+	 */
+	public static void error(final Class<?> clazz, final Throwable t, final String msg, final Object... args) {
+		final var log = get(clazz);
+		if (!log.isLoggable(Level.SEVERE)) {
+			return;
+		}
+		log.log(Level.SEVERE, format(msg, args), t);
+	}
 
-    /* ===================== DEBUG ===================== */
+	/* ===================== DEBUG ===================== */
 
-    public static void debug(final Class<?> clazz, final String msg) {
-        final var log = get(clazz);
-        if (!log.isLoggable(Level.FINE)) {
-            return;
-        }
-        log.fine(msg);
-    }
+	public static void debug(final Class<?> clazz, final String msg) {
+		final var log = get(clazz);
+		if (!log.isLoggable(Level.FINE)) {
+			return;
+		}
+		log.fine(msg);
+	}
 
-    public static void debug(final Class<?> clazz, final String msg, final Object... args) {
-        final var log = get(clazz);
-        if (!log.isLoggable(Level.FINE)) {
-            return;
-        }
-        log.fine(format(msg, args));
-    }
+	public static void debug(final Class<?> clazz, final String msg, final Object... args) {
+		final var log = get(clazz);
+		if (!log.isLoggable(Level.FINE)) {
+			return;
+		}
+		log.fine(format(msg, args));
+	}
 
-    public static void debug(final Class<?> clazz, final Throwable t, final String msg, final Object... args) {
-        final var log = get(clazz);
-        if (!log.isLoggable(Level.FINE)) {
-            return;
-        }
-        log.log(Level.FINE, format(msg, args), t);
-    }
+	public static void debug(final Class<?> clazz, final Throwable t, final String msg, final Object... args) {
+		final var log = get(clazz);
+		if (!log.isLoggable(Level.FINE)) {
+			return;
+		}
+		log.log(Level.FINE, format(msg, args), t);
+	}
 
-    /* ===================== INTERNAL FORMAT ===================== */
+	/* ===================== INTERNAL FORMAT ===================== */
 
-    private static String format(final String message, final Object... args) {
-        if (args == null || args.length == 0) {
-            return message;
-        }
-        final var sb = new StringBuilder(message.length() + 64);
-        var argIdx = 0;
-        var start = 0;
-        int idx;
-        while ((idx = message.indexOf("{}", start)) >= 0 && argIdx < args.length) {
-            sb.append(message, start, idx);
-            sb.append(args[argIdx] == null ? "null" : args[argIdx].toString());
-            start = idx + 2;
-            argIdx++;
-        }
-        sb.append(message, start, message.length());
-        return sb.toString();
-    }
+	private static String format(final String message, final Object... args) {
+		if (args == null || args.length == 0) {
+			return message;
+		}
+		final var sb = new StringBuilder(message.length() + 64);
+		var argIdx = 0;
+		var start = 0;
+		int idx;
+		while ((idx = message.indexOf("{}", start)) >= 0 && argIdx < args.length) {
+			sb.append(message, start, idx);
+			sb.append(args[argIdx] == null ? "null" : args[argIdx].toString());
+			start = idx + 2;
+			argIdx++;
+		}
+		sb.append(message, start, message.length());
+		return sb.toString();
+	}
 }

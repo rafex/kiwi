@@ -46,12 +46,14 @@ glowroot-jetty-build: build
 	  --log=DEBUG
 
 build:
+	$(MVN) spotless:apply
 	$(MVN) clean package
 
 build-without-tests:
 	$(MVN) -DskipTests clean package
 
 quality:
+	$(MVN) spotless:apply
 	$(MVN) -Pquality clean verify
 
 agent: build-without-tests

@@ -20,23 +20,38 @@ CREATE OR REPLACE FUNCTION api_create_object(
   p_location_id UUID
 )
 RETURNS VOID AS $$
+DECLARE
+  v_location_fk BIGINT;
+  v_object_fk BIGINT;
 BEGIN
+  IF p_location_id IS NOT NULL THEN
+    SELECT id
+    INTO v_location_fk
+    FROM locations
+    WHERE location_id = p_location_id;
+
+    IF v_location_fk IS NULL THEN
+      RAISE EXCEPTION 'location_id not found: %', p_location_id;
+    END IF;
+  END IF;
+
   INSERT INTO objects (
     object_id, name, description, type,
-    tags, metadata, current_location_id
+    tags, metadata, current_location_fk
   )
   VALUES (
     p_object_id, p_name, p_description, p_type,
-    p_tags, p_metadata, p_location_id
-  );
+    p_tags, p_metadata, v_location_fk
+  )
+  RETURNING id INTO v_object_fk;
 
   PERFORM update_object_search_vector(p_object_id);
 
   INSERT INTO object_events (
-    event_id, object_id, event_type, to_location_id
+    object_fk, event_type, to_location_fk
   )
   VALUES (
-    gen_random_uuid(), p_object_id, 'CREATED', p_location_id
+    v_object_fk, 'CREATED', v_location_fk
   );
 END;
 $$ LANGUAGE plpgsql;
@@ -47,31 +62,46 @@ CREATE OR REPLACE FUNCTION api_move_object(
 )
 RETURNS VOID AS $$
 DECLARE
-  v_old_location UUID;
+  v_object_fk BIGINT;
+  v_old_location_fk BIGINT;
+  v_new_location_fk BIGINT;
 BEGIN
-  SELECT current_location_id
-  INTO v_old_location
+  SELECT id, current_location_fk
+  INTO v_object_fk, v_old_location_fk
   FROM objects
   WHERE object_id = p_object_id;
 
+  IF v_object_fk IS NULL THEN
+    RAISE EXCEPTION 'object_id not found: %', p_object_id;
+  END IF;
+
+  IF p_new_location_id IS NOT NULL THEN
+    SELECT id
+    INTO v_new_location_fk
+    FROM locations
+    WHERE location_id = p_new_location_id;
+
+    IF v_new_location_fk IS NULL THEN
+      RAISE EXCEPTION 'new location_id not found: %', p_new_location_id;
+    END IF;
+  END IF;
+
   UPDATE objects
-  SET current_location_id = p_new_location_id,
+  SET current_location_fk = v_new_location_fk,
       updated_at = now()
-  WHERE object_id = p_object_id;
+  WHERE id = v_object_fk;
 
   INSERT INTO object_events (
-    event_id,
-    object_id,
+    object_fk,
     event_type,
-    from_location_id,
-    to_location_id
+    from_location_fk,
+    to_location_fk
   )
   VALUES (
-    gen_random_uuid(),
-    p_object_id,
+    v_object_fk,
     'MOVED',
-    v_old_location,
-    p_new_location_id
+    v_old_location_fk,
+    v_new_location_fk
   );
 END;
 $$ LANGUAGE plpgsql;
@@ -81,18 +111,28 @@ CREATE OR REPLACE FUNCTION api_update_tags(
   p_tags TEXT[]
 )
 RETURNS VOID AS $$
+DECLARE
+  v_object_fk BIGINT;
 BEGIN
+  SELECT id
+  INTO v_object_fk
+  FROM objects
+  WHERE object_id = p_object_id;
+
+  IF v_object_fk IS NULL THEN
+    RAISE EXCEPTION 'object_id not found: %', p_object_id;
+  END IF;
+
   UPDATE objects
   SET tags = p_tags,
       updated_at = now()
-  WHERE object_id = p_object_id;
+  WHERE id = v_object_fk;
 
   INSERT INTO object_events (
-    event_id, object_id, event_type, payload
+    object_fk, event_type, payload
   )
   VALUES (
-    gen_random_uuid(),
-    p_object_id,
+    v_object_fk,
     'TAGGED',
     jsonb_build_object('tags', p_tags)
   );
@@ -105,21 +145,31 @@ CREATE OR REPLACE FUNCTION api_update_text(
   p_description TEXT
 )
 RETURNS VOID AS $$
+DECLARE
+  v_object_fk BIGINT;
 BEGIN
+  SELECT id
+  INTO v_object_fk
+  FROM objects
+  WHERE object_id = p_object_id;
+
+  IF v_object_fk IS NULL THEN
+    RAISE EXCEPTION 'object_id not found: %', p_object_id;
+  END IF;
+
   UPDATE objects
   SET name = p_name,
       description = p_description,
       updated_at = now()
-  WHERE object_id = p_object_id;
+  WHERE id = v_object_fk;
 
   PERFORM update_object_search_vector(p_object_id);
 
   INSERT INTO object_events (
-    event_id, object_id, event_type
+    object_fk, event_type
   )
   VALUES (
-    gen_random_uuid(),
-    p_object_id,
+    v_object_fk,
     'UPDATED'
   );
 END;
@@ -130,18 +180,28 @@ CREATE OR REPLACE FUNCTION api_update_metadata(
   p_metadata JSONB
 )
 RETURNS VOID AS $$
+DECLARE
+  v_object_fk BIGINT;
 BEGIN
+  SELECT id
+  INTO v_object_fk
+  FROM objects
+  WHERE object_id = p_object_id;
+
+  IF v_object_fk IS NULL THEN
+    RAISE EXCEPTION 'object_id not found: %', p_object_id;
+  END IF;
+
   UPDATE objects
   SET metadata = p_metadata,
       updated_at = now()
-  WHERE object_id = p_object_id;
+  WHERE id = v_object_fk;
 
   INSERT INTO object_events (
-    event_id, object_id, event_type, payload
+    object_fk, event_type, payload
   )
   VALUES (
-    gen_random_uuid(),
-    p_object_id,
+    v_object_fk,
     'METADATA_UPDATED',
     jsonb_build_object('metadata', p_metadata)
   );
@@ -169,7 +229,12 @@ BEGIN
        websearch_to_tsquery('spanish', p_query) q
   WHERE o.search_vector @@ q
     AND (p_tags IS NULL OR o.tags @> p_tags)
-    AND (p_location_id IS NULL OR o.current_location_id = p_location_id)
+    AND (
+      p_location_id IS NULL
+      OR o.current_location_fk = (
+        SELECT l.id FROM locations l WHERE l.location_id = p_location_id
+      )
+    )
   ORDER BY rank DESC
   LIMIT p_limit;
 END;
@@ -203,8 +268,54 @@ CREATE OR REPLACE FUNCTION api_create_location(
   p_parent_location_id UUID DEFAULT NULL
 )
 RETURNS VOID AS $$
+DECLARE
+  v_parent_fk BIGINT;
 BEGIN
-  INSERT INTO locations (location_id, name, parent_location_id)
-  VALUES (p_location_id, p_name, p_parent_location_id);
+  IF p_parent_location_id IS NOT NULL THEN
+    SELECT id
+    INTO v_parent_fk
+    FROM locations
+    WHERE location_id = p_parent_location_id;
+
+    IF v_parent_fk IS NULL THEN
+      RAISE EXCEPTION 'parent_location_id not found: %', p_parent_location_id;
+    END IF;
+  END IF;
+
+  INSERT INTO locations (location_id, name, parent_id)
+  VALUES (p_location_id, p_name, v_parent_fk);
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE OR REPLACE FUNCTION api_assign_role_to_user(
+  p_user_id UUID,
+  p_role_id UUID
+)
+RETURNS VOID AS $$
+BEGIN
+  INSERT INTO user_roles(user_fk, role_fk)
+  SELECT u.id, r.id
+  FROM users u
+  JOIN roles r ON r.role_id = p_role_id
+  WHERE u.user_id = p_user_id
+  ON CONFLICT (user_fk, role_fk) DO NOTHING;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE OR REPLACE FUNCTION api_find_role_names_by_user_id(
+  p_user_id UUID
+)
+RETURNS TABLE (
+  role_name TEXT
+) AS $$
+BEGIN
+  RETURN QUERY
+  SELECT r.name
+  FROM users u
+  JOIN user_roles ur ON ur.user_fk = u.id
+  JOIN roles r ON ur.role_fk = r.id
+  WHERE u.user_id = p_user_id
+    AND r.status = 'active'
+  ORDER BY r.name;
 END;
 $$ LANGUAGE plpgsql;

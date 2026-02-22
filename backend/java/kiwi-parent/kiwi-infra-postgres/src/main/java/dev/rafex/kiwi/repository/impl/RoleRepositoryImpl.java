@@ -92,9 +92,7 @@ public class RoleRepositoryImpl implements RoleRepository {
     @Override
     public void assignRoleToUser(final UUID userId, final UUID roleId) throws SQLException {
         final var sql = """
-                INSERT INTO user_roles(user_id, role_id)
-                VALUES (?, ?)
-                ON CONFLICT (user_id, role_id) DO NOTHING
+                SELECT api_assign_role_to_user(?::uuid, ?::uuid)
                 """;
 
         try (var c = ds.getConnection(); var ps = c.prepareStatement(sql)) {

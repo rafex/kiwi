@@ -311,6 +311,7 @@
 					<artifactId>dependency-check-maven</artifactId>
 					<version>${dependency.check.maven.version}</version>
 					<configuration>
+						<nvdApiKey>${env.NVD_API_KEY}</nvdApiKey>
 						<failBuildOnCVSS>11</failBuildOnCVSS>
 						<formats>
 							<format>HTML</format>

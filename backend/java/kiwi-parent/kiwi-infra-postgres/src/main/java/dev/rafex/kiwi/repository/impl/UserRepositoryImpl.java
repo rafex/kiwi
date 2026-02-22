@@ -70,12 +70,8 @@ public class UserRepositoryImpl implements UserRepository {
     @Override
     public List<String> findRoleNamesByUserId(final UUID userId) throws SQLException {
         final var sql = """
-                SELECT r.name
-                FROM roles r
-                JOIN user_roles ur ON ur.role_id = r.role_id
-                WHERE ur.user_id = ?
-                  AND r.status = 'active'
-                ORDER BY r.name
+                                SELECT role_name
+                                FROM api_find_role_names_by_user_id(?::uuid)
                 """;
 
         try (var c = ds.getConnection(); var ps = c.prepareStatement(sql)) {

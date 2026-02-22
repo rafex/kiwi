@@ -49,8 +49,11 @@ GRANT EXECUTE ON FUNCTION
   api_move_object(uuid, uuid),
   api_update_tags(uuid, text[]),
   api_update_text(uuid, text, text),
+  api_update_metadata(uuid, jsonb),
   api_search_objects(text, text[], uuid, int),
-  api_fuzzy_search(text, int)
+  api_fuzzy_search(text, int),
+  api_assign_role_to_user(uuid, uuid),
+  api_find_role_names_by_user_id(uuid)
 TO kiwi_app;
 
 -- ============================

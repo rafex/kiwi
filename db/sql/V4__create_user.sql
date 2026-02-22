@@ -32,11 +32,7 @@ GRANT USAGE ON SCHEMA public TO kiwi_app;
 -- Tablas (lectura)
 -- ============================
 
-GRANT SELECT ON TABLE
-  objects,
-  locations,
-  object_events
-TO kiwi_app;
+GRANT SELECT ON ALL TABLES IN SCHEMA public TO kiwi_app;
 
 -- ============================
 -- Funciones API (ejecución)

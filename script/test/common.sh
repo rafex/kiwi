@@ -8,7 +8,8 @@ command -v jq >/dev/null 2>&1 || {
     exit 1
 }
 
-: "${BASE_URL:=https://kiwi.v1.rafex.cloud/}"
+#: "${BASE_URL:=https://kiwi.v1.rafex.cloud/}"
+: "${BASE_URL:=http://localhost:8080/}"
 
 CURL_COMMON="curl --silent --show-error --header 'Accept: application/json'"
 TOKEN="${TOKEN:-}"

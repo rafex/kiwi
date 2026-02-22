@@ -99,7 +99,7 @@ public class RoleRepositoryImpl implements RoleRepository {
 
             ps.setObject(1, userId);
             ps.setObject(2, roleId);
-            ps.executeUpdate();
+            ps.execute();
         }
     }
 

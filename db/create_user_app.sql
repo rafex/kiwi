@@ -9,7 +9,7 @@ BEGIN
   ) THEN
     CREATE ROLE kiwi_app
       LOGIN
-      PASSWORD 'CHANGE_ME_SECURE_PASSWORD'
+      PASSWORD 'lkfkld9P.uyzs2'
       NOSUPERUSER
       NOCREATEDB
       NOCREATEROLE

@@ -2,9 +2,15 @@ name: Deploy Kiwi Backend
 
 on:
   workflow_dispatch:
+    inputs:
+      version_tag:
+        description: 'Tag de imagen a desplegar (opcional, formato vN.YYYYmmDD)'
+        required: false
+        default: ''
+        type: string
   push:
-    branches:
-      - main
+    tags:
+      - 'v*.*'
     paths:
       - 'helm/kiwi-backend/**'
       - '.github/workflows/deploy.yml'
@@ -17,7 +23,6 @@ jobs:
       RELEASE_NAME: kiwi-backend
       CHART_PATH: ./helm/kiwi-backend
       IMAGE_REPOSITORY: ghcr.io/rafex/kiwi-jetty-backend
-      IMAGE_TAG: latest
       EXISTING_SECRET: kiwi-backend-secrets
 
     steps:
@@ -32,6 +37,26 @@ jobs:
 
       - name: Install Helm
         uses: azure/setup-helm@v4
+
+      - name: Resolve deploy image tag
+        id: deploy_tag
+        run: |
+          if [ "${GITHUB_EVENT_NAME}" = "workflow_dispatch" ] && [ -n "${{ github.event.inputs.version_tag }}" ]; then
+            IMAGE_TAG="${{ github.event.inputs.version_tag }}"
+          elif [ "${GITHUB_REF_TYPE}" = "tag" ]; then
+            IMAGE_TAG="${GITHUB_REF_NAME}"
+          else
+            IMAGE_TAG="latest"
+          fi
+
+          if [ "$IMAGE_TAG" != "latest" ] && ! echo "$IMAGE_TAG" | grep -Eq '^v[0-9]+\.[0-9]{8}$'; then
+            echo "Invalid deploy tag format: $IMAGE_TAG"
+            echo "Expected format: vN.YYYYmmDD (examples: v1.20260222, v2.20260222)"
+            exit 1
+          fi
+
+          echo "value=$IMAGE_TAG" >> "$GITHUB_OUTPUT"
+          echo "Deploy image: ${IMAGE_REPOSITORY}:$IMAGE_TAG"
 
       - name: Ensure namespace exists
         run: |
@@ -50,10 +75,15 @@ jobs:
           helm upgrade --install "$RELEASE_NAME" "$CHART_PATH" \
             --namespace "$K3S_NAMESPACE" \
             --set image.repository="$IMAGE_REPOSITORY" \
-            --set image.tag="$IMAGE_TAG" \
+            --set image.tag="${{ steps.deploy_tag.outputs.value }}" \
             --set existingSecret="$EXISTING_SECRET" \
             --wait --timeout 5m
 
       - name: Show rollout status
         run: |
           kubectl -n "$K3S_NAMESPACE" rollout status deployment/"$RELEASE_NAME" --timeout=180s
+
+      - name: Print deployed image reference
+        run: |
+          IMAGE_URL="${IMAGE_REPOSITORY}:${{ steps.deploy_tag.outputs.value }}"
+          echo "Deployed image URL: $IMAGE_URL"

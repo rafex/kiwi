@@ -92,3 +92,21 @@ Scripts disponibles en [script/test](script/test):
 - `create_object.sh`
 - `search.sh`
 - `fuzzy.sh`
+
+## Publicación de contenedor (GHCR)
+
+La publicación del backend en GitHub Actions usa versionado por tag Git con formato:
+
+- `vN.YYYYmmDD` (ejemplos: `v1.20260222`, `v2.20260222`)
+
+Comandos para crear y publicar una versión:
+
+```bash
+	git tag v2.$(date +%Y%m%d)
+git push origin --tags
+```
+
+La imagen se publica en `ghcr.io/<owner>/kiwi-jetty-backend` con:
+
+- tag de versión (`vN.YYYYmmDD`)
+- tag de commit (`<sha>`)

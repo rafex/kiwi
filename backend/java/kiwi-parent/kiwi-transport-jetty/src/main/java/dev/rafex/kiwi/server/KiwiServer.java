@@ -89,7 +89,7 @@ public final class KiwiServer {
 		// Wrapper: /hello público, /objects y /locations protegidos (ajústalo a tu
 		// gusto)
 		final var auth = new JwtAuthHandler(routes, jwt).publicPath("POST", "/admin/users")
-				.publicPath("GET", "/auth/login").publicPath("GET", "/hello").publicPath("GET", "/health")
+				.publicPath("POST", "/auth/login").publicPath("GET", "/hello").publicPath("GET", "/health")
 				.protectedPrefix("/objects/*").protectedPrefix("/locations/*");
 
 		server.setHandler(new GlowrootNamingHandler(auth));

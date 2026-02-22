@@ -87,7 +87,7 @@ public final class CreateUserHandler extends Handler.Abstract.NonBlocking {
 				return true;
 			}
 
-			if (authObj instanceof final JwtService.AuthContext ctx && !ctx.roles().contains("admin")) {
+			if (authObj instanceof final JwtService.AuthContext ctx && !ctx.roles().contains("ADMIN")) {
 				HttpUtil.forbidden(response, callback, "missing_admin_role");
 				return true;
 			}

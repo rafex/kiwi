@@ -73,16 +73,6 @@ spec:
                 secretKeyRef:
                   name: {{ .Values.existingSecret }}
                   key: JWT_SECRET
-            - name: KIWI_USER
-              valueFrom:
-                secretKeyRef:
-                  name: {{ .Values.existingSecret }}
-                  key: KIWI_USER
-            - name: KIWI_PASS
-              valueFrom:
-                secretKeyRef:
-                  name: {{ .Values.existingSecret }}
-                  key: KIWI_PASS
             {{- else }}
             - name: DB_URL
               valueFrom:
@@ -104,16 +94,6 @@ spec:
                 secretKeyRef:
                   name: {{ include "kiwi-backend.fullname" . }}
                   key: JWT_SECRET
-            - name: KIWI_USER
-              valueFrom:
-                secretKeyRef:
-                  name: {{ include "kiwi-backend.fullname" . }}
-                  key: KIWI_USER
-            - name: KIWI_PASS
-              valueFrom:
-                secretKeyRef:
-                  name: {{ include "kiwi-backend.fullname" . }}
-                  key: KIWI_PASS
             {{- end }}
             {{- with .Values.extraEnv }}
             {{- toYaml . | nindent 12 }}

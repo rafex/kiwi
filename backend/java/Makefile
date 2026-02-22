@@ -16,8 +16,6 @@ JWT_ISS ?= dev.rafex.kiwi
 JWT_AUD ?= kiwi-backend
 JWT_SECRET ?=
 JWT_TTL_SECONDS ?= 3600
-KIWI_USER ?= rafex
-KIWI_PASS ?=
 ENVIRONMENT ?= work02
 
 .PHONY: help image run-image run-publish-image run-image-from-current
@@ -32,7 +30,7 @@ help:
 	@echo "  IMAGE, PUBLISHED_IMAGE, PORT, GLOWROOT_PORT, CONTAINER_NAME, CONTAINER_TOOL"
 	@echo "  DB_USER, DB_PASSWORD, DB_URL"
 	@echo "  JWT_ISS, JWT_AUD, JWT_SECRET, JWT_TTL_SECONDS"
-	@echo "  KIWI_USER, KIWI_PASS, ENVIRONMENT"
+	@echo "  ENVIRONMENT"
 
 image:
 	@echo "Checking for fat JAR: $(JAR_JETTY)"
@@ -94,19 +92,6 @@ run-image-from-current:
 	elif [ -n "$$JWT_TTL_SECONDS" ]; then \
 		env_args="$$env_args -e JWT_TTL_SECONDS=$$JWT_TTL_SECONDS"; \
 	fi; \
-	if [ -n "$(KIWI_USER)" ]; then \
-		env_args="$$env_args -e KIWI_USER=$(KIWI_USER)"; \
-	elif [ -n "$$KIWI_USER" ]; then \
-		env_args="$$env_args -e KIWI_USER=$$KIWI_USER"; \
-	fi; \
-	if [ -n "$(KIWI_PASS)" ]; then \
-		env_args="$$env_args -e KIWI_PASS=$(KIWI_PASS)"; \
-	elif [ -n "$$KIWI_PASS" ]; then \
-		env_args="$$env_args -e KIWI_PASS=$$KIWI_PASS"; \
-	else \
-		gen_kiwi_pass="$$(uuidgen)"; \
-		env_args="$$env_args -e KIWI_PASS=$$gen_kiwi_pass"; \
-	fi; \
 	if [ -n "$(ENVIRONMENT)" ]; then \
 		env_args="$$env_args -e ENVIRONMENT=$(ENVIRONMENT)"; \
 	elif [ -n "$$ENVIRONMENT" ]; then \
@@ -114,4 +99,3 @@ run-image-from-current:
 	fi; \
 	echo "Using env: $$env_args"; \
 	$(CONTAINER_TOOL) run -d --name "$(CONTAINER_NAME)" $$env_args -p "$(PORT):8080" -p "$(GLOWROOT_PORT):4000" "$(IMAGE)"
-

@@ -76,8 +76,6 @@ secretEnv:
   DB_USER: ""
   DB_PASSWORD: ""
   JWT_SECRET: ""
-  KIWI_USER: ""
-  KIWI_PASS: ""
 
 existingSecret: kiwi-backend-secrets
 

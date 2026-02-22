@@ -81,7 +81,7 @@ Definidas en [.env.example](.env.example):
 
 - DB/Flyway: `FLYWAY_URL`, `FLYWAY_USER`, `FLYWAY_PASSWORD`, `DB_URL`, `DB_USER`, `DB_PASSWORD`
 - JWT: `JWT_ISS`, `JWT_AUD`, `JWT_SECRET`, `JWT_TTL_SECONDS`
-- Provisioning: `KIWI_USER`, `KIWI_PASS`, `ENVIRONMENT`, `ENABLE_USER_PROVISIONING`, `BOOTSTRAP_TOKEN`
+- Provisioning: `ENVIRONMENT`, `ENABLE_USER_PROVISIONING`, `BOOTSTRAP_TOKEN`
 
 ## Pruebas rápidas
 

@@ -17,9 +17,7 @@ kubectl -n kiwi create secret generic kiwi-backend-secrets \
   --from-literal=DB_URL='jdbc:postgresql://postgres:5432/kiwi' \
   --from-literal=DB_USER='kiwi_app' \
   --from-literal=DB_PASSWORD='changeme' \
-  --from-literal=JWT_SECRET='CHANGE_ME' \
-  --from-literal=KIWI_USER='admin' \
-  --from-literal=KIWI_PASS='admin-pass'
+  --from-literal=JWT_SECRET='CHANGE_ME'
 ```
 
 2) Instalar/actualizar release con tag fijo:
@@ -51,9 +49,7 @@ kubectl -n kiwi create secret generic kiwi-backend-secrets \
   --from-literal=DB_URL='jdbc:postgresql://postgres:5432/kiwi' \
   --from-literal=DB_USER='kiwi_app' \
   --from-literal=DB_PASSWORD='changeme' \
-  --from-literal=JWT_SECRET='CHANGE_ME' \
-  --from-literal=KIWI_USER='admin' \
-  --from-literal=KIWI_PASS='admin-pass'
+  --from-literal=JWT_SECRET='CHANGE_ME'
 
 helm upgrade --install kiwi-backend ./helm/kiwi-backend \
   --namespace kiwi --create-namespace \

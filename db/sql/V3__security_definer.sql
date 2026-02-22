@@ -24,6 +24,9 @@ ALTER FUNCTION public.api_search_objects(text, text[], uuid, int)
 ALTER FUNCTION public.api_fuzzy_search(text, int)
   OWNER TO flyway_migrator;
 
+ALTER FUNCTION public.api_get_object(uuid)
+  OWNER TO flyway_migrator;
+
 ALTER FUNCTION public.api_assign_role_to_user(uuid, uuid)
   OWNER TO flyway_migrator;
 
@@ -64,6 +67,10 @@ ALTER FUNCTION public.api_fuzzy_search(text, int)
   SECURITY DEFINER
   SET search_path = public;
 
+ALTER FUNCTION public.api_get_object(uuid)
+  SECURITY DEFINER
+  SET search_path = public;
+
 ALTER FUNCTION public.api_assign_role_to_user(uuid, uuid)
   SECURITY DEFINER
   SET search_path = public;
@@ -86,6 +93,7 @@ GRANT EXECUTE ON FUNCTION public.api_update_metadata(uuid, jsonb) TO kiwi_app;
 GRANT EXECUTE ON FUNCTION public.update_object_search_vector(uuid) TO kiwi_app;
 GRANT EXECUTE ON FUNCTION public.api_search_objects(text, text[], uuid, int) TO kiwi_app;
 GRANT EXECUTE ON FUNCTION public.api_fuzzy_search(text, int) TO kiwi_app;
+GRANT EXECUTE ON FUNCTION public.api_get_object(uuid) TO kiwi_app;
 GRANT EXECUTE ON FUNCTION public.api_create_location(uuid, text, uuid) TO kiwi_app;
 GRANT EXECUTE ON FUNCTION public.api_assign_role_to_user(uuid, uuid) TO kiwi_app;
 GRANT EXECUTE ON FUNCTION public.api_find_role_names_by_user_id(uuid) TO kiwi_app;

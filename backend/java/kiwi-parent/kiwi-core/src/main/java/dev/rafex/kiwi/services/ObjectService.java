@@ -19,7 +19,9 @@ import dev.rafex.kiwi.errors.KiwiError;
 import dev.rafex.kiwi.models.FuzzyItem;
 import dev.rafex.kiwi.models.SearchItem;
 
+import java.time.Instant;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 public interface ObjectService {
@@ -36,4 +38,10 @@ public interface ObjectService {
 	void updateText(UUID objectId, String name, String description) throws KiwiError;
 
 	List<FuzzyItem> fuzzy(String text, int limit) throws Exception;
+
+	Optional<ObjectDetail> getById(UUID objectId) throws Exception;
+
+	record ObjectDetail(UUID objectId, String name, String description, String type, String status,
+			UUID currentLocationId, String[] tags, String metadataJson, Instant createdAt, Instant updatedAt) {
+	}
 }

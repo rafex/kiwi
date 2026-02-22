@@ -25,6 +25,7 @@ import dev.rafex.kiwi.services.ObjectService;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 public class ObjectServiceImpl implements ObjectService {
@@ -109,6 +110,22 @@ public class ObjectServiceImpl implements ObjectService {
 			Log.error(getClass(), "Error performing fuzzy search", e);
 			// Decide si lanzar error o retornar vacío
 			return List.of();
+		}
+	}
+
+	@Override
+	public Optional<ObjectDetail> getById(final UUID objectId) throws KiwiError {
+		try {
+			final var rowOpt = repo.findById(objectId);
+			if (rowOpt.isEmpty()) {
+				return Optional.empty();
+			}
+			final var row = rowOpt.get();
+			return Optional.of(new ObjectDetail(row.objectId(), row.name(), row.description(), row.type(), row.status(),
+					row.currentLocationId(), row.tags(), row.metadataJson(), row.createdAt(), row.updatedAt()));
+		} catch (final SQLException e) {
+			Log.error(getClass(), "Error obtaining object by id", e);
+			throw new KiwiError("E-006", "Error obtaining object by id", e);
 		}
 	}
 

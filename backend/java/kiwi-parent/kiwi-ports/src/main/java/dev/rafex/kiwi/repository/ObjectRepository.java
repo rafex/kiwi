@@ -16,7 +16,9 @@
 package dev.rafex.kiwi.repository;
 
 import java.sql.SQLException;
+import java.time.Instant;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 public interface ObjectRepository {
@@ -32,6 +34,8 @@ public interface ObjectRepository {
 
 	void updateMetadata(UUID objectId, String metadataJson) throws SQLException;
 
+	Optional<ObjectDetailRow> findById(UUID objectId) throws SQLException;
+
 	List<SearchRow> search(String query, String[] tags, UUID locationId, int limit) throws SQLException;
 
 	List<FuzzyRow> fuzzy(String text, int limit) throws SQLException;
@@ -40,6 +44,10 @@ public interface ObjectRepository {
 	}
 
 	record FuzzyRow(UUID objectId, String name, float score) {
+	}
+
+	record ObjectDetailRow(UUID objectId, String name, String description, String type, String status,
+			UUID currentLocationId, String[] tags, String metadataJson, Instant createdAt, Instant updatedAt) {
 	}
 
 }

@@ -262,6 +262,40 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
+CREATE OR REPLACE FUNCTION api_get_object(
+  p_object_id UUID
+)
+RETURNS TABLE (
+  object_id UUID,
+  name TEXT,
+  description TEXT,
+  type TEXT,
+  status object_status,
+  current_location_id UUID,
+  tags TEXT[],
+  metadata JSONB,
+  created_at TIMESTAMPTZ,
+  updated_at TIMESTAMPTZ
+) AS $$
+BEGIN
+  RETURN QUERY
+  SELECT
+    o.object_id,
+    o.name,
+    o.description,
+    o.type,
+    o.status,
+    l.location_id AS current_location_id,
+    o.tags,
+    o.metadata,
+    o.created_at,
+    o.updated_at
+  FROM objects o
+  LEFT JOIN locations l ON l.id = o.current_location_fk
+  WHERE o.object_id = p_object_id;
+END;
+$$ LANGUAGE plpgsql;
+
 CREATE OR REPLACE FUNCTION api_create_location(
   p_location_id UUID,
   p_name TEXT,

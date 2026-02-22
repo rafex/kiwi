@@ -14,6 +14,19 @@ command -v jq >/dev/null 2>&1 || {
 CURL_COMMON="curl --silent --show-error --header 'Accept: application/json'"
 TOKEN="${TOKEN:-}"
 
+mask_sensitive_headers() {
+    printf '%s' "$1" \
+        | sed -E "s/(Authorization: Bearer )[^']+/\1***REDACTED***/g" \
+        | sed -E "s/(Authorization: Basic )[^']+/\1***REDACTED***/g"
+}
+
+run_curl() {
+    cmd="$1"
+    safe_cmd=$(mask_sensitive_headers "$cmd")
+    printf '>> curl: %s\n' "$safe_cmd" >&2
+    eval "$cmd"
+}
+
 api_get() {
     path="$1"; shift
     args=""
@@ -21,13 +34,13 @@ api_get() {
         args="$args --data-urlencode '$1'"
         shift
     done
-    eval "$CURL_COMMON --get $args \"${BASE_URL%/}${path}\" --write-out '\\n%{http_code}'"
+    run_curl "$CURL_COMMON --get $args \"${BASE_URL%/}${path}\" --write-out '\\n%{http_code}'"
 }
 
 api_post_json_here() {
     # POST leyendo JSON desde stdin
     path="$1"
-    eval "$CURL_COMMON -X POST -H 'Content-Type: application/json' --data-binary @- \"${BASE_URL%/}${path}\" --write-out '\\n%{http_code}'"
+    run_curl "$CURL_COMMON -X POST -H 'Content-Type: application/json' --data-binary @- \"${BASE_URL%/}${path}\" --write-out '\\n%{http_code}'"
 }
 
 api_get_bearer() {
@@ -40,14 +53,20 @@ api_get_bearer() {
         args="$args --data-urlencode '$1'"
         shift
     done
-    eval "$CURL_COMMON --header 'Authorization: Bearer $token' --get $args \"${BASE_URL%/}${path}\" --write-out '\\n%{http_code}'"
+    run_curl "$CURL_COMMON --header 'Authorization: Bearer $token' --get $args \"${BASE_URL%/}${path}\" --write-out '\\n%{http_code}'"
 }
 
 api_post_json_here_bearer() {
     # POST con Bearer token leyendo JSON desde stdin
     token="$1"
     path="$2"
-    eval "$CURL_COMMON -X POST -H 'Authorization: Bearer $token' -H 'Content-Type: application/json' --data-binary @- \"${BASE_URL%/}${path}\" --write-out '\\n%{http_code}'"
+    run_curl "$CURL_COMMON -X POST -H 'Authorization: Bearer $token' -H 'Content-Type: application/json' --data-binary @- \"${BASE_URL%/}${path}\" --write-out '\\n%{http_code}'"
+}
+
+api_post_basic_auth() {
+    basic_auth="$1"
+    path="$2"
+    run_curl "$CURL_COMMON -X POST -H 'Authorization: Basic $basic_auth' \"${BASE_URL%/}${path}\" --write-out '\\n%{http_code}'"
 }
 
 api_bearer() {

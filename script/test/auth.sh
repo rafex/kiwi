@@ -31,7 +31,7 @@ while getopts "U:P:u:h" opt; do
 done
 
 basic_auth="$(printf '%s:%s' "$USER_NAME" "$PASSWORD" | base64 | tr -d '\n')"
-response=$(eval "$CURL_COMMON -X POST -H 'Authorization: Basic $basic_auth' --write-out '\n%{http_code}' \"${BASE_URL%/}/auth/login\"")
+response=$(api_post_basic_auth "$basic_auth" /auth/login)
 
 http_code=$(printf '%s' "$response" | tail -n1)
 body=$(printf '%s' "$response" | sed '$d')

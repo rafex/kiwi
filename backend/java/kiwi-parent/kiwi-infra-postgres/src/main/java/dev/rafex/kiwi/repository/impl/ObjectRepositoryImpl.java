@@ -179,10 +179,8 @@ public class ObjectRepositoryImpl implements ObjectRepository {
 				final var tagsArray = rs.getArray("tags");
 				final var tags = tagsArray == null ? null : (String[]) tagsArray.getArray();
 
-				final var createdAtTs = rs.getTimestamp("created_at");
-				final var updatedAtTs = rs.getTimestamp("updated_at");
-				final Instant createdAt = createdAtTs == null ? null : createdAtTs.toInstant();
-				final Instant updatedAt = updatedAtTs == null ? null : updatedAtTs.toInstant();
+				final Instant createdAt = ResultSets.asInstant(rs, "created_at");
+				final Instant updatedAt = ResultSets.asInstant(rs, "updated_at");
 
 				return Optional.of(new ObjectDetailRow(rs.getObject("object_id", UUID.class), rs.getString("name"),
 						rs.getString("description"), rs.getString("type"), rs.getString("status"),

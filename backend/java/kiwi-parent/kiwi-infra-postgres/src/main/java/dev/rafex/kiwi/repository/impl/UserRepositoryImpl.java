@@ -75,8 +75,8 @@ public class UserRepositoryImpl implements UserRepository {
 
 				return Optional.of(new UserRow(rs.getObject("user_id", UUID.class), rs.getString("username"),
 						rs.getBytes("password_hash"), rs.getBytes("salt"), rs.getInt("iterations"),
-						rs.getString("status"), rs.getTimestamp("created_at").toInstant(),
-						rs.getTimestamp("updated_at").toInstant()));
+						rs.getString("status"), ResultSets.asInstant(rs, "created_at"),
+						ResultSets.asInstant(rs, "updated_at")));
 			}
 		}
 	}

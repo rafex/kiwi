@@ -41,6 +41,7 @@
 	</developers>
 
 	<modules>
+		<module>kiwi-architecture-tests</module>
 		<module>kiwi-ports</module>
 		<module>kiwi-common</module>
 		<module>kiwi-core</module>

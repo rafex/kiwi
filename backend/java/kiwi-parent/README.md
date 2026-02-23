@@ -13,6 +13,7 @@ Este proyecto define:
 - `kiwi-ports`: contratos/puertos.
 - `kiwi-common`: utilidades y tipos compartidos.
 - `kiwi-core`: lógica de dominio/casos de uso.
+- `kiwi-architecture-tests`: reglas ArchUnit para arquitectura hexagonal.
 - `kiwi-infra-postgres`: adaptador PostgreSQL.
 - `kiwi-bootstrap`: wiring/composición de dependencias.
 - `kiwi-transport-jetty`: transporte HTTP con Jetty embebido.

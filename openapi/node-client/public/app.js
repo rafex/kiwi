@@ -5,6 +5,9 @@ const state = {
 };
 
 const el = {
+  layoutRoot: document.getElementById("layoutRoot"),
+  splitterLeft: document.getElementById("splitterLeft"),
+  splitterRight: document.getElementById("splitterRight"),
   baseUrl: document.getElementById("baseUrl"),
   endpointFilter: document.getElementById("endpointFilter"),
   endpoints: document.getElementById("endpoints"),
@@ -209,6 +212,62 @@ function collectParamValues(keyPrefix) {
   return values;
 }
 
+function getColumnPercents() {
+  const style = getComputedStyle(document.documentElement);
+  const c1 = Number.parseFloat(style.getPropertyValue("--col1")) || 24;
+  const c2 = Number.parseFloat(style.getPropertyValue("--col2")) || 38;
+  const c3 = Number.parseFloat(style.getPropertyValue("--col3")) || 38;
+  return [c1, c2, c3];
+}
+
+function setColumnPercents(c1, c2, c3) {
+  document.documentElement.style.setProperty("--col1", `${c1.toFixed(2)}%`);
+  document.documentElement.style.setProperty("--col2", `${c2.toFixed(2)}%`);
+  document.documentElement.style.setProperty("--col3", `${c3.toFixed(2)}%`);
+}
+
+function initSplitters() {
+  const minCol = 18;
+
+  function attach(splitter, mode) {
+    let startX = 0;
+    let start = [0, 0, 0];
+
+    function onMove(event) {
+      const rootRect = el.layoutRoot.getBoundingClientRect();
+      const deltaPercent = ((event.clientX - startX) / rootRect.width) * 100;
+      let [c1, c2, c3] = start;
+
+      if (mode === "left") {
+        c1 = Math.max(minCol, Math.min(64, start[0] + deltaPercent));
+        c2 = start[1] - (c1 - start[0]);
+      } else {
+        c2 = Math.max(minCol, Math.min(64, start[1] + deltaPercent));
+        c3 = start[2] - (c2 - start[1]);
+      }
+
+      if (c2 < minCol || c3 < minCol || c1 < minCol) return;
+      setColumnPercents(c1, c2, c3);
+    }
+
+    function onUp() {
+      window.removeEventListener("pointermove", onMove);
+      window.removeEventListener("pointerup", onUp);
+    }
+
+    splitter.addEventListener("pointerdown", (event) => {
+      if (window.matchMedia("(max-width: 1100px)").matches) return;
+      startX = event.clientX;
+      start = getColumnPercents();
+      window.addEventListener("pointermove", onMove);
+      window.addEventListener("pointerup", onUp);
+    });
+  }
+
+  attach(el.splitterLeft, "left");
+  attach(el.splitterRight, "right");
+}
+
 async function sendRequest() {
   if (!state.selected) return;
 
@@ -330,3 +389,5 @@ el.bearerToken.addEventListener("change", () => localStorage.setItem("kiwi.beare
 bootstrap().catch((error) => {
   el.responseBody.textContent = pretty({ error: "No se pudo cargar el OAS", message: String(error.message || error) });
 });
+
+initSplitters();

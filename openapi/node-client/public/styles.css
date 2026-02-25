@@ -8,6 +8,9 @@
   --accent: #31c48d;
   --warn: #ffb020;
   --danger: #ff6b6b;
+  --col1: 24%;
+  --col2: 38%;
+  --col3: 38%;
 }
 
 * {
@@ -50,7 +53,7 @@ body {
   position: relative;
   z-index: 1;
   display: grid;
-  grid-template-columns: 1fr 1.2fr 1.2fr;
+  grid-template-columns: var(--col1) 8px var(--col2) 8px var(--col3);
   gap: 14px;
   padding: 14px;
 }
@@ -62,6 +65,9 @@ body {
   padding: 14px;
   backdrop-filter: blur(12px);
   animation: reveal 300ms ease;
+  min-width: 280px;
+  min-height: 320px;
+  overflow: auto;
 }
 
 @keyframes reveal {
@@ -147,6 +153,19 @@ textarea {
   margin-bottom: 8px;
 }
 
+.splitter {
+  width: 8px;
+  border-radius: 8px;
+  background: linear-gradient(180deg, rgba(49, 196, 141, 0.45), rgba(47, 158, 247, 0.45));
+  cursor: col-resize;
+  user-select: none;
+  touch-action: none;
+}
+
+.splitter:hover {
+  filter: brightness(1.25);
+}
+
 .method {
   font-family: "JetBrains Mono", monospace;
   font-weight: 700;
@@ -197,13 +216,30 @@ textarea {
   font-size: 0.95rem;
 }
 
+.response-panel {
+  display: flex;
+  flex-direction: column;
+}
+
+.response-panel .section {
+  display: flex;
+  flex-direction: column;
+  min-height: 150px;
+}
+
 .json-box {
   background: #07101d;
   border: 1px solid var(--line);
   border-radius: 10px;
   padding: 10px;
   overflow: auto;
-  max-height: 260px;
+  flex: 1;
+  min-height: 140px;
+  resize: vertical;
+  max-width: 100%;
+  white-space: pre-wrap;
+  word-break: break-word;
+  overflow-wrap: anywhere;
   color: #bfe5ff;
   font-size: 0.86rem;
 }
@@ -223,6 +259,10 @@ textarea {
 @media (max-width: 1100px) {
   .layout {
     grid-template-columns: 1fr;
+  }
+
+  .splitter {
+    display: none;
   }
 
   .endpoint-list {

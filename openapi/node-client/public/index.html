@@ -13,7 +13,7 @@
     <div class="bg-shape shape-1"></div>
     <div class="bg-shape shape-2"></div>
 
-    <main class="layout">
+    <main class="layout" id="layoutRoot">
       <aside class="panel endpoints-panel">
         <h1>Kiwi API Explorer</h1>
         <p class="muted">Cliente visual tipo Postman/Swagger basado en tu OAS.</p>
@@ -30,6 +30,8 @@
 
         <div id="endpoints" class="endpoint-list"></div>
       </aside>
+
+      <div class="splitter" id="splitterLeft" aria-label="Redimensionar paneles"></div>
 
       <section class="panel request-panel">
         <header class="request-header">
@@ -81,6 +83,8 @@
 
         <button id="sendBtn" class="send-btn">Enviar Request</button>
       </section>
+
+      <div class="splitter" id="splitterRight" aria-label="Redimensionar paneles"></div>
 
       <section class="panel response-panel">
         <div class="response-meta">

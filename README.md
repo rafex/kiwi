@@ -80,7 +80,7 @@ Este proyecto está licenciado bajo **Apache License 2.0**.
 Definidas en [.env.example](.env.example):
 
 - DB/Flyway: `FLYWAY_URL`, `FLYWAY_USER`, `FLYWAY_PASSWORD`, `DB_URL`, `DB_USER`, `DB_PASSWORD`
-- JWT: `JWT_ISS`, `JWT_AUD`, `JWT_SECRET`, `JWT_TTL_SECONDS`
+- JWT: `JWT_ISS`, `JWT_AUD`, `JWT_SECRET`, `JWT_TTL_SECONDS`, `JWT_APP_TTL_SECONDS`
 - Provisioning: `ENVIRONMENT`, `ENABLE_USER_PROVISIONING`, `BOOTSTRAP_TOKEN`
 
 ## Pruebas rápidas
@@ -88,6 +88,8 @@ Definidas en [.env.example](.env.example):
 Scripts disponibles en [script/test](script/test):
 
 - `health.sh`
+- `auth_app.sh`
+- `create_app_client.sh`
 - `say_hello.sh`
 - `create_object.sh`
 - `search.sh`

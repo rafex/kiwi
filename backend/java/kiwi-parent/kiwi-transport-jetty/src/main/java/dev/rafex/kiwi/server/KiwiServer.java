@@ -25,6 +25,8 @@ import dev.rafex.kiwi.handlers.LocationHandler;
 import dev.rafex.kiwi.handlers.LoginHandler;
 import dev.rafex.kiwi.handlers.NotFoundHandler;
 import dev.rafex.kiwi.handlers.ObjectHandler;
+import dev.rafex.kiwi.handlers.TokenHandler;
+import dev.rafex.kiwi.handlers.CreateAppClientHandler;
 import dev.rafex.kiwi.json.JsonUtil;
 import dev.rafex.kiwi.security.JwtService;
 
@@ -61,6 +63,7 @@ public final class KiwiServer {
 		final var objectService = container.objectService();
 		final var locationService = container.locationService();
 		final var authService = container.authService();
+		final var appClientAuthService = container.appClientAuthService();
 		final var provisioning = container.userProvisioningService();
 
 		// JWT config
@@ -72,8 +75,10 @@ public final class KiwiServer {
 		routes.addMapping(PathSpec.from("/hello"), new HelloHandler());
 		routes.addMapping(PathSpec.from("/health"), new HealthHandler());
 		routes.addMapping(PathSpec.from("/auth/login"), new LoginHandler(jwt, authService));
+		routes.addMapping(PathSpec.from("/auth/token"), new TokenHandler(jwt, appClientAuthService));
 		routes.addMapping(PathSpec.from("/objects/*"), new ObjectHandler(objectService));
 		routes.addMapping(PathSpec.from("/locations/*"), new LocationHandler(locationService));
+		routes.addMapping(PathSpec.from("/admin/app-clients"), new CreateAppClientHandler(appClientAuthService));
 		routes.addMapping(PathSpec.from("/*"), new NotFoundHandler()); // fallback (según versión/impl)
 
 		final var env = System.getenv().getOrDefault("ENVIRONMENT", "unknown");
@@ -89,8 +94,9 @@ public final class KiwiServer {
 		// Wrapper: /hello público, /objects y /locations protegidos (ajústalo a tu
 		// gusto)
 		final var auth = new JwtAuthHandler(routes, jwt).publicPath("POST", "/admin/users")
-				.publicPath("POST", "/auth/login").publicPath("GET", "/hello").publicPath("GET", "/health")
-				.protectedPrefix("/objects/*").protectedPrefix("/locations/*");
+				.publicPath("POST", "/auth/login").publicPath("POST", "/auth/token").publicPath("GET", "/hello")
+				.publicPath("GET", "/health")
+				.protectedPrefix("/objects/*").protectedPrefix("/locations/*").protectedPrefix("/admin/app-clients");
 
 		server.setHandler(new GlowrootNamingHandler(auth));
 

@@ -32,7 +32,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 public final class JwtService {
 
-	public record AuthContext(String sub, long exp, String iss, String aud, List<String> roles) {
+	public record AuthContext(String sub, long exp, String iss, String aud, List<String> roles, String tokenType,
+			String clientId) {
 	}
 
 	public record VerifyResult(boolean ok, AuthContext ctx, String code) {
@@ -73,6 +74,16 @@ public final class JwtService {
 
 	/** Token con roles (claim: "roles": ["admin","writer"]) */
 	public String mint(final String sub, final Collection<String> roles, final long ttlSeconds) {
+		return mintInternal(sub, roles, ttlSeconds, "user", null);
+	}
+
+	/** Token M2M para aplicaciones. */
+	public String mintApp(final String sub, final String clientId, final Collection<String> roles, final long ttlSeconds) {
+		return mintInternal(sub, roles, ttlSeconds, "app", clientId);
+	}
+
+	private String mintInternal(final String sub, final Collection<String> roles, final long ttlSeconds,
+			final String tokenType, final String clientId) {
 		final var now = Instant.now().getEpochSecond();
 		final var exp = now + ttlSeconds;
 
@@ -81,9 +92,16 @@ public final class JwtService {
 		// roles JSON (sin depender de JsonUtil)
 		final var rolesJson = rolesToJsonArray(roles);
 
-		final var payloadJson = "{" + "\"sub\":\"" + escapeJson(sub) + "\"," + "\"iss\":\"" + escapeJson(iss) + "\","
-				+ "\"aud\":\"" + escapeJson(aud) + "\"," + "\"iat\":" + now + "," + "\"exp\":" + exp + ","
-				+ "\"roles\":" + rolesJson + "}";
+		final var payloadJson = "{"
+				+ "\"sub\":\"" + escapeJson(sub) + "\","
+				+ "\"iss\":\"" + escapeJson(iss) + "\","
+				+ "\"aud\":\"" + escapeJson(aud) + "\","
+				+ "\"iat\":" + now + ","
+				+ "\"exp\":" + exp + ","
+				+ "\"roles\":" + rolesJson + ","
+				+ "\"token_type\":\"" + escapeJson(tokenType) + "\""
+				+ (clientId == null || clientId.isBlank() ? "" : ",\"client_id\":\"" + escapeJson(clientId) + "\"")
+				+ "}";
 
 		final var h = b64u(headerJson.getBytes(StandardCharsets.UTF_8));
 		final var p = b64u(payloadJson.getBytes(StandardCharsets.UTF_8));
@@ -126,6 +144,8 @@ public final class JwtService {
 			final var audGot = asString(payload.get("aud"));
 			final var exp = asLong(payload.get("exp"));
 			final var roles = asStringList(payload.get("roles"));
+			var tokenType = asString(payload.get("token_type"));
+			final var clientId = asString(payload.get("client_id"));
 
 			if (sub == null || sub.isBlank()) {
 				return VerifyResult.bad("missing_sub");
@@ -142,8 +162,17 @@ public final class JwtService {
 			if (!Objects.equals(aud, audGot)) {
 				return VerifyResult.bad("bad_aud");
 			}
+			if (tokenType == null || tokenType.isBlank()) {
+				tokenType = "user";
+			}
+			if (!"user".equals(tokenType) && !"app".equals(tokenType)) {
+				return VerifyResult.bad("bad_token_type");
+			}
+			if ("app".equals(tokenType) && (clientId == null || clientId.isBlank())) {
+				return VerifyResult.bad("missing_client_id");
+			}
 
-			return VerifyResult.ok(new AuthContext(sub, exp, issGot, audGot, roles));
+			return VerifyResult.ok(new AuthContext(sub, exp, issGot, audGot, roles, tokenType, clientId));
 		} catch (final Exception e) {
 			return VerifyResult.bad("verify_exception");
 		}

@@ -107,6 +107,53 @@ paths:
         '405':
           description: Método no permitido
 
+  /auth/token:
+    post:
+      tags: [Auth]
+      summary: Emisión de token para aplicativos (client credentials)
+      description: |
+        Acepta `client_id` y `client_secret` por Basic Auth (`Authorization: Basic base64(client_id:client_secret)`)
+        o por body (`application/json` o `application/x-www-form-urlencoded`).
+      security:
+        - basicAuth: []
+        - {}
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ClientCredentialsRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/ClientCredentialsRequest'
+      responses:
+        '200':
+          description: Token emitido
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TokenResponse'
+        '400':
+          description: Request inválido (grant no soportado, JSON inválido, etc.)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Cliente inválido
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Cliente inactivo
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '405':
+          description: Método no permitido
+
   /admin/users:
     post:
       tags: [Admin]
@@ -153,6 +200,50 @@ paths:
                 $ref: '#/components/schemas/NotFoundResponse'
         '409':
           description: Username ya existente
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorCodeResponse'
+
+  /admin/app-clients:
+    post:
+      tags: [Admin]
+      summary: Crear cliente de aplicación
+      description: |
+        Requiere JWT de usuario con rol `ADMIN`. Responde 201 con el cliente creado.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateAppClientRequest'
+      responses:
+        '201':
+          description: Cliente creado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreateAppClientResponse'
+        '400':
+          description: Datos inválidos
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Sin token Bearer
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Falta rol ADMIN o token tipo app
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: client_id ya existente
           content:
             application/json:
               schema:
@@ -498,6 +589,35 @@ components:
           type: integer
           format: int64
 
+    ClientCredentialsRequest:
+      type: object
+      required: [grant_type, client_id, client_secret]
+      properties:
+        grant_type:
+          type: string
+          example: client_credentials
+        client_id:
+          type: string
+        client_secret:
+          type: string
+          format: password
+
+    TokenResponse:
+      type: object
+      required: [token_type, access_token, expires_in]
+      properties:
+        token_type:
+          type: string
+          example: Bearer
+        access_token:
+          type: string
+        expires_in:
+          type: integer
+          format: int64
+        grant_type:
+          type: string
+          example: client_credentials
+
     CreateUserRequest:
       type: object
       required: [username, password]
@@ -521,6 +641,40 @@ components:
           type: string
           format: uuid
         username:
+          type: string
+        roles:
+          type: array
+          items:
+            type: string
+
+    CreateAppClientRequest:
+      type: object
+      required: [client_id, client_secret]
+      properties:
+        client_id:
+          type: string
+        client_secret:
+          type: string
+          format: password
+        name:
+          type: string
+        roles:
+          oneOf:
+            - type: string
+            - type: array
+              items:
+                type: string
+
+    CreateAppClientResponse:
+      type: object
+      required: [app_client_id, client_id, name, roles]
+      properties:
+        app_client_id:
+          type: string
+          format: uuid
+        client_id:
+          type: string
+        name:
           type: string
         roles:
           type: array

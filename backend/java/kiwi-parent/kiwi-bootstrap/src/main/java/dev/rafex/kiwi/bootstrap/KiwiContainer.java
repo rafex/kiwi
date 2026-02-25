@@ -16,19 +16,23 @@
 package dev.rafex.kiwi.bootstrap;
 
 import dev.rafex.kiwi.db.Db;
+import dev.rafex.kiwi.repository.AppClientRepository;
 import dev.rafex.kiwi.repository.LocationRepository;
 import dev.rafex.kiwi.repository.ObjectRepository;
 import dev.rafex.kiwi.repository.RoleRepository;
 import dev.rafex.kiwi.repository.UserRepository;
+import dev.rafex.kiwi.repository.impl.AppClientRepositoryImpl;
 import dev.rafex.kiwi.repository.impl.LocationRepositoryImpl;
 import dev.rafex.kiwi.repository.impl.ObjectRepositoryImpl;
 import dev.rafex.kiwi.repository.impl.RoleRepositoryImpl;
 import dev.rafex.kiwi.repository.impl.UserRepositoryImpl;
 import dev.rafex.kiwi.security.PasswordHasherPBKDF2;
+import dev.rafex.kiwi.services.AppClientAuthService;
 import dev.rafex.kiwi.services.AuthService;
 import dev.rafex.kiwi.services.LocationService;
 import dev.rafex.kiwi.services.ObjectService;
 import dev.rafex.kiwi.services.UserProvisioningService;
+import dev.rafex.kiwi.services.impl.AppClientAuthServiceImpl;
 import dev.rafex.kiwi.services.impl.AuthServiceImpl;
 import dev.rafex.kiwi.services.impl.LocationServiceImpl;
 import dev.rafex.kiwi.services.impl.ObjectServiceImpl;
@@ -55,7 +59,9 @@ public final class KiwiContainer {
 			Optional<Supplier<ObjectRepository>> objectRepository, Optional<Supplier<ObjectService>> objectService,
 			Optional<Supplier<LocationRepository>> locationRepository,
 			Optional<Supplier<LocationService>> locationService, Optional<Supplier<UserRepository>> userRepository,
-			Optional<Supplier<RoleRepository>> roleRepository, Optional<Supplier<AuthService>> authService,
+			Optional<Supplier<RoleRepository>> roleRepository,
+			Optional<Supplier<AppClientRepository>> appClientRepository, Optional<Supplier<AuthService>> authService,
+			Optional<Supplier<AppClientAuthService>> appClientAuthService,
 			Optional<Supplier<UserProvisioningService>> userProvisioningService) {
 		public Overrides {
 			config = config != null ? config : Optional.empty();
@@ -67,7 +73,9 @@ public final class KiwiContainer {
 			locationService = locationService != null ? locationService : Optional.empty();
 			userRepository = userRepository != null ? userRepository : Optional.empty();
 			roleRepository = roleRepository != null ? roleRepository : Optional.empty();
+			appClientRepository = appClientRepository != null ? appClientRepository : Optional.empty();
 			authService = authService != null ? authService : Optional.empty();
+			appClientAuthService = appClientAuthService != null ? appClientAuthService : Optional.empty();
 			userProvisioningService = userProvisioningService != null ? userProvisioningService : Optional.empty();
 		}
 
@@ -85,7 +93,9 @@ public final class KiwiContainer {
 			private Supplier<LocationService> locationService;
 			private Supplier<UserRepository> userRepository;
 			private Supplier<RoleRepository> roleRepository;
+			private Supplier<AppClientRepository> appClientRepository;
 			private Supplier<AuthService> authService;
+			private Supplier<AppClientAuthService> appClientAuthService;
 			private Supplier<UserProvisioningService> userProvisioningService;
 
 			public Builder config(final Supplier<KiwiConfig> v) {
@@ -133,8 +143,18 @@ public final class KiwiContainer {
 				return this;
 			}
 
+			public Builder appClientRepository(final Supplier<AppClientRepository> v) {
+				appClientRepository = v;
+				return this;
+			}
+
 			public Builder authService(final Supplier<AuthService> v) {
 				authService = v;
+				return this;
+			}
+
+			public Builder appClientAuthService(final Supplier<AppClientAuthService> v) {
+				appClientAuthService = v;
 				return this;
 			}
 
@@ -148,7 +168,8 @@ public final class KiwiContainer {
 						Optional.ofNullable(passwordHasher), Optional.ofNullable(objectRepository),
 						Optional.ofNullable(objectService), Optional.ofNullable(locationRepository),
 						Optional.ofNullable(locationService), Optional.ofNullable(userRepository),
-						Optional.ofNullable(roleRepository), Optional.ofNullable(authService),
+						Optional.ofNullable(roleRepository), Optional.ofNullable(appClientRepository),
+						Optional.ofNullable(authService), Optional.ofNullable(appClientAuthService),
 						Optional.ofNullable(userProvisioningService));
 			}
 		}
@@ -164,8 +185,10 @@ public final class KiwiContainer {
 	private final Lazy<LocationService> locationService;
 	private final Lazy<UserRepository> userRepository;
 	private final Lazy<RoleRepository> roleRepository;
+	private final Lazy<AppClientRepository> appClientRepository;
 	private final Lazy<PasswordHasherPBKDF2> passwordHasher;
 	private final Lazy<AuthService> authService;
+	private final Lazy<AppClientAuthService> appClientAuthService;
 	private final Lazy<UserProvisioningService> userProvisioningService;
 
 	public KiwiContainer() {
@@ -188,8 +211,12 @@ public final class KiwiContainer {
 				select(overrides.locationService(), () -> new LocationServiceImpl(locationRepository())));
 		userRepository = new Lazy<>(select(overrides.userRepository(), () -> new UserRepositoryImpl(dataSource())));
 		roleRepository = new Lazy<>(select(overrides.roleRepository(), () -> new RoleRepositoryImpl(dataSource())));
+		appClientRepository = new Lazy<>(
+				select(overrides.appClientRepository(), () -> new AppClientRepositoryImpl(dataSource())));
 		authService = new Lazy<>(
 				select(overrides.authService(), () -> new AuthServiceImpl(userRepository(), passwordHasher())));
+		appClientAuthService = new Lazy<>(select(overrides.appClientAuthService(),
+				() -> new AppClientAuthServiceImpl(appClientRepository(), passwordHasher())));
 		userProvisioningService = new Lazy<>(select(overrides.userProvisioningService(),
 				() -> new UserProvisioningServiceImpl(userRepository(), roleRepository(), passwordHasher())));
 	}
@@ -232,8 +259,16 @@ public final class KiwiContainer {
 		return roleRepository.get();
 	}
 
+	public AppClientRepository appClientRepository() {
+		return appClientRepository.get();
+	}
+
 	public AuthService authService() {
 		return authService.get();
+	}
+
+	public AppClientAuthService appClientAuthService() {
+		return appClientAuthService.get();
 	}
 
 	public UserProvisioningService userProvisioningService() {
@@ -254,7 +289,9 @@ public final class KiwiContainer {
 		locationService();
 		userRepository();
 		roleRepository();
+		appClientRepository();
 		authService();
+		appClientAuthService();
 		userProvisioningService();
 	}
 

@@ -1,0 +1,735 @@
+openapi: 3.0.3
+info:
+  title: Kiwi API
+  version: 1.0.0
+  description: |
+    OpenAPI Specification para la API Kiwi (transport Jetty).
+    Incluye endpoints públicos y protegidos por JWT.
+servers:
+  - url: https://kiwi.v1.rafex.cloud
+    description: Entorno remoto
+  - url: http://localhost:8080
+    description: Desarrollo local
+security:
+  - bearerAuth: []
+tags:
+  - name: Public
+  - name: Auth
+  - name: Objects
+  - name: Locations
+  - name: Admin
+paths:
+  /hello:
+    get:
+      tags: [Public]
+      summary: Saludo de la API
+      security: []
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                additionalProperties: true
+
+  /health:
+    get:
+      tags: [Public]
+      summary: Estado de salud del servicio
+      security: []
+      responses:
+        '200':
+          description: Servicio disponible
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [status, timestamp]
+                properties:
+                  status:
+                    type: string
+                    example: UP
+                  timestamp:
+                    type: string
+                    format: date-time
+        '405':
+          description: Método no permitido
+
+  /auth/login:
+    post:
+      tags: [Auth]
+      summary: Autenticación y emisión de JWT
+      description: |
+        Acepta credenciales por `Authorization: Basic base64(user:pass)` o por body JSON.
+      security:
+        - basicAuth: []
+        - {}
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+            examples:
+              jsonCredentials:
+                value:
+                  username: rafex
+                  password: secret
+      responses:
+        '200':
+          description: Token emitido
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LoginResponse'
+        '400':
+          description: JSON inválido u otro error de request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Credenciales inválidas o faltantes
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Usuario deshabilitado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '405':
+          description: Método no permitido
+
+  /admin/users:
+    post:
+      tags: [Admin]
+      summary: Crear usuario (sandbox/provisioning)
+      description: |
+        Endpoint habilitado solo cuando `ENABLE_USER_PROVISIONING=true` y entorno sandbox/dev.
+        Primer usuario puede crearse con `x-bootstrap-token`; después requiere JWT con rol ADMIN.
+      parameters:
+        - name: x-bootstrap-token
+          in: header
+          required: false
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateUserRequest'
+      responses:
+        '200':
+          description: Usuario creado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreateUserResponse'
+        '400':
+          description: Datos inválidos
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Falta rol ADMIN
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Endpoint oculto/no disponible
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotFoundResponse'
+        '409':
+          description: Username ya existente
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorCodeResponse'
+
+  /locations:
+    post:
+      tags: [Locations]
+      summary: Crear ubicación
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateLocationRequest'
+      responses:
+        '201':
+          description: Ubicación creada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreateLocationResponse'
+        '400':
+          description: Error de validación
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Sin token Bearer
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Error interno
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: '#/components/schemas/ErrorSimple'
+                  - $ref: '#/components/schemas/ErrorCodeResponse'
+
+  /objects:
+    post:
+      tags: [Objects]
+      summary: Crear objeto
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateObjectRequest'
+      responses:
+        '201':
+          description: Objeto creado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreateObjectResponse'
+        '400':
+          description: Error de validación
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: '#/components/schemas/ErrorResponse'
+                  - $ref: '#/components/schemas/ErrorSimple'
+        '401':
+          description: Sin token Bearer
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Error interno
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorSimple'
+
+  /objects/{objectId}:
+    get:
+      tags: [Objects]
+      summary: Obtener objeto por ID
+      parameters:
+        - $ref: '#/components/parameters/ObjectIdPath'
+      responses:
+        '200':
+          description: Objeto encontrado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ObjectDetailResponse'
+        '400':
+          description: UUID inválido
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Sin token Bearer
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: No encontrado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotFoundSimpleResponse'
+        '500':
+          description: Error interno
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorSimple'
+
+  /objects/search:
+    get:
+      tags: [Objects]
+      summary: Búsqueda por texto/tags/ubicación
+      parameters:
+        - name: q
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: tags
+          in: query
+          required: false
+          description: Lista separada por coma
+          schema:
+            type: string
+            example: laptop,apple
+        - name: locationId
+          in: query
+          required: false
+          schema:
+            type: string
+            format: uuid
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 200
+            default: 20
+      responses:
+        '200':
+          description: Resultados de búsqueda
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SearchResponse'
+        '400':
+          description: Parámetros inválidos
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Sin token Bearer
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Error interno
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorSimple'
+
+  /objects/fuzzy:
+    get:
+      tags: [Objects]
+      summary: Búsqueda fuzzy por nombre
+      parameters:
+        - name: name
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Resultados fuzzy
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FuzzyResponse'
+        '400':
+          description: Parámetros inválidos
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Sin token Bearer
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Error interno
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorSimple'
+
+  /objects/{objectId}/move:
+    patch:
+      tags: [Objects]
+      summary: Mover objeto a otra ubicación
+      parameters:
+        - $ref: '#/components/parameters/ObjectIdPath'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MoveObjectRequest'
+      responses:
+        '204':
+          description: Actualizado sin contenido
+        '400':
+          description: Datos inválidos
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: '#/components/schemas/ErrorResponse'
+                  - $ref: '#/components/schemas/ErrorSimple'
+        '401':
+          description: Sin token Bearer
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /objects/{objectId}/tags:
+    patch:
+      tags: [Objects]
+      summary: Actualizar tags de objeto
+      parameters:
+        - $ref: '#/components/parameters/ObjectIdPath'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateTagsRequest'
+      responses:
+        '204':
+          description: Actualizado sin contenido
+        '400':
+          description: Datos inválidos
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: '#/components/schemas/ErrorResponse'
+                  - $ref: '#/components/schemas/ErrorSimple'
+        '401':
+          description: Sin token Bearer
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /objects/{objectId}/text:
+    patch:
+      tags: [Objects]
+      summary: Actualizar nombre/descripcion de objeto
+      parameters:
+        - $ref: '#/components/parameters/ObjectIdPath'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateTextRequest'
+      responses:
+        '204':
+          description: Actualizado sin contenido
+        '400':
+          description: Datos inválidos
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: '#/components/schemas/ErrorResponse'
+                  - $ref: '#/components/schemas/ErrorSimple'
+        '401':
+          description: Sin token Bearer
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+components:
+  parameters:
+    ObjectIdPath:
+      name: objectId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+    basicAuth:
+      type: http
+      scheme: basic
+
+  schemas:
+    LoginRequest:
+      type: object
+      required: [username, password]
+      properties:
+        username:
+          type: string
+        password:
+          type: string
+          format: password
+
+    LoginResponse:
+      type: object
+      required: [token_type, access_token, expires_in]
+      properties:
+        token_type:
+          type: string
+          example: Bearer
+        access_token:
+          type: string
+        expires_in:
+          type: integer
+          format: int64
+
+    CreateUserRequest:
+      type: object
+      required: [username, password]
+      properties:
+        username:
+          type: string
+        password:
+          type: string
+        roles:
+          oneOf:
+            - type: string
+            - type: array
+              items:
+                type: string
+
+    CreateUserResponse:
+      type: object
+      required: [user_id, username, roles]
+      properties:
+        user_id:
+          type: string
+          format: uuid
+        username:
+          type: string
+        roles:
+          type: array
+          items:
+            type: string
+
+    CreateLocationRequest:
+      type: object
+      required: [name]
+      properties:
+        name:
+          type: string
+        parentLocationId:
+          type: string
+          format: uuid
+
+    CreateLocationResponse:
+      type: object
+      required: [location_id]
+      properties:
+        location_id:
+          type: string
+          format: uuid
+
+    CreateObjectRequest:
+      type: object
+      required: [name, locationId]
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        type:
+          type: string
+        tags:
+          type: array
+          items:
+            type: string
+        metadata:
+          type: object
+          additionalProperties: true
+        locationId:
+          type: string
+          format: uuid
+
+    CreateObjectResponse:
+      type: object
+      required: [object_id]
+      properties:
+        object_id:
+          type: string
+          format: uuid
+
+    MoveObjectRequest:
+      type: object
+      required: [newLocationId]
+      properties:
+        newLocationId:
+          type: string
+          format: uuid
+
+    UpdateTagsRequest:
+      type: object
+      required: [tags]
+      properties:
+        tags:
+          type: array
+          items:
+            type: string
+
+    UpdateTextRequest:
+      type: object
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+
+    SearchResponse:
+      type: object
+      required: [items]
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/SearchItem'
+
+    SearchItem:
+      type: object
+      required: [object_id, name, rank]
+      properties:
+        object_id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        rank:
+          type: number
+          format: double
+
+    FuzzyResponse:
+      type: object
+      required: [items]
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/FuzzyItem'
+
+    FuzzyItem:
+      type: object
+      required: [object_id, name, score]
+      properties:
+        object_id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        score:
+          type: number
+          format: float
+
+    ObjectDetailResponse:
+      type: object
+      required:
+        - object_id
+        - name
+        - current_location_id
+        - tags
+        - created_at
+        - updated_at
+      properties:
+        object_id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        description:
+          type: string
+          nullable: true
+        type:
+          type: string
+          nullable: true
+        status:
+          type: string
+          nullable: true
+        current_location_id:
+          type: string
+          format: uuid
+          nullable: true
+        tags:
+          type: array
+          items:
+            type: string
+        metadata:
+          type: object
+          additionalProperties: true
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+        code:
+          type: string
+        message:
+          type: string
+        timestamp:
+          type: string
+          format: date-time
+
+    ErrorCodeResponse:
+      type: object
+      required: [error, code]
+      properties:
+        error:
+          type: string
+        code:
+          type: string
+
+    ErrorSimple:
+      type: object
+      required: [error]
+      properties:
+        error:
+          type: string
+
+    NotFoundResponse:
+      allOf:
+        - $ref: '#/components/schemas/ErrorSimple'
+        - type: object
+          properties:
+            path:
+              type: string
+            timestamp:
+              type: string
+              format: date-time
+
+    NotFoundSimpleResponse:
+      type: object
+      required: [error]
+      properties:
+        error:
+          type: string
+          example: not_found

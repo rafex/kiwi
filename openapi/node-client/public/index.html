@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Kiwi API Explorer</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <div class="bg-shape shape-1"></div>
+    <div class="bg-shape shape-2"></div>
+
+    <main class="layout">
+      <aside class="panel endpoints-panel">
+        <h1>Kiwi API Explorer</h1>
+        <p class="muted">Cliente visual tipo Postman/Swagger basado en tu OAS.</p>
+
+        <div class="field">
+          <label for="baseUrl">Base URL</label>
+          <input id="baseUrl" type="text" placeholder="http://localhost:8080" />
+        </div>
+
+        <div class="field">
+          <label for="endpointFilter">Filtrar endpoint</label>
+          <input id="endpointFilter" type="text" placeholder="/objects, login, health..." />
+        </div>
+
+        <div id="endpoints" class="endpoint-list"></div>
+      </aside>
+
+      <section class="panel request-panel">
+        <header class="request-header">
+          <span id="methodBadge" class="method">GET</span>
+          <code id="pathValue">/health</code>
+        </header>
+
+        <p id="summary" class="muted"></p>
+        <p id="securityHint" class="security-hint"></p>
+
+        <div id="pathParams" class="section"></div>
+        <div id="queryParams" class="section"></div>
+
+        <div class="section auth-box">
+          <h3>Autenticación</h3>
+          <div class="row-3">
+            <div class="field">
+              <label for="authType">Tipo</label>
+              <select id="authType">
+                <option value="none">Ninguna</option>
+                <option value="bearer">Bearer</option>
+                <option value="basic">Basic</option>
+              </select>
+            </div>
+            <div class="field" id="bearerField">
+              <label for="bearerToken">Bearer token</label>
+              <input id="bearerToken" type="text" placeholder="eyJ..." />
+            </div>
+            <div class="field hidden" id="basicUserField">
+              <label for="basicUser">Basic user</label>
+              <input id="basicUser" type="text" placeholder="usuario" />
+            </div>
+            <div class="field hidden" id="basicPassField">
+              <label for="basicPass">Basic password</label>
+              <input id="basicPass" type="password" placeholder="password" />
+            </div>
+          </div>
+        </div>
+
+        <div class="section">
+          <h3>Headers</h3>
+          <textarea id="headersInput" rows="6" placeholder="Accept: application/json"></textarea>
+        </div>
+
+        <div class="section">
+          <h3>Body JSON</h3>
+          <textarea id="bodyInput" rows="12" placeholder='{"name":"Mi objeto"}'></textarea>
+        </div>
+
+        <button id="sendBtn" class="send-btn">Enviar Request</button>
+      </section>
+
+      <section class="panel response-panel">
+        <div class="response-meta">
+          <div><strong>Status:</strong> <span id="statusValue">-</span></div>
+          <div><strong>Tiempo:</strong> <span id="timeValue">-</span></div>
+          <div><strong>URL:</strong> <span id="urlValue">-</span></div>
+        </div>
+
+        <div class="section">
+          <h3>Response Headers</h3>
+          <pre id="responseHeaders" class="json-box">{}</pre>
+        </div>
+
+        <div class="section">
+          <h3>Response Body</h3>
+          <pre id="responseBody" class="json-box">{}</pre>
+        </div>
+      </section>
+    </main>
+
+    <script type="module" src="/app.js"></script>
+  </body>
+</html>

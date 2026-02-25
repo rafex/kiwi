@@ -15,16 +15,17 @@
  */
 package dev.rafex.kiwi.services;
 
-import java.sql.SQLException;
+import dev.rafex.kiwi.errors.KiwiError;
+
 import java.util.List;
 import java.util.UUID;
 
 public interface UserProvisioningService {
 
 	CreateUserResult createUser(final String username, final char[] password, final List<String> roles)
-			throws SQLException;
+			throws KiwiError;
 
-	boolean existsAnyUser() throws SQLException;
+	boolean existsAnyUser() throws KiwiError;
 
 	public record CreateUserResult(boolean ok, UUID userId, String code) {
 		public static CreateUserResult ok(final UUID userId) {

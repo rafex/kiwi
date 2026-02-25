@@ -15,6 +15,7 @@
  */
 package dev.rafex.kiwi.services.impl;
 
+import dev.rafex.kiwi.errors.KiwiError;
 import dev.rafex.kiwi.repository.RoleRepository;
 import dev.rafex.kiwi.repository.UserRepository;
 import dev.rafex.kiwi.security.PasswordHasherPBKDF2;
@@ -61,7 +62,7 @@ public class UserProvisioningServiceImpl implements UserProvisioningService {
 	 */
 	@Override
 	public CreateUserResult createUser(final String username, final char[] password, final List<String> roles)
-			throws SQLException {
+			throws KiwiError {
 
 		if (username == null || username.isBlank() || password == null || password.length == 0) {
 			return CreateUserResult.bad("invalid_input");
@@ -105,11 +106,13 @@ public class UserProvisioningServiceImpl implements UserProvisioningService {
 	}
 
 	@Override
-	public boolean existsAnyUser() throws SQLException {
-
-		final var countUsers = userRepo.countUsers();
-
-		return countUsers > 0;
+	public boolean existsAnyUser() throws KiwiError {
+		try {
+			final var countUsers = userRepo.countUsers();
+			return countUsers > 0;
+		} catch (final SQLException e) {
+			throw new KiwiError("E-201", "Error checking if any user exists", e);
+		}
 	}
 
 }

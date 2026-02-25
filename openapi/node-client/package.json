@@ -1,0 +1,22 @@
+{
+  "name": "kiwi-node-client",
+  "version": "1.0.0",
+  "description": "CLI Node.js para consumir la API Kiwi",
+  "type": "module",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "node src/index.js",
+    "web": "node src/server.js",
+    "health": "node src/index.js health",
+    "hello": "node src/index.js hello",
+    "login": "node src/index.js login",
+    "demo": "node src/index.js demo"
+  },
+  "dependencies": {
+    "express": "^4.21.2",
+    "js-yaml": "^4.1.0"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

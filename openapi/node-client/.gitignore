@@ -1,0 +1,13 @@
+node_modules/
+dist/
+
+# Ignore log files and temp files
+*.log
+*.tmp
+# Ignore environment variable files
+.env
+.env.local
+.env.development
+.env.test
+.env.production
+

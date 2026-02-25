@@ -15,33 +15,30 @@
  */
 package dev.rafex.kiwi.services;
 
-import dev.rafex.kiwi.errors.KiwiError;
-import dev.rafex.kiwi.models.FuzzyItem;
-import dev.rafex.kiwi.models.SearchItem;
-
-import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
+import dev.rafex.kiwi.errors.KiwiError;
+import dev.rafex.kiwi.models.FuzzyItem;
+import dev.rafex.kiwi.models.ObjectDetail;
+import dev.rafex.kiwi.models.SearchItem;
+
 public interface ObjectService {
 
-	void create(UUID objectId, String name, String description, String type, String[] tags, String metadataJson,
-			UUID locationId) throws Exception;
+    void create(UUID objectId, String name, String description, String type, String[] tags, String metadataJson,
+            UUID locationId) throws Exception;
 
-	void move(UUID objectId, UUID newLocationId) throws KiwiError;
+    void move(UUID objectId, UUID newLocationId) throws KiwiError;
 
-	List<SearchItem> search(String query, String[] tags, UUID locationId, int limit);
+    List<SearchItem> search(String query, String[] tags, UUID locationId, int limit);
 
-	void updateTags(UUID objectId, String[] tags) throws KiwiError;
+    void updateTags(UUID objectId, String[] tags) throws KiwiError;
 
-	void updateText(UUID objectId, String name, String description) throws KiwiError;
+    void updateText(UUID objectId, String name, String description) throws KiwiError;
 
-	List<FuzzyItem> fuzzy(String text, int limit) throws Exception;
+    List<FuzzyItem> fuzzy(String text, int limit) throws Exception;
 
-	Optional<ObjectDetail> getById(UUID objectId) throws Exception;
+    Optional<ObjectDetail> getById(UUID objectId) throws Exception;
 
-	record ObjectDetail(UUID objectId, String name, String description, String type, String status,
-			UUID currentLocationId, String[] tags, String metadataJson, Instant createdAt, Instant updatedAt) {
-	}
 }

@@ -116,11 +116,11 @@ public class ObjectRepositoryImpl implements ObjectRepository {
 	// --- Queries (RETURNS TABLE) ---
 
 	@Override
-	public List<SearchRow> search(final String query, final String[] tags, final UUID locationId, final int limit)
-			throws SQLException {
+	public List<SearchRow> search(final String query, final String[] tags, final UUID locationId, final int limit,
+			final int offset) throws SQLException {
 		try (var c = ds.getConnection();
 				var ps = c.prepareStatement(
-						"SELECT object_id, name, rank FROM api_search_objects(?, ?::text[], ?::uuid, ?)")) {
+						"SELECT object_id, name, rank FROM api_search_objects(?, ?::text[], ?::uuid, ?, ?)")) {
 
 			ps.setString(1, query);
 
@@ -137,6 +137,7 @@ public class ObjectRepositoryImpl implements ObjectRepository {
 			}
 
 			ps.setInt(4, limit);
+			ps.setInt(5, offset);
 
 			try (var rs = ps.executeQuery()) {
 				final List<SearchRow> out = new ArrayList<>();
@@ -149,11 +150,12 @@ public class ObjectRepositoryImpl implements ObjectRepository {
 	}
 
 	@Override
-	public List<FuzzyRow> fuzzy(final String text, final int limit) throws SQLException {
+	public List<FuzzyRow> fuzzy(final String text, final int limit, final int offset) throws SQLException {
 		try (var c = ds.getConnection();
-				var ps = c.prepareStatement("SELECT object_id, name, score FROM api_fuzzy_search(?, ?)")) {
+				var ps = c.prepareStatement("SELECT object_id, name, score FROM api_fuzzy_search(?, ?, ?)")) {
 			ps.setString(1, text);
 			ps.setInt(2, limit);
+			ps.setInt(3, offset);
 
 			try (var rs = ps.executeQuery()) {
 				final List<FuzzyRow> out = new ArrayList<>();

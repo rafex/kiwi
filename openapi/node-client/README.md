@@ -46,11 +46,11 @@ npm run web
 
 ```bash
 npm run health
-npm run hello
+npm run hello -- --name Rafex
 npm run login -- --username USER --password PASS [--basic]
 npm run start -- get-object --id UUID
-npm run start -- search --q macbook --tags laptop,apple --limit 20
-npm run start -- fuzzy --name mac
+npm run start -- search --q macbook --tags laptop,apple --limit 20 --offset 0
+npm run start -- fuzzy --name mac --limit 20 --offset 0
 npm run start -- create-location --name "Closet"
 npm run start -- create-object --name "MacBook Pro" --location-id UUID --tags laptop,apple --metadata '{"ram_gb":32}'
 npm run start -- move-object --id UUID --new-location-id UUID

@@ -63,9 +63,10 @@ public class ObjectServiceImpl implements ObjectService {
     }
 
     @Override
-    public List<SearchItem> search(final String query, final String[] tags, final UUID locationId, final int limit) {
+    public List<SearchItem> search(final String query, final String[] tags, final UUID locationId, final int limit,
+            final int offset) {
         try {
-            final var rows = repo.search(query, tags, locationId, limit);
+            final var rows = repo.search(query, tags, locationId, limit, offset);
             // Si SearchRow y SearchItem comparten campos, usar view directa
             final var result = new ArrayList<SearchItem>(rows.size());
             for (final var r : rows) {
@@ -99,9 +100,9 @@ public class ObjectServiceImpl implements ObjectService {
     }
 
     @Override
-    public List<FuzzyItem> fuzzy(final String text, final int limit) throws KiwiError {
+    public List<FuzzyItem> fuzzy(final String text, final int limit, final int offset) throws KiwiError {
         try {
-            final var rows = repo.fuzzy(text, limit);
+            final var rows = repo.fuzzy(text, limit, offset);
             final var result = new ArrayList<FuzzyItem>(rows.size());
             for (final var r : rows) {
                 result.add(new FuzzyItem(r.objectId(), r.name(), r.score()));

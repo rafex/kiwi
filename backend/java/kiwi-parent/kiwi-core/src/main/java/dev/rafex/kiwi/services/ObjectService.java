@@ -31,13 +31,13 @@ public interface ObjectService {
 
     void move(UUID objectId, UUID newLocationId) throws KiwiError;
 
-    List<SearchItem> search(String query, String[] tags, UUID locationId, int limit);
+    List<SearchItem> search(String query, String[] tags, UUID locationId, int limit, int offset);
 
     void updateTags(UUID objectId, String[] tags) throws KiwiError;
 
     void updateText(UUID objectId, String name, String description) throws KiwiError;
 
-    List<FuzzyItem> fuzzy(String text, int limit) throws Exception;
+    List<FuzzyItem> fuzzy(String text, int limit, int offset) throws Exception;
 
     Optional<ObjectDetail> getById(UUID objectId) throws Exception;
 

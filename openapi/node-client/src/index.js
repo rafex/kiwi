@@ -21,11 +21,11 @@ Uso:
 
 Comandos:
   health
-  hello
+  hello [--name NOMBRE]
   login --username USER --password PASS [--basic]
   get-object --id UUID
-  search --q TEXTO [--tags a,b] [--location-id UUID] [--limit N]
-  fuzzy --name TEXTO [--limit N]
+  search --q TEXTO [--tags a,b] [--location-id UUID] [--limit N] [--offset N]
+  fuzzy --name TEXTO [--limit N] [--offset N]
   create-location --name NOMBRE [--parent-id UUID]
   create-object --name NOMBRE --location-id UUID [--description TXT] [--type TIPO] [--tags a,b] [--metadata '{"k":"v"}']
   move-object --id UUID --new-location-id UUID
@@ -63,7 +63,7 @@ async function main() {
         break;
 
       case "hello":
-        res = await client.hello();
+        res = await client.hello({ name: argValue("--name") || undefined });
         break;
 
       case "login": {
@@ -87,14 +87,16 @@ async function main() {
           q: argValue("--q"),
           tags: argValue("--tags"),
           locationId: argValue("--location-id"),
-          limit: argValue("--limit") ? Number(argValue("--limit")) : undefined
+          limit: argValue("--limit") ? Number(argValue("--limit")) : undefined,
+          offset: argValue("--offset") ? Number(argValue("--offset")) : undefined
         });
         break;
 
       case "fuzzy":
         res = await client.fuzzy({
           name: argValue("--name"),
-          limit: argValue("--limit") ? Number(argValue("--limit")) : undefined
+          limit: argValue("--limit") ? Number(argValue("--limit")) : undefined,
+          offset: argValue("--offset") ? Number(argValue("--offset")) : undefined
         });
         break;
 

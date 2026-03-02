@@ -19,6 +19,6 @@ import dev.rafex.kiwi.models.SearchItem;
 
 import java.util.List;
 
-public record SearchResponse(List<SearchItem> items) {
+public record SearchResponse(List<SearchItem> items, int limit, int offset) {
 
 }

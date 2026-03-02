@@ -28,6 +28,11 @@
 			<artifactId>kiwi-bootstrap</artifactId>
 			<version>0.1.0-SNAPSHOT</version>
 		</dependency>
+		<dependency>
+			<groupId>dev.rafex.kiwi</groupId>
+			<artifactId>kiwi-tools</artifactId>
+			<version>0.1.0-SNAPSHOT</version>
+		</dependency>
 
 		<dependency>
 			<groupId>org.glowroot</groupId>

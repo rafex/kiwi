@@ -181,14 +181,16 @@ public class ObjectHandler extends Handler.Abstract {
 			final var tagsParam = queryParam(qp, "tags"); // "a,b,c"
 			final var locationParam = queryParam(qp, "locationId"); // uuid
 			final var limitParam = queryParam(qp, "limit"); // int
+			final var offsetParam = queryParam(qp, "offset"); // int
 
 			final var tags = parseTags(tagsParam);
 			final var locationId = parseUuidOrNull(locationParam);
 			final var limit = parseLimit(limitParam, 20, 1, 200);
+			final var offset = parseOffset(offsetParam, 0, 0, 100_000);
 
-			final var search = service.search(q.trim(), tags, locationId, limit);
+			final var search = service.search(q.trim(), tags, locationId, limit, offset);
 
-			HttpUtil.ok(response, callback, om.writeValueAsString(new SearchResponse(search)));
+			HttpUtil.ok(response, callback, om.writeValueAsString(new SearchResponse(search, limit, offset)));
 			return true;
 
 		} catch (final IllegalArgumentException e) {
@@ -267,6 +269,24 @@ public class ObjectHandler extends Handler.Abstract {
 			return v;
 		} catch (final NumberFormatException e) {
 			throw new IllegalArgumentException("limit must be an integer");
+		}
+	}
+
+	private static int parseOffset(final String offsetStr, final int def, final int min, final int max) {
+		if (offsetStr == null || offsetStr.trim().isEmpty()) {
+			return def;
+		}
+		try {
+			final var v = Integer.parseInt(offsetStr.trim());
+			if (v < min) {
+				return min;
+			}
+			if (v > max) {
+				return max;
+			}
+			return v;
+		} catch (final NumberFormatException e) {
+			throw new IllegalArgumentException("offset must be an integer");
 		}
 	}
 
@@ -430,14 +450,18 @@ public class ObjectHandler extends Handler.Abstract {
 
 			final var qp = parseQuery(request.getHttpURI().getQuery());
 			final var name = queryParam(qp, "name");
+			final var limitParam = queryParam(qp, "limit"); // int
+			final var offsetParam = queryParam(qp, "offset"); // int
 			if (name == null || name.isBlank()) {
 				HttpUtil.badRequest(response, callback, "name is required");
 				return true;
 			}
+			final var limit = parseLimit(limitParam, 20, 1, 200);
+			final var offset = parseOffset(offsetParam, 0, 0, 100_000);
 
-			final var search = service.fuzzy(name, 20);
+			final var search = service.fuzzy(name, limit, offset);
 
-			HttpUtil.ok(response, callback, om.writeValueAsString(new FuzzyResponse(search)));
+			HttpUtil.ok(response, callback, om.writeValueAsString(new FuzzyResponse(search, limit, offset)));
 
 			return true;
 

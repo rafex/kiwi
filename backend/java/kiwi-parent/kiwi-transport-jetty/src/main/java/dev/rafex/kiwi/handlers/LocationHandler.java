@@ -17,21 +17,20 @@ package dev.rafex.kiwi.handlers;
 
 import dev.rafex.kiwi.dtos.CreateLocationRequest;
 import dev.rafex.kiwi.errors.KiwiError;
+import dev.rafex.kiwi.handlers.resources.HttpExchange;
+import dev.rafex.kiwi.handlers.resources.NonBlockingResourceHandler;
 import dev.rafex.kiwi.http.HttpUtil;
 import dev.rafex.kiwi.json.JsonUtil;
 import dev.rafex.kiwi.logging.Log;
 import dev.rafex.kiwi.services.LocationService;
 
+import java.util.List;
+import java.util.Set;
 import java.util.UUID;
-
-import org.eclipse.jetty.server.Handler;
-import org.eclipse.jetty.server.Request;
-import org.eclipse.jetty.server.Response;
-import org.eclipse.jetty.util.Callback;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-public class LocationHandler extends Handler.Abstract {
+public class LocationHandler extends NonBlockingResourceHandler {
 
 	private final LocationService service;
 	private final ObjectMapper om;
@@ -42,24 +41,33 @@ public class LocationHandler extends Handler.Abstract {
 	}
 
 	@Override
-	public boolean handle(final Request request, final Response response, final Callback callback) throws Exception {
-		final var method = request.getMethod();
-		final var path = request.getHttpURI().getPath();
-
-		if ("POST".equals(method) && "/locations".equals(path)) {
-			Log.info(getClass(), "Handling object creation request");
-			return create(request, response, callback);
-		}
-		return false;
+	protected String basePath() {
+		return "/locations";
 	}
 
-	private boolean create(final Request request, final Response response, final Callback callback) {
+	@Override
+	protected List<Route> routes() {
+		return List.of(Route.of("/", Set.of("POST")));
+	}
+
+	@Override
+	public boolean post(final HttpExchange x) {
+		Log.info(getClass(), "Handling location creation request");
+		return create(x);
+	}
+
+	@Override
+	public Set<String> supportedMethods() {
+		return Set.of("POST");
+	}
+
+	private boolean create(final HttpExchange x) {
 		try {
 
-			final var r = om.readValue(Request.asInputStream(request), CreateLocationRequest.class);
+			final var r = om.readValue(org.eclipse.jetty.server.Request.asInputStream(x.request()), CreateLocationRequest.class);
 
 			if (r.name() == null || r.name().isBlank()) {
-				HttpUtil.badRequest(response, callback, "name is required");
+				HttpUtil.badRequest(x.response(), x.callback(), "name is required");
 				return true;
 			}
 
@@ -71,20 +79,20 @@ public class LocationHandler extends Handler.Abstract {
 			final var locationId = UUID.randomUUID();
 			service.create(locationId, r.name().trim(), parentId);
 
-			HttpUtil.json(response, callback, 201, "{\"location_id\":\"" + locationId + "\"}");
+			x.json(201, "{\"location_id\":\"" + locationId + "\"}");
 			return true;
 
 		} catch (final IllegalArgumentException e) {
-			HttpUtil.badRequest(response, callback, "invalid UUID in parentLocationId");
+			HttpUtil.badRequest(x.response(), x.callback(), "invalid UUID in parentLocationId");
 			return true;
 
 		} catch (final KiwiError e) {
-			HttpUtil.json(response, callback, 500, "{\"error\":\"db_error\"}");
+			x.json(500, "{\"error\":\"db_error\"}");
 			return true;
 
 		} catch (final Exception e) {
 			Log.debug(getClass(), "Error creating location: {}", e.getMessage());
-			HttpUtil.json(response, callback, 500, "{\"error\":\"internal_error\"}");
+			x.json(500, "{\"error\":\"internal_error\"}");
 			return true;
 		}
 	}

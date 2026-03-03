@@ -15,6 +15,8 @@
  */
 package dev.rafex.kiwi.handlers;
 
+import dev.rafex.kiwi.handlers.resources.HttpExchange;
+import dev.rafex.kiwi.handlers.resources.NonBlockingResourceHandler;
 import dev.rafex.kiwi.http.HttpUtil;
 import dev.rafex.kiwi.json.JsonUtil;
 import dev.rafex.kiwi.security.JwtService;
@@ -22,19 +24,17 @@ import dev.rafex.kiwi.services.AuthService;
 
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 
 import org.eclipse.jetty.http.HttpStatus;
 import org.eclipse.jetty.io.Content;
-import org.eclipse.jetty.server.Handler;
-import org.eclipse.jetty.server.Request;
-import org.eclipse.jetty.server.Response;
-import org.eclipse.jetty.util.Callback;
 
 import com.fasterxml.jackson.databind.JsonNode;
 
-public final class LoginHandler extends Handler.Abstract.NonBlocking {
+public final class LoginHandler extends NonBlockingResourceHandler {
 
 	private final JwtService jwt;
 	private final AuthService authService;
@@ -51,35 +51,44 @@ public final class LoginHandler extends Handler.Abstract.NonBlocking {
 	}
 
 	@Override
-	public boolean handle(final Request request, final Response response, final Callback callback) throws Exception {
+	protected String basePath() {
+		return "/auth/login";
+	}
 
-		if (!"POST".equalsIgnoreCase(request.getMethod())) {
-			HttpUtil.json(response, callback, HttpStatus.METHOD_NOT_ALLOWED_405, Map.of("error", "method_not_allowed"));
-			return true;
-		}
+	@Override
+	protected List<Route> routes() {
+		return List.of(Route.of("/", Set.of("POST")));
+	}
 
+	@Override
+	public Set<String> supportedMethods() {
+		return Set.of("POST");
+	}
+
+	@Override
+	public boolean post(final HttpExchange x) throws Exception {
 		// 1) Intenta Basic Auth
-		final var authz = request.getHeaders().get("authorization");
+		final var authz = x.request().getHeaders().get("authorization");
 		if (authz != null && authz.regionMatches(true, 0, "Basic ", 0, "Basic ".length())) {
 			final var creds = decodeBasic(authz.substring("Basic ".length()).trim());
 			if (creds == null) {
-				HttpUtil.unauthorized(response, callback, "bad_basic_auth");
+				HttpUtil.unauthorized(x.response(), x.callback(), "bad_basic_auth");
 				return true;
 			}
-			return authenticateAndMint(response, callback, creds.user, creds.pass);
+			return authenticateAndMint(x, creds.user, creds.pass);
 		}
 
 		// 2) JSON body: {"username":"...","password":"..."}
 		final String body;
 		try {
-			body = Content.Source.asString(request, StandardCharsets.UTF_8);
+			body = Content.Source.asString(x.request(), StandardCharsets.UTF_8);
 		} catch (final Exception e) {
-			HttpUtil.badRequest(response, callback, "cannot_read_body");
+			HttpUtil.badRequest(x.response(), x.callback(), "cannot_read_body");
 			return true;
 		}
 
 		if (body == null || body.isBlank()) {
-			HttpUtil.unauthorized(response, callback, "missing_credentials");
+			HttpUtil.unauthorized(x.response(), x.callback(), "missing_credentials");
 			return true;
 		}
 
@@ -87,7 +96,7 @@ public final class LoginHandler extends Handler.Abstract.NonBlocking {
 		try {
 			json = JsonUtil.MAPPER.readTree(body);
 		} catch (final Exception e) {
-			HttpUtil.badRequest(response, callback, "invalid_json");
+			HttpUtil.badRequest(x.response(), x.callback(), "invalid_json");
 			return true;
 		}
 
@@ -95,14 +104,14 @@ public final class LoginHandler extends Handler.Abstract.NonBlocking {
 		final var pass = text(json, "password");
 
 		if (user == null || pass == null) {
-			HttpUtil.unauthorized(response, callback, "missing_credentials");
+			HttpUtil.unauthorized(x.response(), x.callback(), "missing_credentials");
 			return true;
 		}
 
-		return authenticateAndMint(response, callback, user, pass);
+		return authenticateAndMint(x, user, pass);
 	}
 
-	private boolean authenticateAndMint(final Response response, final Callback callback, final String username,
+	private boolean authenticateAndMint(final HttpExchange x, final String username,
 			final String password) throws Exception {
 
 		// Nota: pasamos char[] para poder limpiarlo dentro de AuthServiceImpl
@@ -114,12 +123,12 @@ public final class LoginHandler extends Handler.Abstract.NonBlocking {
 			final var code = result.code() != null ? result.code() : "bad_credentials";
 
 			if ("user_disabled".equals(code)) {
-				HttpUtil.json(response, callback, HttpStatus.FORBIDDEN_403,
+				HttpUtil.json(x.response(), x.callback(), HttpStatus.FORBIDDEN_403,
 						Map.of("error", "forbidden", "code", "user_disabled"));
 			} else if ("bad_credentials".equals(code)) {
-				HttpUtil.unauthorized(response, callback, "bad_credentials");
+				HttpUtil.unauthorized(x.response(), x.callback(), "bad_credentials");
 			} else {
-				HttpUtil.json(response, callback, HttpStatus.UNAUTHORIZED_401,
+				HttpUtil.json(x.response(), x.callback(), HttpStatus.UNAUTHORIZED_401,
 						Map.of("error", "unauthorized", "code", code));
 			}
 			return true;
@@ -134,7 +143,8 @@ public final class LoginHandler extends Handler.Abstract.NonBlocking {
 		// Si lo extiendes para roles/username, aquí es donde lo pasas.
 		final var token = jwt.mint(subject, roles, ttlSeconds);
 
-		HttpUtil.ok(response, callback, Map.of("token_type", "Bearer", "access_token", token, "expires_in", ttlSeconds
+		HttpUtil.ok(x.response(), x.callback(),
+				Map.of("token_type", "Bearer", "access_token", token, "expires_in", ttlSeconds
 		// si quieres devolver roles al cliente:
 		// "roles", result.roles()
 		));

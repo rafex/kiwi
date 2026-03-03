@@ -15,52 +15,40 @@
  */
 package dev.rafex.kiwi.handlers;
 
+import dev.rafex.kiwi.handlers.resources.HttpExchange;
+import dev.rafex.kiwi.handlers.resources.NonBlockingResourceHandler;
 import dev.rafex.kiwi.http.HttpUtil;
 import dev.rafex.kiwi.logging.Log;
 import dev.rafex.kiwi.tools.BuildVersion;
 
-import java.nio.charset.StandardCharsets;
+import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
-import org.eclipse.jetty.http.HttpMethod;
-import org.eclipse.jetty.server.Handler;
-import org.eclipse.jetty.server.Request;
-import org.eclipse.jetty.server.Response;
-import org.eclipse.jetty.util.Callback;
-import org.eclipse.jetty.util.MultiMap;
-import org.eclipse.jetty.util.UrlEncoded;
+public class HelloHandler extends NonBlockingResourceHandler {
 
-public class HelloHandler extends Handler.Abstract.NonBlocking {
-
-	// @Instrumentation.Transaction(transactionType = "Web", transactionName =
-	// "{{0.method}} {{0.httpURI.path}}", traceHeadline = "{{0.method}}
-	// {{0.httpURI.path}}", timer = "jetty-handler")
 	@Override
-	public boolean handle(final Request request, final Response response, final Callback callback) throws Exception {
+	protected String basePath() {
+		return "/hello";
+	}
 
+	@Override
+	protected List<Route> routes() {
+		return List.of(Route.of("/", Set.of("GET")));
+	}
+
+	@Override
+	public boolean get(final HttpExchange x) {
 		Log.debug(getClass(), "GET /hello");
-
-		if (!HttpMethod.GET.is(request.getMethod())) {
-			response.setStatus(405);
-			callback.succeeded();
-			return true;
-		}
-
-		final var rawQuery = request.getHttpURI() != null ? request.getHttpURI().getQuery() : null;
-		final var queryParams = parseQuery(rawQuery);
-		final var name = normalize(queryParams.getValue("name"));
-
+		final var name = normalize(queryParam(x, "name"));
 		final var message = name == null ? "Hello!!" : "Hello!! " + name;
-		HttpUtil.ok(response, callback, Map.of("message", message, "version", BuildVersion.current()));
+		HttpUtil.ok(x.response(), x.callback(), Map.of("message", message, "version", BuildVersion.current()));
 		return true;
 	}
 
-	private static MultiMap<String> parseQuery(final String rawQuery) {
-		final var params = new MultiMap<String>();
-		if (rawQuery != null && !rawQuery.isBlank()) {
-			UrlEncoded.decodeTo(rawQuery, params, StandardCharsets.UTF_8);
-		}
-		return params;
+	@Override
+	public Set<String> supportedMethods() {
+		return Set.of("GET");
 	}
 
 	private static String normalize(final String value) {

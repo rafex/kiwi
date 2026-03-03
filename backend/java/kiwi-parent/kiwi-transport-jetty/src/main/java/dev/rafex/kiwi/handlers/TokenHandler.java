@@ -15,6 +15,8 @@
  */
 package dev.rafex.kiwi.handlers;
 
+import dev.rafex.kiwi.handlers.resources.HttpExchange;
+import dev.rafex.kiwi.handlers.resources.NonBlockingResourceHandler;
 import dev.rafex.kiwi.http.HttpUtil;
 import dev.rafex.kiwi.json.JsonUtil;
 import dev.rafex.kiwi.security.JwtService;
@@ -22,21 +24,19 @@ import dev.rafex.kiwi.services.AppClientAuthService;
 
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 
 import org.eclipse.jetty.http.HttpStatus;
 import org.eclipse.jetty.io.Content;
-import org.eclipse.jetty.server.Handler;
-import org.eclipse.jetty.server.Request;
-import org.eclipse.jetty.server.Response;
-import org.eclipse.jetty.util.Callback;
 import org.eclipse.jetty.util.MultiMap;
 import org.eclipse.jetty.util.UrlEncoded;
 
 import com.fasterxml.jackson.databind.JsonNode;
 
-public final class TokenHandler extends Handler.Abstract.NonBlocking {
+public final class TokenHandler extends NonBlockingResourceHandler {
 
 	private final JwtService jwt;
 	private final AppClientAuthService authService;
@@ -53,64 +53,74 @@ public final class TokenHandler extends Handler.Abstract.NonBlocking {
 	}
 
 	@Override
-	public boolean handle(final Request request, final Response response, final Callback callback) throws Exception {
-		if (!"POST".equalsIgnoreCase(request.getMethod())) {
-			HttpUtil.json(response, callback, HttpStatus.METHOD_NOT_ALLOWED_405, Map.of("error", "method_not_allowed"));
-			return true;
-		}
+	protected String basePath() {
+		return "/auth/token";
+	}
 
-		final var authz = request.getHeaders().get("authorization");
+	@Override
+	protected List<Route> routes() {
+		return List.of(Route.of("/", Set.of("POST")));
+	}
+
+	@Override
+	public Set<String> supportedMethods() {
+		return Set.of("POST");
+	}
+
+	@Override
+	public boolean post(final HttpExchange x) throws Exception {
+		final var authz = x.request().getHeaders().get("authorization");
 		if (authz != null && authz.regionMatches(true, 0, "Basic ", 0, "Basic ".length())) {
 			final var creds = decodeBasic(authz.substring("Basic ".length()).trim());
 			if (creds == null) {
-				HttpUtil.unauthorized(response, callback, "invalid_client");
+				HttpUtil.unauthorized(x.response(), x.callback(), "invalid_client");
 				return true;
 			}
-			return authenticateAndMint(response, callback, creds.clientId(), creds.clientSecret(), "client_credentials");
+			return authenticateAndMint(x, creds.clientId(), creds.clientSecret(), "client_credentials");
 		}
 
 		final String body;
 		try {
-			body = Content.Source.asString(request, StandardCharsets.UTF_8);
+			body = Content.Source.asString(x.request(), StandardCharsets.UTF_8);
 		} catch (final Exception e) {
-			HttpUtil.badRequest(response, callback, "cannot_read_body");
+			HttpUtil.badRequest(x.response(), x.callback(), "cannot_read_body");
 			return true;
 		}
 
 		if (body == null || body.isBlank()) {
-			HttpUtil.badRequest(response, callback, "missing_body");
+			HttpUtil.badRequest(x.response(), x.callback(), "missing_body");
 			return true;
 		}
 
-		final var contentType = request.getHeaders().get("content-type");
+		final var contentType = x.request().getHeaders().get("content-type");
 		if (contentType != null && contentType.toLowerCase().contains("application/json")) {
 			final JsonNode json;
 			try {
 				json = JsonUtil.MAPPER.readTree(body);
 			} catch (final Exception e) {
-				HttpUtil.badRequest(response, callback, "invalid_json");
+				HttpUtil.badRequest(x.response(), x.callback(), "invalid_json");
 				return true;
 			}
 
-			return authenticateAndMint(response, callback, text(json, "client_id"), text(json, "client_secret"),
+			return authenticateAndMint(x, text(json, "client_id"), text(json, "client_secret"),
 					text(json, "grant_type"));
 		}
 
 		final var form = new MultiMap<String>();
 		UrlEncoded.decodeTo(body, form, StandardCharsets.UTF_8);
-		return authenticateAndMint(response, callback, value(form, "client_id"), value(form, "client_secret"),
+		return authenticateAndMint(x, value(form, "client_id"), value(form, "client_secret"),
 				value(form, "grant_type"));
 	}
 
-	private boolean authenticateAndMint(final Response response, final Callback callback, final String clientId,
+	private boolean authenticateAndMint(final HttpExchange x, final String clientId,
 			final String clientSecret, final String grantType) throws Exception {
 		if (grantType == null || !"client_credentials".equals(grantType)) {
-			HttpUtil.badRequest(response, callback, "unsupported_grant_type");
+			HttpUtil.badRequest(x.response(), x.callback(), "unsupported_grant_type");
 			return true;
 		}
 
 		if (clientId == null || clientSecret == null) {
-			HttpUtil.unauthorized(response, callback, "invalid_client");
+			HttpUtil.unauthorized(x.response(), x.callback(), "invalid_client");
 			return true;
 		}
 
@@ -118,18 +128,18 @@ public final class TokenHandler extends Handler.Abstract.NonBlocking {
 		if (!result.ok()) {
 			final var code = result.code() != null ? result.code() : "invalid_client";
 			if ("client_disabled".equals(code)) {
-				HttpUtil.forbidden(response, callback, "client_disabled");
+				HttpUtil.forbidden(x.response(), x.callback(), "client_disabled");
 			} else if ("invalid_client".equals(code)) {
-				HttpUtil.unauthorized(response, callback, "invalid_client");
+				HttpUtil.unauthorized(x.response(), x.callback(), "invalid_client");
 			} else {
-				HttpUtil.json(response, callback, HttpStatus.UNAUTHORIZED_401,
+				HttpUtil.json(x.response(), x.callback(), HttpStatus.UNAUTHORIZED_401,
 						Map.of("error", "unauthorized", "code", code));
 			}
 			return true;
 		}
 
 		final var token = jwt.mintApp("app:" + result.clientId(), result.clientId(), result.roles(), ttlSeconds);
-		HttpUtil.ok(response, callback,
+		HttpUtil.ok(x.response(), x.callback(),
 				Map.of("token_type", "Bearer", "access_token", token, "expires_in", ttlSeconds, "grant_type",
 						"client_credentials"));
 		return true;

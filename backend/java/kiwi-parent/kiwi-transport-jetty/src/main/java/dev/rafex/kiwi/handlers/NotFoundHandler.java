@@ -15,21 +15,64 @@
  */
 package dev.rafex.kiwi.handlers;
 
+import dev.rafex.kiwi.handlers.resources.HttpExchange;
+import dev.rafex.kiwi.handlers.resources.NonBlockingResourceHandler;
 import dev.rafex.kiwi.http.HttpUtil;
 import dev.rafex.kiwi.logging.Log;
 
-import org.eclipse.jetty.server.Handler;
-import org.eclipse.jetty.server.Request;
-import org.eclipse.jetty.server.Response;
-import org.eclipse.jetty.util.Callback;
+import java.util.List;
+import java.util.Set;
 
-public final class NotFoundHandler extends Handler.Abstract {
+public final class NotFoundHandler extends NonBlockingResourceHandler {
 
 	@Override
-	public boolean handle(final Request request, final Response response, final Callback callback) throws Exception {
-		Log.debug(getClass(), "No handler found for path: {}", request.getHttpURI().getPath());
-		HttpUtil.notFound(response, callback, request.getHttpURI().getPath()); // reutiliza el body constante de
-																				// HttpUtil
+	protected String basePath() {
+		return "/";
+	}
+
+	@Override
+	protected List<Route> routes() {
+		return List.of(Route.of("/**", Set.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS")));
+	}
+
+	@Override
+	public Set<String> supportedMethods() {
+		return Set.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS");
+	}
+
+	@Override
+	public boolean get(final HttpExchange x) {
+		return notFound(x);
+	}
+
+	@Override
+	public boolean post(final HttpExchange x) {
+		return notFound(x);
+	}
+
+	@Override
+	public boolean put(final HttpExchange x) {
+		return notFound(x);
+	}
+
+	@Override
+	public boolean patch(final HttpExchange x) {
+		return notFound(x);
+	}
+
+	@Override
+	public boolean delete(final HttpExchange x) {
+		return notFound(x);
+	}
+
+	@Override
+	public boolean options(final HttpExchange x) {
+		return notFound(x);
+	}
+
+	private boolean notFound(final HttpExchange x) {
+		Log.debug(getClass(), "No handler found for path: {}", x.path());
+		HttpUtil.notFound(x.response(), x.callback(), x.path());
 		return true;
 	}
 }

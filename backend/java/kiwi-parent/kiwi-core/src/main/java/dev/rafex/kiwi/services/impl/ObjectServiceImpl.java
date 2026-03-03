@@ -26,6 +26,7 @@ import dev.rafex.kiwi.logging.Log;
 import dev.rafex.kiwi.models.FuzzyItem;
 import dev.rafex.kiwi.models.ObjectDetail;
 import dev.rafex.kiwi.models.SearchItem;
+import dev.rafex.kiwi.query.QuerySpec;
 import dev.rafex.kiwi.repository.ObjectRepository;
 import dev.rafex.kiwi.services.ObjectService;
 
@@ -63,10 +64,9 @@ public class ObjectServiceImpl implements ObjectService {
     }
 
     @Override
-    public List<SearchItem> search(final String query, final String[] tags, final UUID locationId, final int limit,
-            final int offset) {
+    public List<SearchItem> search(final QuerySpec querySpec) {
         try {
-            final var rows = repo.search(query, tags, locationId, limit, offset);
+            final var rows = repo.search(querySpec);
             // Si SearchRow y SearchItem comparten campos, usar view directa
             final var result = new ArrayList<SearchItem>(rows.size());
             for (final var r : rows) {

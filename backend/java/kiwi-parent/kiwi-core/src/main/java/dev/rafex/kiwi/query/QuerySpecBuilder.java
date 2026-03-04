@@ -30,7 +30,7 @@ public final class QuerySpecBuilder {
 	public QuerySpec fromRawParams(final String q, final String tags, final String locationId, final String enabled,
 			final String sort, final String limit, final String offset) {
 
-		final RsqlNode rsqlFilter = parser.parse(trimToNull(q));
+		final RsqlNode rsqlFilter = parseQ(trimToNull(q));
 		final RsqlNode queryFilter = buildClassicFilter(tags, locationId, enabled);
 		final RsqlNode finalFilter = mergeWithAnd(rsqlFilter, queryFilter);
 
@@ -39,6 +39,20 @@ public final class QuerySpecBuilder {
 		final var sorts = parseSort(sort);
 
 		return new QuerySpec(finalFilter, finalLimit, finalOffset, sorts);
+	}
+
+	private RsqlNode parseQ(final String q) {
+		if (q == null) {
+			return null;
+		}
+		try {
+			return parser.parse(q);
+		} catch (final IllegalArgumentException e) {
+			if (isFreeTextCandidate(q)) {
+				return new RsqlNode.Comp("name", RsqlOperator.LIKE, List.of("%" + q + "%"));
+			}
+			throw e;
+		}
 	}
 
 	private RsqlNode buildClassicFilter(final String tagsRaw, final String locationIdRaw, final String enabledRaw) {
@@ -146,6 +160,16 @@ public final class QuerySpecBuilder {
 		}
 		final var trimmed = value.trim();
 		return trimmed.isEmpty() ? null : trimmed;
+	}
+
+	private static boolean isFreeTextCandidate(final String value) {
+		return value.indexOf('=') < 0
+				&& value.indexOf('!') < 0
+				&& value.indexOf(';') < 0
+				&& value.indexOf(',') < 0
+				&& value.indexOf('(') < 0
+				&& value.indexOf(')') < 0
+				&& value.indexOf('"') < 0;
 	}
 
 }

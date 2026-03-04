@@ -15,27 +15,27 @@
  */
 package dev.rafex.kiwi.server;
 
-import dev.rafex.kiwi.bootstrap.KiwiContainer;
-
+import java.util.ArrayList;
 import java.util.List;
-import java.util.logging.Logger;
 
-public final class KiwiServer {
+public final class AuthPolicyRegistry {
 
-	private static final Logger LOG = Logger.getLogger(KiwiServer.class.getName());
+	private final List<AuthPolicy> policies = new ArrayList<>();
 
-	private KiwiServer() {
+	public void add(final AuthPolicy policy) {
+		policies.add(policy);
 	}
 
-	public static void start(final KiwiContainer container) throws Exception {
-		start(container, ServerConfig.fromEnv(), List.of(new DefaultKiwiModule()));
+	public void publicPath(final String method, final String pathSpec) {
+		add(AuthPolicy.publicPath(method, pathSpec));
 	}
 
-	public static void start(final KiwiContainer container, final ServerConfig config, final List<KiwiModule> modules)
-			throws Exception {
-		final var runner = KiwiServerFactory.create(container, config, modules);
-		LOG.info("Starting Kiwi backend on port " + config.port());
-		runner.start();
-		runner.await();
+	public void protectedPrefix(final String pathSpec) {
+		add(AuthPolicy.protectedPrefix(pathSpec));
 	}
+
+	public List<AuthPolicy> policies() {
+		return List.copyOf(policies);
+	}
+
 }

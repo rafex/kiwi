@@ -20,7 +20,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
-import org.eclipse.jetty.http.HttpStatus;
 import org.eclipse.jetty.http.pathmap.PathSpec;
 import org.eclipse.jetty.server.Handler;
 import org.eclipse.jetty.server.Request;
@@ -29,6 +28,7 @@ import org.eclipse.jetty.util.Callback;
 
 import dev.rafex.kiwi.http.HttpUtil;
 import dev.rafex.kiwi.security.JwtService;
+import dev.rafex.kiwi.server.AuthPolicy;
 
 public final class JwtAuthHandler extends Handler.Wrapper {
 
@@ -58,14 +58,33 @@ public final class JwtAuthHandler extends Handler.Wrapper {
         return this;
     }
 
+    public JwtAuthHandler authPolicy(final AuthPolicy policy) {
+        if (policy == null) {
+            return this;
+        }
+        if (policy.type() == AuthPolicy.Type.PUBLIC_PATH) {
+            return publicPath(policy.method(), policy.pathSpec());
+        }
+        return protectedPrefix(policy.pathSpec());
+    }
+
+    public JwtAuthHandler authPolicies(final List<AuthPolicy> policies) {
+        if (policies == null) {
+            return this;
+        }
+        for (final var policy : policies) {
+            authPolicy(policy);
+        }
+        return this;
+    }
+
     @Override
     public boolean handle(final Request request, final Response response, final Callback callback) throws Exception {
         final var method = request.getMethod().toUpperCase();
         final var path = request.getHttpURI() != null ? request.getHttpURI().getPath() : null;
 
         if (path == null) {
-            HttpUtil.json(response, callback, HttpStatus.BAD_REQUEST_400,
-                    java.util.Map.of("error", "bad_request", "message", "missing_path"));
+            HttpUtil.badRequest(response, callback, "missing_path");
             return true;
         }
 
@@ -78,16 +97,14 @@ public final class JwtAuthHandler extends Handler.Wrapper {
         // 3) protegido -> exige bearer
         final var authz = request.getHeaders().get("authorization");
         if (authz == null || !authz.startsWith("Bearer ")) {
-            HttpUtil.json(response, callback, HttpStatus.UNAUTHORIZED_401,
-                    java.util.Map.of("error", "unauthorized", "code", "missing_bearer_token"));
+            HttpUtil.unauthorized(response, callback, "missing_bearer_token");
             return true;
         }
 
         final var token = authz.substring("Bearer ".length()).trim();
         final var res = jwt.verify(token, Instant.now().getEpochSecond());
         if (!res.ok()) {
-            HttpUtil.json(response, callback, HttpStatus.UNAUTHORIZED_401,
-                    java.util.Map.of("error", "unauthorized", "code", res.code()));
+            HttpUtil.unauthorized(response, callback, res.code());
             return true;
         }
 

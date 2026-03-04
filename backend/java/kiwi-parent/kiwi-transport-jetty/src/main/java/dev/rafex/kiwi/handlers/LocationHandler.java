@@ -20,7 +20,7 @@ import dev.rafex.kiwi.errors.KiwiError;
 import dev.rafex.kiwi.handlers.resources.HttpExchange;
 import dev.rafex.kiwi.handlers.resources.NonBlockingResourceHandler;
 import dev.rafex.kiwi.http.HttpUtil;
-import dev.rafex.kiwi.json.JsonUtil;
+import dev.rafex.kiwi.http.KiwiErrorHttpMapper;
 import dev.rafex.kiwi.logging.Log;
 import dev.rafex.kiwi.services.LocationService;
 
@@ -28,16 +28,12 @@ import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-
 public class LocationHandler extends NonBlockingResourceHandler {
 
 	private final LocationService service;
-	private final ObjectMapper om;
 
 	public LocationHandler(final LocationService services) {
 		service = services;
-		om = JsonUtil.MAPPER;
 	}
 
 	@Override
@@ -64,7 +60,8 @@ public class LocationHandler extends NonBlockingResourceHandler {
 	private boolean create(final HttpExchange x) {
 		try {
 
-			final var r = om.readValue(org.eclipse.jetty.server.Request.asInputStream(x.request()), CreateLocationRequest.class);
+			final var r = HttpUtil.jsonCodec().readValue(org.eclipse.jetty.server.Request.asInputStream(x.request()),
+					CreateLocationRequest.class);
 
 			if (r.name() == null || r.name().isBlank()) {
 				HttpUtil.badRequest(x.response(), x.callback(), "name is required");
@@ -87,12 +84,12 @@ public class LocationHandler extends NonBlockingResourceHandler {
 			return true;
 
 		} catch (final KiwiError e) {
-			x.json(500, "{\"error\":\"db_error\"}");
+			HttpUtil.error(x.response(), x.callback(), KiwiErrorHttpMapper.map(e, "location.create"));
 			return true;
 
 		} catch (final Exception e) {
 			Log.debug(getClass(), "Error creating location: {}", e.getMessage());
-			x.json(500, "{\"error\":\"internal_error\"}");
+			HttpUtil.internalServerError(x.response(), x.callback(), "internal_error");
 			return true;
 		}
 	}

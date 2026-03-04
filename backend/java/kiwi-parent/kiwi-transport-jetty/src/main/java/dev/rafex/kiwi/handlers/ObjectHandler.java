@@ -25,7 +25,7 @@ import dev.rafex.kiwi.errors.KiwiError;
 import dev.rafex.kiwi.handlers.resources.HttpExchange;
 import dev.rafex.kiwi.handlers.resources.NonBlockingResourceHandler;
 import dev.rafex.kiwi.http.HttpUtil;
-import dev.rafex.kiwi.json.JsonUtil;
+import dev.rafex.kiwi.http.KiwiErrorHttpMapper;
 import dev.rafex.kiwi.logging.Log;
 import dev.rafex.kiwi.query.QuerySpecBuilder;
 import dev.rafex.kiwi.services.ObjectService;
@@ -37,17 +37,13 @@ import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-
 public class ObjectHandler extends NonBlockingResourceHandler {
 
 	private final ObjectService service;
-	private final ObjectMapper om;
 	private final QuerySpecBuilder querySpecBuilder;
 
 	public ObjectHandler(final ObjectService service) {
 		this.service = service;
-		this.om = JsonUtil.MAPPER;
 		this.querySpecBuilder = new QuerySpecBuilder();
 	}
 
@@ -138,16 +134,16 @@ public class ObjectHandler extends NonBlockingResourceHandler {
 			if (object.metadataJson() == null || object.metadataJson().isBlank()) {
 				responseBody.put("metadata", null);
 			} else {
-				responseBody.put("metadata", om.readTree(object.metadataJson()));
+				responseBody.put("metadata", HttpUtil.jsonCodec().readTree(object.metadataJson()));
 			}
 			responseBody.put("created_at", object.createdAt());
 			responseBody.put("updated_at", object.updatedAt());
 
-			x.json(200, om.writeValueAsString(responseBody));
+			x.json(200, responseBody);
 			return true;
 		} catch (final Exception e) {
 			Log.error(getClass(), "Error getting object by id", e);
-			x.json(500, "{\"error\":\"internal_error\"}");
+			HttpUtil.internalServerError(x.response(), x.callback(), "internal_error");
 			return true;
 		}
 	}
@@ -164,14 +160,14 @@ public class ObjectHandler extends NonBlockingResourceHandler {
 					queryParam(x, "offset"));
 
 			final var search = service.search(spec);
-			x.json(200, om.writeValueAsString(new SearchResponse(search, spec.limit(), spec.offset())));
+			x.json(200, new SearchResponse(search, spec.limit(), spec.offset()));
 			return true;
 		} catch (final IllegalArgumentException e) {
 			HttpUtil.badRequest(x.response(), x.callback(), e.getMessage());
 			return true;
 		} catch (final Exception e) {
 			Log.error(getClass(), "Error searching objects", e);
-			x.json(500, "{\"error\":\"internal_error\"}");
+			HttpUtil.internalServerError(x.response(), x.callback(), "internal_error");
 			return true;
 		}
 	}
@@ -179,7 +175,8 @@ public class ObjectHandler extends NonBlockingResourceHandler {
 	private boolean moveLocation(final HttpExchange x, final UUID objectId) {
 		try {
 			Log.info(getClass(), "Handling object move request");
-			final var r = om.readValue(org.eclipse.jetty.server.Request.asInputStream(x.request()), MoveObjectRequest.class);
+			final var r = HttpUtil.jsonCodec().readValue(org.eclipse.jetty.server.Request.asInputStream(x.request()),
+					MoveObjectRequest.class);
 
 			if (r.newLocationId() == null || r.newLocationId().isBlank()) {
 				HttpUtil.badRequest(x.response(), x.callback(), "newLocationId is required");
@@ -198,21 +195,9 @@ public class ObjectHandler extends NonBlockingResourceHandler {
 			HttpUtil.ok_noContent(x.response(), x.callback());
 			return true;
 		} catch (final KiwiError e) {
-			return switch (e.getCode()) {
-				case "E-001" -> {
-					HttpUtil.badRequest(x.response(), x.callback(), "newLocationId does not exist");
-					yield true;
-				}
-				case "E-002" -> {
-					HttpUtil.badRequest(x.response(), x.callback(), "invalid new location");
-					yield true;
-				}
-				default -> {
-					Log.error(getClass(), "KiwiError moving object", e);
-					x.json(400, "{\"error\":\"" + e.getCode() + "\"}");
-					yield true;
-				}
-			};
+			Log.error(getClass(), "KiwiError moving object", e);
+			HttpUtil.error(x.response(), x.callback(), KiwiErrorHttpMapper.map(e, "object.move"));
+			return true;
 		} catch (final IOException e) {
 			Log.error(getClass(), "Error moving object", e);
 			HttpUtil.badRequest(x.response(), x.callback(), "invalid request body");
@@ -222,7 +207,8 @@ public class ObjectHandler extends NonBlockingResourceHandler {
 
 	private boolean create(final HttpExchange x) {
 		try {
-			final var r = om.readValue(org.eclipse.jetty.server.Request.asInputStream(x.request()), CreateObjectRequest.class);
+			final var r = HttpUtil.jsonCodec().readValue(org.eclipse.jetty.server.Request.asInputStream(x.request()),
+					CreateObjectRequest.class);
 
 			if (r.name() == null || r.name().isBlank()) {
 				HttpUtil.badRequest(x.response(), x.callback(), "name is required");
@@ -236,14 +222,14 @@ public class ObjectHandler extends NonBlockingResourceHandler {
 			final var objectId = UUID.randomUUID();
 			final var locationId = UUID.fromString(r.locationId());
 			final var tags = r.tags() == null ? null : r.tags().toArray(new String[0]);
-			final var metadataJson = r.metadata() == null ? null : om.writeValueAsString(r.metadata());
+			final var metadataJson = r.metadata() == null ? null : HttpUtil.jsonCodec().toJson(r.metadata());
 
 			service.create(objectId, r.name(), r.description(), r.type(), tags, metadataJson, locationId);
 			x.json(201, "{\"object_id\":\"" + objectId + "\"}");
 			return true;
 		} catch (final KiwiError e) {
 			Log.error(getClass(), "KiwiError creating object", e);
-			x.json(400, "{\"error\":\"" + e.getCode() + "\"}");
+			HttpUtil.error(x.response(), x.callback(), KiwiErrorHttpMapper.map(e, "object.create"));
 			return true;
 		} catch (final IllegalArgumentException e) {
 			Log.error(getClass(), "Invalid UUID format", e);
@@ -251,7 +237,7 @@ public class ObjectHandler extends NonBlockingResourceHandler {
 			return true;
 		} catch (final Exception e) {
 			Log.error(getClass(), "Error creating object", e);
-			x.json(500, "{\"error\":\"internal_error\"}");
+			HttpUtil.internalServerError(x.response(), x.callback(), "internal_error");
 			return true;
 		}
 	}
@@ -259,7 +245,8 @@ public class ObjectHandler extends NonBlockingResourceHandler {
 	private boolean updateTags(final HttpExchange x, final UUID objectId) {
 		try {
 			Log.info(getClass(), "Handling object tag update request");
-			final var r = om.readValue(org.eclipse.jetty.server.Request.asInputStream(x.request()), UpdateTagsRequest.class);
+			final var r = HttpUtil.jsonCodec().readValue(org.eclipse.jetty.server.Request.asInputStream(x.request()),
+					UpdateTagsRequest.class);
 
 			if (r.tags() == null) {
 				HttpUtil.badRequest(x.response(), x.callback(), "tags is required");
@@ -272,11 +259,11 @@ public class ObjectHandler extends NonBlockingResourceHandler {
 			return true;
 		} catch (final KiwiError e) {
 			Log.error(getClass(), "KiwiError updating tags", e);
-			x.json(400, "{\"error\":\"" + e.getCode() + "\"}");
+			HttpUtil.error(x.response(), x.callback(), KiwiErrorHttpMapper.map(e, "object.update_tags"));
 			return true;
 		} catch (final IOException e1) {
 			Log.error(getClass(), "Error updating tags", e1);
-			x.json(400, "{\"error\":\"" + e1.getMessage() + "\"}");
+			HttpUtil.badRequest(x.response(), x.callback(), "invalid request body");
 			return true;
 		}
 	}
@@ -284,7 +271,8 @@ public class ObjectHandler extends NonBlockingResourceHandler {
 	private boolean updateText(final HttpExchange x, final UUID objectId) {
 		try {
 			Log.info(getClass(), "Handling object text update request");
-			final var r = om.readValue(org.eclipse.jetty.server.Request.asInputStream(x.request()), UpdateTextRequest.class);
+			final var r = HttpUtil.jsonCodec().readValue(org.eclipse.jetty.server.Request.asInputStream(x.request()),
+					UpdateTextRequest.class);
 
 			if ((r.name() == null || r.name().isBlank()) && (r.description() == null || r.description().isBlank())) {
 				HttpUtil.badRequest(x.response(), x.callback(), "name or description is required");
@@ -296,11 +284,11 @@ public class ObjectHandler extends NonBlockingResourceHandler {
 			return true;
 		} catch (final KiwiError e) {
 			Log.error(getClass(), "KiwiError updating text", e);
-			x.json(400, "{\"error\":\"" + e.getCode() + "\"}");
+			HttpUtil.error(x.response(), x.callback(), KiwiErrorHttpMapper.map(e, "object.update_text"));
 			return true;
 		} catch (final IOException e1) {
 			Log.error(getClass(), "Error updating text", e1);
-			x.json(400, "{\"error\":\"" + e1.getMessage() + "\"}");
+			HttpUtil.badRequest(x.response(), x.callback(), "invalid request body");
 			return true;
 		}
 	}
@@ -319,11 +307,11 @@ public class ObjectHandler extends NonBlockingResourceHandler {
 			final var offset = parseOffset(offsetParam, 0, 0, 100_000);
 
 			final var search = service.fuzzy(name, limit, offset);
-			x.json(200, om.writeValueAsString(new FuzzyResponse(search, limit, offset)));
+			x.json(200, new FuzzyResponse(search, limit, offset));
 			return true;
 		} catch (final Exception e) {
 			Log.error(getClass(), "Error handling fuzzy search", e);
-			x.json(500, "{\"error\":\"internal_error\"}");
+			HttpUtil.internalServerError(x.response(), x.callback(), "internal_error");
 			return true;
 		}
 	}

@@ -16,26 +16,7 @@
 package dev.rafex.kiwi.server;
 
 import dev.rafex.kiwi.bootstrap.KiwiContainer;
+import dev.rafex.kiwi.security.JwtService;
 
-import java.util.List;
-import java.util.logging.Logger;
-
-public final class KiwiServer {
-
-	private static final Logger LOG = Logger.getLogger(KiwiServer.class.getName());
-
-	private KiwiServer() {
-	}
-
-	public static void start(final KiwiContainer container) throws Exception {
-		start(container, ServerConfig.fromEnv(), List.of(new DefaultKiwiModule()));
-	}
-
-	public static void start(final KiwiContainer container, final ServerConfig config, final List<KiwiModule> modules)
-			throws Exception {
-		final var runner = KiwiServerFactory.create(container, config, modules);
-		LOG.info("Starting Kiwi backend on port " + config.port());
-		runner.start();
-		runner.await();
-	}
+public record ModuleContext(KiwiContainer container, ServerConfig config, JwtService jwtService) {
 }

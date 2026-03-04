@@ -18,7 +18,6 @@ package dev.rafex.kiwi.handlers;
 import dev.rafex.kiwi.handlers.resources.HttpExchange;
 import dev.rafex.kiwi.handlers.resources.NonBlockingResourceHandler;
 import dev.rafex.kiwi.http.HttpUtil;
-import dev.rafex.kiwi.json.JsonUtil;
 
 import java.time.Instant;
 import java.util.List;
@@ -40,7 +39,7 @@ public class HealthHandler extends NonBlockingResourceHandler {
 	@Override
 	public boolean get(final HttpExchange x) {
 		final var body = Map.of("status", "UP", "timestamp", Instant.now().toString());
-		HttpUtil.ok(x.response(), x.callback(), JsonUtil.toJson(body));
+		HttpUtil.ok(x.response(), x.callback(), body);
 		return true;
 	}
 

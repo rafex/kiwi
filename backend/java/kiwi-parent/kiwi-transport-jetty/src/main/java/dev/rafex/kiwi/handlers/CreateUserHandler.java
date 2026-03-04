@@ -18,7 +18,6 @@ package dev.rafex.kiwi.handlers;
 import dev.rafex.kiwi.handlers.resources.HttpExchange;
 import dev.rafex.kiwi.handlers.resources.NonBlockingResourceHandler;
 import dev.rafex.kiwi.http.HttpUtil;
-import dev.rafex.kiwi.json.JsonUtil;
 import dev.rafex.kiwi.security.JwtService;
 import dev.rafex.kiwi.services.UserProvisioningService;
 
@@ -124,7 +123,7 @@ public final class CreateUserHandler extends NonBlockingResourceHandler {
 
 		final JsonNode json;
 		try {
-			json = JsonUtil.MAPPER.readTree(body);
+			json = HttpUtil.jsonCodec().readTree(body);
 		} catch (final Exception e) {
 			HttpUtil.badRequest(x.response(), x.callback(), "invalid_json");
 			return true;
@@ -144,13 +143,13 @@ public final class CreateUserHandler extends NonBlockingResourceHandler {
 		if (!res.ok()) {
 			final var code = res.code();
 			if ("username_taken".equals(code)) {
-				HttpUtil.json(x.response(), x.callback(), HttpStatus.CONFLICT_409,
-						Map.of("error", "conflict", "code", "username_taken"));
+				HttpUtil.error(x.response(), x.callback(), HttpStatus.CONFLICT_409, "conflict", "username_taken",
+						"username already exists");
 			} else if ("invalid_input".equals(code)) {
 				HttpUtil.badRequest(x.response(), x.callback(), "invalid_input");
 			} else {
-				HttpUtil.json(x.response(), x.callback(), HttpStatus.INTERNAL_SERVER_ERROR_500,
-						Map.of("error", "server_error", "code", code));
+				HttpUtil.error(x.response(), x.callback(), HttpStatus.INTERNAL_SERVER_ERROR_500, "server_error", code,
+						"user provisioning failed");
 			}
 			return true;
 		}

@@ -15,11 +15,10 @@
  */
 package dev.rafex.kiwi.http;
 
-import dev.rafex.kiwi.json.JsonUtil;
-
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 import org.eclipse.jetty.http.HttpStatus;
@@ -28,20 +27,21 @@ import org.eclipse.jetty.util.Callback;
 
 public final class HttpUtil {
 
-	private static final Map<String, String> NOT_FOUND_BODY = Map.of("error", "not_found");
+	private static volatile JsonCodec jsonCodec = JacksonJsonCodec.defaultCodec();
 
 	private HttpUtil() {
 	}
 
 	/**
 	 * Escribe una respuesta JSON. Si `body` es una cadena se asume JSON ya
-	 * formateado, en caso contrario se serializa con `JsonUtil.MAPPER`.
+	 * formateado, en caso contrario se serializa con el {@link JsonCodec}
+	 * configurado.
 	 */
 	public static void json(final Response response, final Callback callback, final int status, final Object body) {
 		response.setStatus(status);
 		response.getHeaders().put("content-type", "application/json; charset=utf-8");
 
-		final var jsonBody = body instanceof final String s ? s : JsonUtil.toJson(body);
+		final var jsonBody = body instanceof final String s ? s : jsonCodec.toJson(body);
 		final var bytes = jsonBody.getBytes(StandardCharsets.UTF_8);
 		response.write(true, ByteBuffer.wrap(bytes), callback);
 	}
@@ -64,35 +64,76 @@ public final class HttpUtil {
 	}
 
 	public static void notFound(final Response response, final Callback callback) {
-		json(response, callback, HttpStatus.NOT_FOUND_404, NOT_FOUND_BODY);
+		error(response, callback, HttpStatus.NOT_FOUND_404, "not_found", null, "resource not found", null);
 
 	}
 
 	public static void notFound(final Response response, final Callback callback, final String path) {
-		json(response, callback, HttpStatus.NOT_FOUND_404,
-				Map.of("error", "not_found", "path", path, "timestamp", Instant.now().toString()));
+		error(response, callback, HttpStatus.NOT_FOUND_404, "not_found", null, "resource not found", path);
 
 	}
 
 	public static void badRequest(final Response response, final Callback callback, final String message) {
-		json(response, callback, HttpStatus.BAD_REQUEST_400,
-				Map.of("error", "bad_request", "message", message, "timestamp", Instant.now().toString()));
+		error(response, callback, HttpStatus.BAD_REQUEST_400, "bad_request", "bad_request", message, null);
 	}
 
 	public static void internalServerError(final Response response, final Callback callback, final String message) {
-		json(response, callback, HttpStatus.INTERNAL_SERVER_ERROR_500,
-				Map.of("error", "internal_server_error", "message", message, "timestamp", Instant.now().toString()));
+		error(response, callback, HttpStatus.INTERNAL_SERVER_ERROR_500, "internal_server_error", "internal_error",
+				message, null);
 	}
 
 	public static void unauthorized(final Response response, final Callback callback, final String code) {
-		json(response, callback, HttpStatus.UNAUTHORIZED_401,
-				Map.of("error", "unauthorized", "code", code, "timestamp", Instant.now().toString()));
+		error(response, callback, HttpStatus.UNAUTHORIZED_401, "unauthorized", code, null, null);
 
 	}
 
 	public static void forbidden(final Response response, final Callback callback, final String code) {
-		json(response, callback, HttpStatus.FORBIDDEN_403,
-				Map.of("error", "forbidden", "code", code, "timestamp", Instant.now().toString()));
+		error(response, callback, HttpStatus.FORBIDDEN_403, "forbidden", code, null, null);
+	}
+
+	public static void error(final Response response, final Callback callback, final MappedHttpError mapped) {
+		if (mapped == null) {
+			internalServerError(response, callback, "internal_error");
+			return;
+		}
+		error(response, callback, mapped.status(), mapped.error(), mapped.code(), mapped.message(), null);
+	}
+
+	public static void error(final Response response, final Callback callback, final int status, final String error,
+			final String code) {
+		error(response, callback, status, error, code, null, null);
+	}
+
+	public static void error(final Response response, final Callback callback, final int status, final String error,
+			final String code, final String message) {
+		error(response, callback, status, error, code, message, null);
+	}
+
+	public static void error(final Response response, final Callback callback, final int status, final String error,
+			final String code, final String message, final String path) {
+		final var payload = new LinkedHashMap<String, Object>();
+		payload.put("error", error);
+		if (code != null && !code.isBlank()) {
+			payload.put("code", code);
+		}
+		if (message != null && !message.isBlank()) {
+			payload.put("message", message);
+		}
+		if (path != null && !path.isBlank()) {
+			payload.put("path", path);
+		}
+		payload.put("timestamp", Instant.now().toString());
+		json(response, callback, status, payload);
+	}
+
+	public static JsonCodec jsonCodec() {
+		return jsonCodec;
+	}
+
+	public static void setJsonCodec(final JsonCodec codec) {
+		if (codec != null) {
+			jsonCodec = codec;
+		}
 	}
 
 }

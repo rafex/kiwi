@@ -110,7 +110,8 @@ public final class HttpExchange {
 
 	public void methodNotAllowed() {
 		response.getHeaders().put("Allow", String.join(", ", allowedMethods));
-		HttpUtil.json(response, callback, HttpStatus.METHOD_NOT_ALLOWED_405, Map.of("error", "method_not_allowed"));
+		HttpUtil.error(response, callback, HttpStatus.METHOD_NOT_ALLOWED_405, "method_not_allowed", null,
+				"method not allowed", path());
 	}
 
 	public void options() {

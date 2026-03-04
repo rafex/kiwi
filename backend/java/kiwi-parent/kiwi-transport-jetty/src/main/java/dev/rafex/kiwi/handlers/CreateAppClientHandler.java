@@ -18,7 +18,6 @@ package dev.rafex.kiwi.handlers;
 import dev.rafex.kiwi.handlers.resources.HttpExchange;
 import dev.rafex.kiwi.handlers.resources.NonBlockingResourceHandler;
 import dev.rafex.kiwi.http.HttpUtil;
-import dev.rafex.kiwi.json.JsonUtil;
 import dev.rafex.kiwi.security.JwtService;
 import dev.rafex.kiwi.services.AppClientAuthService;
 
@@ -85,7 +84,7 @@ public final class CreateAppClientHandler extends NonBlockingResourceHandler {
 
 		final JsonNode json;
 		try {
-			json = JsonUtil.MAPPER.readTree(body);
+			json = HttpUtil.jsonCodec().readTree(body);
 		} catch (final Exception e) {
 			HttpUtil.badRequest(x.response(), x.callback(), "invalid_json");
 			return true;
@@ -105,8 +104,8 @@ public final class CreateAppClientHandler extends NonBlockingResourceHandler {
 		if (!res.ok()) {
 			final var code = res.code() == null ? "error" : res.code();
 			if ("client_id_taken".equals(code)) {
-				HttpUtil.json(x.response(), x.callback(), HttpStatus.CONFLICT_409,
-						Map.of("error", "conflict", "code", "client_id_taken"));
+				HttpUtil.error(x.response(), x.callback(), HttpStatus.CONFLICT_409, "conflict", "client_id_taken",
+						"client id already exists");
 			} else if ("invalid_input".equals(code)) {
 				HttpUtil.badRequest(x.response(), x.callback(), "invalid_input");
 			} else {

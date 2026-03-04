@@ -18,7 +18,6 @@ package dev.rafex.kiwi.handlers;
 import dev.rafex.kiwi.handlers.resources.HttpExchange;
 import dev.rafex.kiwi.handlers.resources.NonBlockingResourceHandler;
 import dev.rafex.kiwi.http.HttpUtil;
-import dev.rafex.kiwi.json.JsonUtil;
 import dev.rafex.kiwi.security.JwtService;
 import dev.rafex.kiwi.services.AuthService;
 
@@ -29,7 +28,6 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 
-import org.eclipse.jetty.http.HttpStatus;
 import org.eclipse.jetty.io.Content;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -94,7 +92,7 @@ public final class LoginHandler extends NonBlockingResourceHandler {
 
 		final JsonNode json;
 		try {
-			json = JsonUtil.MAPPER.readTree(body);
+			json = HttpUtil.jsonCodec().readTree(body);
 		} catch (final Exception e) {
 			HttpUtil.badRequest(x.response(), x.callback(), "invalid_json");
 			return true;
@@ -123,13 +121,11 @@ public final class LoginHandler extends NonBlockingResourceHandler {
 			final var code = result.code() != null ? result.code() : "bad_credentials";
 
 			if ("user_disabled".equals(code)) {
-				HttpUtil.json(x.response(), x.callback(), HttpStatus.FORBIDDEN_403,
-						Map.of("error", "forbidden", "code", "user_disabled"));
+				HttpUtil.forbidden(x.response(), x.callback(), "user_disabled");
 			} else if ("bad_credentials".equals(code)) {
 				HttpUtil.unauthorized(x.response(), x.callback(), "bad_credentials");
 			} else {
-				HttpUtil.json(x.response(), x.callback(), HttpStatus.UNAUTHORIZED_401,
-						Map.of("error", "unauthorized", "code", code));
+				HttpUtil.unauthorized(x.response(), x.callback(), code);
 			}
 			return true;
 		}

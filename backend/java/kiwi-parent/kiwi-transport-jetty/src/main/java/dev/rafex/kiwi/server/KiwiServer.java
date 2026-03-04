@@ -17,7 +17,6 @@ package dev.rafex.kiwi.server;
 
 import dev.rafex.kiwi.bootstrap.KiwiContainer;
 import dev.rafex.kiwi.handlers.JwtAuthHandler;
-import dev.rafex.kiwi.json.JsonUtil;
 import dev.rafex.kiwi.security.JwtService;
 
 import java.util.ArrayList;
@@ -28,6 +27,7 @@ import java.util.logging.Logger;
 import dev.rafex.ether.http.jetty12.JettyRouteRegistry;
 import dev.rafex.ether.http.jetty12.JettyServerConfig;
 import dev.rafex.ether.http.jetty12.JettyServerFactory;
+import dev.rafex.ether.json.JacksonJsonCodec;
 
 public final class KiwiServer {
 
@@ -53,7 +53,8 @@ public final class KiwiServer {
 		Objects.requireNonNull(container, "container");
 		Objects.requireNonNull(config, "config");
 
-		final var jwt = new JwtService(JsonUtil.MAPPER, config.jwtIssuer(), config.jwtAudience(), config.jwtSecret());
+		final var jsonCodec = JacksonJsonCodec.defaultCodec();
+		final var jwt = new JwtService(jsonCodec.mapper(), config.jwtIssuer(), config.jwtAudience(), config.jwtSecret());
 		final var context = new ModuleContext(container, config, jwt);
 
 		final var routeRegistry = new RouteRegistry();
@@ -81,7 +82,6 @@ public final class KiwiServer {
 
 		final var etherConfig = new JettyServerConfig(config.port(), config.maxThreads(), config.minThreads(),
 				config.idleTimeoutMs(), config.threadPoolName(), config.environment());
-		final var jsonCodec = new dev.rafex.ether.json.JacksonJsonCodec(JsonUtil.MAPPER);
 		return JettyServerFactory.create(etherConfig, etherRoutes, jsonCodec, null, List.of(), etherMiddlewares);
 	}
 }

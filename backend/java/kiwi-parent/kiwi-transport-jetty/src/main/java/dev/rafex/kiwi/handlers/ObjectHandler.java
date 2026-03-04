@@ -30,7 +30,6 @@ import dev.rafex.kiwi.logging.Log;
 import dev.rafex.kiwi.query.QuerySpecBuilder;
 import dev.rafex.kiwi.services.ObjectService;
 
-import java.io.IOException;
 import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -198,7 +197,7 @@ public class ObjectHandler extends NonBlockingResourceHandler {
 			Log.error(getClass(), "KiwiError moving object", e);
 			HttpUtil.error(x.response(), x.callback(), KiwiErrorHttpMapper.map(e, "object.move"));
 			return true;
-		} catch (final IOException e) {
+		} catch (final RuntimeException e) {
 			Log.error(getClass(), "Error moving object", e);
 			HttpUtil.badRequest(x.response(), x.callback(), "invalid request body");
 			return true;
@@ -261,7 +260,7 @@ public class ObjectHandler extends NonBlockingResourceHandler {
 			Log.error(getClass(), "KiwiError updating tags", e);
 			HttpUtil.error(x.response(), x.callback(), KiwiErrorHttpMapper.map(e, "object.update_tags"));
 			return true;
-		} catch (final IOException e1) {
+		} catch (final RuntimeException e1) {
 			Log.error(getClass(), "Error updating tags", e1);
 			HttpUtil.badRequest(x.response(), x.callback(), "invalid request body");
 			return true;
@@ -286,7 +285,7 @@ public class ObjectHandler extends NonBlockingResourceHandler {
 			Log.error(getClass(), "KiwiError updating text", e);
 			HttpUtil.error(x.response(), x.callback(), KiwiErrorHttpMapper.map(e, "object.update_text"));
 			return true;
-		} catch (final IOException e1) {
+		} catch (final RuntimeException e1) {
 			Log.error(getClass(), "Error updating text", e1);
 			HttpUtil.badRequest(x.response(), x.callback(), "invalid request body");
 			return true;

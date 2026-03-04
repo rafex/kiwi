@@ -25,6 +25,9 @@ import org.eclipse.jetty.http.HttpStatus;
 import org.eclipse.jetty.server.Response;
 import org.eclipse.jetty.util.Callback;
 
+import dev.rafex.ether.json.JacksonJsonCodec;
+import dev.rafex.ether.json.JsonCodec;
+
 public final class HttpUtil {
 
 	private static volatile JsonCodec jsonCodec = JacksonJsonCodec.defaultCodec();
@@ -34,7 +37,7 @@ public final class HttpUtil {
 
 	/**
 	 * Escribe una respuesta JSON. Si `body` es una cadena se asume JSON ya
-	 * formateado, en caso contrario se serializa con el {@link JsonCodec}
+	 * formateado, en caso contrario se serializa con el {@link dev.rafex.ether.json.JsonCodec}
 	 * configurado.
 	 */
 	public static void json(final Response response, final Callback callback, final int status, final Object body) {

@@ -16,7 +16,6 @@
 package dev.rafex.kiwi.server;
 
 import dev.rafex.kiwi.bootstrap.KiwiContainer;
-import dev.rafex.kiwi.handlers.JwtAuthHandler;
 import dev.rafex.kiwi.security.JwtService;
 
 import java.util.ArrayList;
@@ -27,6 +26,8 @@ import java.util.logging.Logger;
 import dev.rafex.ether.http.jetty12.JettyRouteRegistry;
 import dev.rafex.ether.http.jetty12.JettyServerConfig;
 import dev.rafex.ether.http.jetty12.JettyServerFactory;
+import dev.rafex.ether.http.jetty12.JettyAuthHandler;
+import dev.rafex.ether.http.jetty12.TokenVerificationResult;
 import dev.rafex.ether.json.JacksonJsonCodec;
 
 public final class KiwiServer {
@@ -77,7 +78,23 @@ public final class KiwiServer {
 			etherMiddlewares.add(middleware::wrap);
 		}
 		if (!authPolicyRegistry.policies().isEmpty()) {
-			etherMiddlewares.add(next -> new JwtAuthHandler(next, jwt).authPolicies(authPolicyRegistry.policies()));
+			etherMiddlewares.add(next -> {
+				final var auth = new JettyAuthHandler(next, (token, epochSeconds) -> {
+					final var verification = jwt.verify(token, epochSeconds);
+					if (!verification.ok()) {
+						return TokenVerificationResult.failed(verification.code());
+					}
+					return TokenVerificationResult.ok(verification.ctx());
+				}, jsonCodec);
+				for (final var policy : authPolicyRegistry.policies()) {
+					if (policy.type() == AuthPolicy.Type.PUBLIC_PATH) {
+						auth.publicPath(policy.method(), policy.pathSpec());
+					} else {
+						auth.protectedPrefix(policy.pathSpec());
+					}
+				}
+				return auth;
+			});
 		}
 
 		final var etherConfig = new JettyServerConfig(config.port(), config.maxThreads(), config.minThreads(),

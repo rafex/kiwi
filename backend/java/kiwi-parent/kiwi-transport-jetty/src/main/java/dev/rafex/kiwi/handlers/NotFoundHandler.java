@@ -15,15 +15,25 @@
  */
 package dev.rafex.kiwi.handlers;
 
-import dev.rafex.kiwi.handlers.resources.HttpExchange;
-import dev.rafex.kiwi.handlers.resources.NonBlockingResourceHandler;
-import dev.rafex.kiwi.http.HttpUtil;
+import dev.rafex.ether.http.jetty12.JettyHttpExchange;
+import dev.rafex.ether.http.jetty12.NonBlockingResourceHandler;
+import dev.rafex.ether.json.JsonCodec;
+import dev.rafex.ether.json.JsonUtils;
+import dev.rafex.ether.http.core.Route;
+import dev.rafex.ether.http.jetty12.JettyApiErrorResponses;
 import dev.rafex.kiwi.logging.Log;
 
 import java.util.List;
 import java.util.Set;
 
 public final class NotFoundHandler extends NonBlockingResourceHandler {
+
+	private static final JsonCodec JSON_CODEC = JsonUtils.codec();
+	private static final JettyApiErrorResponses ERRORS = new JettyApiErrorResponses(JSON_CODEC);
+
+	public NotFoundHandler() {
+		super(JSON_CODEC);
+	}
 
 	@Override
 	protected String basePath() {
@@ -41,38 +51,42 @@ public final class NotFoundHandler extends NonBlockingResourceHandler {
 	}
 
 	@Override
-	public boolean get(final HttpExchange x) {
-		return notFound(x);
+	public boolean get(final dev.rafex.ether.http.core.HttpExchange x) {
+		return notFound(asJetty(x));
 	}
 
 	@Override
-	public boolean post(final HttpExchange x) {
-		return notFound(x);
+	public boolean post(final dev.rafex.ether.http.core.HttpExchange x) {
+		return notFound(asJetty(x));
 	}
 
 	@Override
-	public boolean put(final HttpExchange x) {
-		return notFound(x);
+	public boolean put(final dev.rafex.ether.http.core.HttpExchange x) {
+		return notFound(asJetty(x));
 	}
 
 	@Override
-	public boolean patch(final HttpExchange x) {
-		return notFound(x);
+	public boolean patch(final dev.rafex.ether.http.core.HttpExchange x) {
+		return notFound(asJetty(x));
 	}
 
 	@Override
-	public boolean delete(final HttpExchange x) {
-		return notFound(x);
+	public boolean delete(final dev.rafex.ether.http.core.HttpExchange x) {
+		return notFound(asJetty(x));
 	}
 
 	@Override
-	public boolean options(final HttpExchange x) {
-		return notFound(x);
+	public boolean options(final dev.rafex.ether.http.core.HttpExchange x) {
+		return notFound(asJetty(x));
 	}
 
-	private boolean notFound(final HttpExchange x) {
+	private boolean notFound(final JettyHttpExchange x) {
 		Log.debug(getClass(), "No handler found for path: {}", x.path());
-		HttpUtil.notFound(x.response(), x.callback(), x.path());
+		ERRORS.notFound(x.response(), x.callback(), x.path());
 		return true;
+	}
+
+	private static JettyHttpExchange asJetty(final dev.rafex.ether.http.core.HttpExchange x) {
+		return (JettyHttpExchange) x;
 	}
 }

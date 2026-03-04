@@ -15,11 +15,14 @@
  */
 package dev.rafex.kiwi.handlers;
 
+import dev.rafex.ether.http.core.Route;
+import dev.rafex.ether.http.jetty12.JettyApiErrorResponses;
 import dev.rafex.kiwi.dtos.CreateLocationRequest;
 import dev.rafex.kiwi.errors.KiwiError;
-import dev.rafex.kiwi.handlers.resources.HttpExchange;
-import dev.rafex.kiwi.handlers.resources.NonBlockingResourceHandler;
-import dev.rafex.kiwi.http.HttpUtil;
+import dev.rafex.ether.http.jetty12.JettyHttpExchange;
+import dev.rafex.ether.http.jetty12.NonBlockingResourceHandler;
+import dev.rafex.ether.json.JsonCodec;
+import dev.rafex.ether.json.JsonUtils;
 import dev.rafex.kiwi.http.KiwiErrorHttpMapper;
 import dev.rafex.kiwi.logging.Log;
 import dev.rafex.kiwi.services.LocationService;
@@ -30,9 +33,13 @@ import java.util.UUID;
 
 public class LocationHandler extends NonBlockingResourceHandler {
 
+	private static final JsonCodec JSON_CODEC = JsonUtils.codec();
+	private static final JettyApiErrorResponses ERRORS = new JettyApiErrorResponses(JSON_CODEC);
+
 	private final LocationService service;
 
 	public LocationHandler(final LocationService services) {
+		super(JSON_CODEC);
 		service = services;
 	}
 
@@ -47,9 +54,9 @@ public class LocationHandler extends NonBlockingResourceHandler {
 	}
 
 	@Override
-	public boolean post(final HttpExchange x) {
+	public boolean post(final dev.rafex.ether.http.core.HttpExchange x) {
 		Log.info(getClass(), "Handling location creation request");
-		return create(x);
+		return create(asJetty(x));
 	}
 
 	@Override
@@ -57,14 +64,14 @@ public class LocationHandler extends NonBlockingResourceHandler {
 		return Set.of("POST");
 	}
 
-	private boolean create(final HttpExchange x) {
+	private boolean create(final JettyHttpExchange x) {
 		try {
 
-			final var r = HttpUtil.jsonCodec().readValue(org.eclipse.jetty.server.Request.asInputStream(x.request()),
+			final var r = JSON_CODEC.readValue(org.eclipse.jetty.server.Request.asInputStream(x.request()),
 					CreateLocationRequest.class);
 
 			if (r.name() == null || r.name().isBlank()) {
-				HttpUtil.badRequest(x.response(), x.callback(), "name is required");
+				ERRORS.badRequest(x.response(), x.callback(), "name is required");
 				return true;
 			}
 
@@ -80,18 +87,24 @@ public class LocationHandler extends NonBlockingResourceHandler {
 			return true;
 
 		} catch (final IllegalArgumentException e) {
-			HttpUtil.badRequest(x.response(), x.callback(), "invalid UUID in parentLocationId");
+			ERRORS.badRequest(x.response(), x.callback(), "invalid UUID in parentLocationId");
 			return true;
 
 		} catch (final KiwiError e) {
-			HttpUtil.error(x.response(), x.callback(), KiwiErrorHttpMapper.map(e, "location.create"));
+			final var mapped = KiwiErrorHttpMapper.map(e, "location.create");
+			ERRORS.error(x.response(), x.callback(), mapped.status(), mapped.error(), mapped.code(), mapped.message(),
+					x.path());
 			return true;
 
 		} catch (final Exception e) {
 			Log.debug(getClass(), "Error creating location: {}", e.getMessage());
-			HttpUtil.internalServerError(x.response(), x.callback(), "internal_error");
+			ERRORS.internalServerError(x.response(), x.callback(), "internal_error");
 			return true;
 		}
+	}
+
+	private static JettyHttpExchange asJetty(final dev.rafex.ether.http.core.HttpExchange x) {
+		return (JettyHttpExchange) x;
 	}
 
 }

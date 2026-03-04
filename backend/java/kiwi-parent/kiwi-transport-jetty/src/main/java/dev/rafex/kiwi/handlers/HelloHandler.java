@@ -15,9 +15,12 @@
  */
 package dev.rafex.kiwi.handlers;
 
-import dev.rafex.kiwi.handlers.resources.HttpExchange;
-import dev.rafex.kiwi.handlers.resources.NonBlockingResourceHandler;
-import dev.rafex.kiwi.http.HttpUtil;
+import dev.rafex.ether.http.jetty12.JettyHttpExchange;
+import dev.rafex.ether.http.jetty12.NonBlockingResourceHandler;
+import dev.rafex.ether.json.JsonCodec;
+import dev.rafex.ether.json.JsonUtils;
+import dev.rafex.ether.http.core.Route;
+import dev.rafex.ether.http.jetty12.JettyApiResponses;
 import dev.rafex.kiwi.logging.Log;
 import dev.rafex.kiwi.tools.BuildVersion;
 
@@ -26,6 +29,13 @@ import java.util.Map;
 import java.util.Set;
 
 public class HelloHandler extends NonBlockingResourceHandler {
+
+	private static final JsonCodec JSON_CODEC = JsonUtils.codec();
+	private static final JettyApiResponses RESPONSES = new JettyApiResponses(JSON_CODEC);
+
+	public HelloHandler() {
+		super(JSON_CODEC);
+	}
 
 	@Override
 	protected String basePath() {
@@ -38,11 +48,12 @@ public class HelloHandler extends NonBlockingResourceHandler {
 	}
 
 	@Override
-	public boolean get(final HttpExchange x) {
+	public boolean get(final dev.rafex.ether.http.core.HttpExchange x) {
+		final var jx = asJetty(x);
 		Log.debug(getClass(), "GET /hello");
-		final var name = normalize(queryParam(x, "name"));
+		final var name = normalize(queryParam(jx, "name"));
 		final var message = name == null ? "Hello!!" : "Hello!! " + name;
-		HttpUtil.ok(x.response(), x.callback(), Map.of("message", message, "version", BuildVersion.current()));
+		RESPONSES.ok(jx.response(), jx.callback(), Map.of("message", message, "version", BuildVersion.current()));
 		return true;
 	}
 
@@ -57,6 +68,10 @@ public class HelloHandler extends NonBlockingResourceHandler {
 		}
 		final var trimmed = value.trim();
 		return trimmed.isEmpty() ? null : trimmed;
+	}
+
+	private static JettyHttpExchange asJetty(final dev.rafex.ether.http.core.HttpExchange x) {
+		return (JettyHttpExchange) x;
 	}
 
 }

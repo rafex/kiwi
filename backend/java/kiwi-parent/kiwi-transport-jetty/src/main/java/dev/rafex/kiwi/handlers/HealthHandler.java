@@ -15,9 +15,12 @@
  */
 package dev.rafex.kiwi.handlers;
 
-import dev.rafex.kiwi.handlers.resources.HttpExchange;
-import dev.rafex.kiwi.handlers.resources.NonBlockingResourceHandler;
-import dev.rafex.kiwi.http.HttpUtil;
+import dev.rafex.ether.http.jetty12.JettyHttpExchange;
+import dev.rafex.ether.http.jetty12.NonBlockingResourceHandler;
+import dev.rafex.ether.json.JsonCodec;
+import dev.rafex.ether.json.JsonUtils;
+import dev.rafex.ether.http.core.Route;
+import dev.rafex.ether.http.jetty12.JettyApiResponses;
 
 import java.time.Instant;
 import java.util.List;
@@ -25,6 +28,13 @@ import java.util.Map;
 import java.util.Set;
 
 public class HealthHandler extends NonBlockingResourceHandler {
+
+	private static final JsonCodec JSON_CODEC = JsonUtils.codec();
+	private static final JettyApiResponses RESPONSES = new JettyApiResponses(JSON_CODEC);
+
+	public HealthHandler() {
+		super(JSON_CODEC);
+	}
 
 	@Override
 	protected String basePath() {
@@ -37,15 +47,20 @@ public class HealthHandler extends NonBlockingResourceHandler {
 	}
 
 	@Override
-	public boolean get(final HttpExchange x) {
+	public boolean get(final dev.rafex.ether.http.core.HttpExchange x) {
+		final var jx = asJetty(x);
 		final var body = Map.of("status", "UP", "timestamp", Instant.now().toString());
-		HttpUtil.ok(x.response(), x.callback(), body);
+		RESPONSES.ok(jx.response(), jx.callback(), body);
 		return true;
 	}
 
 	@Override
 	public Set<String> supportedMethods() {
 		return Set.of("GET");
+	}
+
+	private static JettyHttpExchange asJetty(final dev.rafex.ether.http.core.HttpExchange x) {
+		return (JettyHttpExchange) x;
 	}
 
 }

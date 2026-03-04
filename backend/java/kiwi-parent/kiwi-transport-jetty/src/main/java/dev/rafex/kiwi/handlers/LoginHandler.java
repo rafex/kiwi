@@ -22,7 +22,7 @@ import dev.rafex.ether.http.jetty12.JettyHttpExchange;
 import dev.rafex.ether.http.jetty12.NonBlockingResourceHandler;
 import dev.rafex.ether.json.JsonCodec;
 import dev.rafex.ether.json.JsonUtils;
-import dev.rafex.kiwi.security.JwtService;
+import dev.rafex.kiwi.security.KiwiJwtService;
 import dev.rafex.kiwi.services.AuthService;
 
 import java.nio.charset.StandardCharsets;
@@ -42,15 +42,15 @@ public final class LoginHandler extends NonBlockingResourceHandler {
 	private static final JettyApiResponses RESPONSES = new JettyApiResponses(JSON_CODEC);
 	private static final JettyApiErrorResponses ERRORS = new JettyApiErrorResponses(JSON_CODEC);
 
-	private final JwtService jwt;
+	private final KiwiJwtService jwt;
 	private final AuthService authService;
 	private final long ttlSeconds;
 
-	public LoginHandler(final JwtService jwt, final AuthService authService) {
+	public LoginHandler(final KiwiJwtService jwt, final AuthService authService) {
 		this(jwt, authService, Long.parseLong(System.getenv().getOrDefault("JWT_TTL_SECONDS", "3600")));
 	}
 
-	public LoginHandler(final JwtService jwt, final AuthService authService, final long ttlSeconds) {
+	public LoginHandler(final KiwiJwtService jwt, final AuthService authService, final long ttlSeconds) {
 		super(JSON_CODEC);
 		this.jwt = Objects.requireNonNull(jwt);
 		this.authService = Objects.requireNonNull(authService);

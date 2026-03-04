@@ -20,6 +20,7 @@
 		<main.class>dev.rafex.kiwi.App</main.class>
 		<ether.http.jetty12.version>1.0.0-SNAPSHOT</ether.http.jetty12.version>
 		<ether.json.version>4.0.0-SNAPSHOT</ether.json.version>
+		<ether.jwt.version>4.0.0-SNAPSHOT</ether.jwt.version>
 	</properties>
 
 	<dependencies>
@@ -43,6 +44,11 @@
 			<groupId>dev.rafex.ether.json</groupId>
 			<artifactId>ether-json</artifactId>
 			<version>${ether.json.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>dev.rafex.ether.jwt</groupId>
+			<artifactId>ether-jwt</artifactId>
+			<version>${ether.jwt.version}</version>
 		</dependency>
 
 		<dependency>

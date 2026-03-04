@@ -22,7 +22,7 @@ import dev.rafex.ether.http.jetty12.JettyHttpExchange;
 import dev.rafex.ether.http.jetty12.NonBlockingResourceHandler;
 import dev.rafex.ether.json.JsonCodec;
 import dev.rafex.ether.json.JsonUtils;
-import dev.rafex.kiwi.security.JwtService;
+import dev.rafex.kiwi.security.KiwiJwtService;
 import dev.rafex.kiwi.services.AppClientAuthService;
 
 import java.nio.charset.StandardCharsets;
@@ -44,15 +44,15 @@ public final class TokenHandler extends NonBlockingResourceHandler {
 	private static final JettyApiResponses RESPONSES = new JettyApiResponses(JSON_CODEC);
 	private static final JettyApiErrorResponses ERRORS = new JettyApiErrorResponses(JSON_CODEC);
 
-	private final JwtService jwt;
+	private final KiwiJwtService jwt;
 	private final AppClientAuthService authService;
 	private final long ttlSeconds;
 
-	public TokenHandler(final JwtService jwt, final AppClientAuthService authService) {
+	public TokenHandler(final KiwiJwtService jwt, final AppClientAuthService authService) {
 		this(jwt, authService, Long.parseLong(System.getenv().getOrDefault("JWT_APP_TTL_SECONDS", "1800")));
 	}
 
-	public TokenHandler(final JwtService jwt, final AppClientAuthService authService, final long ttlSeconds) {
+	public TokenHandler(final KiwiJwtService jwt, final AppClientAuthService authService, final long ttlSeconds) {
 		super(JSON_CODEC);
 		this.jwt = Objects.requireNonNull(jwt);
 		this.authService = Objects.requireNonNull(authService);

@@ -23,7 +23,7 @@ import dev.rafex.ether.http.jetty12.JettyHttpExchange;
 import dev.rafex.ether.http.jetty12.NonBlockingResourceHandler;
 import dev.rafex.ether.json.JsonCodec;
 import dev.rafex.ether.json.JsonUtils;
-import dev.rafex.kiwi.security.JwtService;
+import dev.rafex.kiwi.security.KiwiJwtService;
 import dev.rafex.kiwi.services.UserProvisioningService;
 
 import java.nio.charset.StandardCharsets;
@@ -112,7 +112,7 @@ public final class CreateUserHandler extends NonBlockingResourceHandler {
 				return true;
 			}
 
-			if (authObj instanceof final JwtService.AuthContext ctx && !ctx.roles().contains("ADMIN")) {
+			if (authObj instanceof final KiwiJwtService.AuthContext ctx && !ctx.roles().contains("ADMIN")) {
 				ERRORS.forbidden(jx.response(), jx.callback(), "missing_admin_role");
 				return true;
 			}

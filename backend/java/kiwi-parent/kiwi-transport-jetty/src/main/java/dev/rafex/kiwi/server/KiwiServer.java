@@ -16,7 +16,7 @@
 package dev.rafex.kiwi.server;
 
 import dev.rafex.kiwi.bootstrap.KiwiContainer;
-import dev.rafex.kiwi.security.JwtService;
+import dev.rafex.kiwi.security.KiwiJwtService;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -55,7 +55,7 @@ public final class KiwiServer {
 		Objects.requireNonNull(config, "config");
 
 		final var jsonCodec = JacksonJsonCodec.defaultCodec();
-		final var jwt = new JwtService(jsonCodec.mapper(), config.jwtIssuer(), config.jwtAudience(), config.jwtSecret());
+		final var jwt = new KiwiJwtService(config.jwtIssuer(), config.jwtAudience(), config.jwtSecret());
 		final var context = new ModuleContext(container, config, jwt);
 
 		final var routeRegistry = new RouteRegistry();

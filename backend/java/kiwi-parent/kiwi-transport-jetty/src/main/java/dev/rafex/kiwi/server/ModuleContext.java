@@ -16,7 +16,7 @@
 package dev.rafex.kiwi.server;
 
 import dev.rafex.kiwi.bootstrap.KiwiContainer;
-import dev.rafex.kiwi.security.JwtService;
+import dev.rafex.kiwi.security.KiwiJwtService;
 
-public record ModuleContext(KiwiContainer container, ServerConfig config, JwtService jwtService) {
+public record ModuleContext(KiwiContainer container, ServerConfig config, KiwiJwtService jwtService) {
 }

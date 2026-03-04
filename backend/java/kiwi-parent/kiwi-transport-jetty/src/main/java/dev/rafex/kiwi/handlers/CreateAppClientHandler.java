@@ -23,7 +23,7 @@ import dev.rafex.ether.http.jetty12.JettyHttpExchange;
 import dev.rafex.ether.http.jetty12.NonBlockingResourceHandler;
 import dev.rafex.ether.json.JsonCodec;
 import dev.rafex.ether.json.JsonUtils;
-import dev.rafex.kiwi.security.JwtService;
+import dev.rafex.kiwi.security.KiwiJwtService;
 import dev.rafex.kiwi.services.AppClientAuthService;
 
 import java.nio.charset.StandardCharsets;
@@ -70,7 +70,7 @@ public final class CreateAppClientHandler extends NonBlockingResourceHandler {
 	public boolean post(final dev.rafex.ether.http.core.HttpExchange x) throws Exception {
 		final var jx = asJetty(x);
 		final var authObj = jx.request().getAttribute(JettyAuthHandler.REQ_ATTR_AUTH);
-		if (!(authObj instanceof final JwtService.AuthContext ctx)) {
+		if (!(authObj instanceof final KiwiJwtService.AuthContext ctx)) {
 			ERRORS.unauthorized(jx.response(), jx.callback(), "missing_bearer_token");
 			return true;
 		}

@@ -72,9 +72,9 @@
 		<archunit.version>1.4.1</archunit.version>
 
 
-		<ether.http.jetty12.version>1.0.0-SNAPSHOT</ether.http.jetty12.version>
-		<ether.json.version>4.0.0-SNAPSHOT</ether.json.version>
-		<ether.jwt.version>4.0.0-SNAPSHOT</ether.jwt.version>
+		<ether.http.jetty12.version>4.0.0-v20260304</ether.http.jetty12.version>
+		<ether.json.version>4.0.0-v20260304</ether.json.version>
+		<ether.jwt.version>4.0.0-v20260304</ether.jwt.version>
 
 		<!-- Plugin versions -->
 		<exec.maven.plugin.version>3.6.3</exec.maven.plugin.version>

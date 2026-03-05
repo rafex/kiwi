@@ -46,17 +46,24 @@ npm run web
 
 ```bash
 npm run health
-npm run hello
+npm run hello -- --name Rafex
 npm run login -- --username USER --password PASS [--basic]
 npm run start -- get-object --id UUID
-npm run start -- search --q macbook --tags laptop,apple --limit 20
-npm run start -- fuzzy --name mac
+npm run start -- search --q macbook --tags laptop,apple --limit 20 --offset 0
+npm run start -- search --rsql 'name=like="%macbook%";status==active' --tags laptop,apple --limit 20 --offset 0
+npm run start -- fuzzy --name mac --limit 20 --offset 0
 npm run start -- create-location --name "Closet"
 npm run start -- create-object --name "MacBook Pro" --location-id UUID --tags laptop,apple --metadata '{"ram_gb":32}'
 npm run start -- move-object --id UUID --new-location-id UUID
 npm run start -- update-tags --id UUID --tags a,b,c
 npm run start -- update-text --id UUID --name "Nuevo nombre" --description "Nueva desc"
 ```
+
+Notas de `search`:
+
+- `--q` interpreta texto libre y lo convierte a RSQL seguro: `name=like="%<texto>%"`
+- `--rsql` envía la expresión RSQL tal cual (tiene prioridad sobre `--q`)
+- Si usas `;` o paréntesis en RSQL, envuelve el valor entre comillas simples en shell
 
 Variables útiles:
 

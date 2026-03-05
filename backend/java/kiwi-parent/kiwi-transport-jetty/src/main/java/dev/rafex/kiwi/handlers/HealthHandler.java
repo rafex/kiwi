@@ -15,34 +15,52 @@
  */
 package dev.rafex.kiwi.handlers;
 
-import dev.rafex.kiwi.http.HttpUtil;
-import dev.rafex.kiwi.json.JsonUtil;
+import dev.rafex.ether.http.jetty12.JettyHttpExchange;
+import dev.rafex.ether.http.jetty12.NonBlockingResourceHandler;
+import dev.rafex.ether.json.JsonCodec;
+import dev.rafex.ether.json.JsonUtils;
+import dev.rafex.ether.http.core.Route;
+import dev.rafex.ether.http.jetty12.JettyApiResponses;
 
 import java.time.Instant;
+import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
-import org.eclipse.jetty.http.HttpMethod;
-import org.eclipse.jetty.server.Handler;
-import org.eclipse.jetty.server.Request;
-import org.eclipse.jetty.server.Response;
-import org.eclipse.jetty.util.Callback;
+public class HealthHandler extends NonBlockingResourceHandler {
 
-public class HealthHandler extends Handler.Abstract.NonBlocking {
+	private static final JsonCodec JSON_CODEC = JsonUtils.codec();
+	private static final JettyApiResponses RESPONSES = new JettyApiResponses(JSON_CODEC);
+
+	public HealthHandler() {
+		super(JSON_CODEC);
+	}
 
 	@Override
-	public boolean handle(final Request request, final Response response, final Callback callback) throws Exception {
-		if (!"/health".equals(request.getHttpURI().getPath())) {
-			return false;
-		}
-		if (request.getMethod() == null || !HttpMethod.GET.is(request.getMethod())) {
-			response.setStatus(405);
-			return true;
-		}
+	protected String basePath() {
+		return "/health";
+	}
 
+	@Override
+	protected List<Route> routes() {
+		return List.of(Route.of("/", Set.of("GET")));
+	}
+
+	@Override
+	public boolean get(final dev.rafex.ether.http.core.HttpExchange x) {
+		final var jx = asJetty(x);
 		final var body = Map.of("status", "UP", "timestamp", Instant.now().toString());
-
-		HttpUtil.ok(response, callback, JsonUtil.toJson(body));
+		RESPONSES.ok(jx.response(), jx.callback(), body);
 		return true;
+	}
+
+	@Override
+	public Set<String> supportedMethods() {
+		return Set.of("GET");
+	}
+
+	private static JettyHttpExchange asJetty(final dev.rafex.ether.http.core.HttpExchange x) {
+		return (JettyHttpExchange) x;
 	}
 
 }

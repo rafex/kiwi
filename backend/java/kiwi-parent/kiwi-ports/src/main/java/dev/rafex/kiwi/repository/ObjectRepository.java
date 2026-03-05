@@ -15,6 +15,8 @@
  */
 package dev.rafex.kiwi.repository;
 
+import dev.rafex.kiwi.query.QuerySpec;
+
 import java.sql.SQLException;
 import java.time.Instant;
 import java.util.List;
@@ -36,9 +38,9 @@ public interface ObjectRepository {
 
 	Optional<ObjectDetailRow> findById(UUID objectId) throws SQLException;
 
-	List<SearchRow> search(String query, String[] tags, UUID locationId, int limit) throws SQLException;
+	List<SearchRow> search(QuerySpec querySpec) throws SQLException;
 
-	List<FuzzyRow> fuzzy(String text, int limit) throws SQLException;
+	List<FuzzyRow> fuzzy(String text, int limit, int offset) throws SQLException;
 
 	record SearchRow(UUID objectId, String name, float rank) {
 	}

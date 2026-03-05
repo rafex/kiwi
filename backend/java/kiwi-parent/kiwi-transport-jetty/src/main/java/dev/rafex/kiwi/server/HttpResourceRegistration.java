@@ -13,12 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package dev.rafex.kiwi.dtos;
+package dev.rafex.kiwi.server;
 
-import dev.rafex.kiwi.models.SearchItem;
+import org.eclipse.jetty.server.Handler;
 
-import java.util.List;
-
-public record SearchResponse(List<SearchItem> items, int limit, int offset) {
-
+public record HttpResourceRegistration(String pathSpec, Handler handler) {
 }

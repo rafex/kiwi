@@ -13,12 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package dev.rafex.kiwi.dtos;
+package dev.rafex.kiwi.server;
 
-import dev.rafex.kiwi.models.SearchItem;
-
+import java.util.ArrayList;
 import java.util.List;
 
-public record SearchResponse(List<SearchItem> items, int limit, int offset) {
+public final class MiddlewareRegistry {
+
+	private final List<Middleware> middlewares = new ArrayList<>();
+
+	public void add(final Middleware middleware) {
+		middlewares.add(middleware);
+	}
+
+	public List<Middleware> middlewares() {
+		return List.copyOf(middlewares);
+	}
 
 }

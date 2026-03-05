@@ -15,21 +15,78 @@
  */
 package dev.rafex.kiwi.handlers;
 
-import dev.rafex.kiwi.http.HttpUtil;
+import dev.rafex.ether.http.jetty12.JettyHttpExchange;
+import dev.rafex.ether.http.jetty12.NonBlockingResourceHandler;
+import dev.rafex.ether.json.JsonCodec;
+import dev.rafex.ether.json.JsonUtils;
+import dev.rafex.ether.http.core.Route;
+import dev.rafex.ether.http.jetty12.JettyApiErrorResponses;
 import dev.rafex.kiwi.logging.Log;
 
-import org.eclipse.jetty.server.Handler;
-import org.eclipse.jetty.server.Request;
-import org.eclipse.jetty.server.Response;
-import org.eclipse.jetty.util.Callback;
+import java.util.List;
+import java.util.Set;
 
-public final class NotFoundHandler extends Handler.Abstract {
+public final class NotFoundHandler extends NonBlockingResourceHandler {
+
+	private static final JsonCodec JSON_CODEC = JsonUtils.codec();
+	private static final JettyApiErrorResponses ERRORS = new JettyApiErrorResponses(JSON_CODEC);
+
+	public NotFoundHandler() {
+		super(JSON_CODEC);
+	}
 
 	@Override
-	public boolean handle(final Request request, final Response response, final Callback callback) throws Exception {
-		Log.debug(getClass(), "No handler found for path: {}", request.getHttpURI().getPath());
-		HttpUtil.notFound(response, callback, request.getHttpURI().getPath()); // reutiliza el body constante de
-																				// HttpUtil
+	protected String basePath() {
+		return "/";
+	}
+
+	@Override
+	protected List<Route> routes() {
+		return List.of(Route.of("/**", Set.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS")));
+	}
+
+	@Override
+	public Set<String> supportedMethods() {
+		return Set.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS");
+	}
+
+	@Override
+	public boolean get(final dev.rafex.ether.http.core.HttpExchange x) {
+		return notFound(asJetty(x));
+	}
+
+	@Override
+	public boolean post(final dev.rafex.ether.http.core.HttpExchange x) {
+		return notFound(asJetty(x));
+	}
+
+	@Override
+	public boolean put(final dev.rafex.ether.http.core.HttpExchange x) {
+		return notFound(asJetty(x));
+	}
+
+	@Override
+	public boolean patch(final dev.rafex.ether.http.core.HttpExchange x) {
+		return notFound(asJetty(x));
+	}
+
+	@Override
+	public boolean delete(final dev.rafex.ether.http.core.HttpExchange x) {
+		return notFound(asJetty(x));
+	}
+
+	@Override
+	public boolean options(final dev.rafex.ether.http.core.HttpExchange x) {
+		return notFound(asJetty(x));
+	}
+
+	private boolean notFound(final JettyHttpExchange x) {
+		Log.debug(getClass(), "No handler found for path: {}", x.path());
+		ERRORS.notFound(x.response(), x.callback(), x.path());
 		return true;
+	}
+
+	private static JettyHttpExchange asJetty(final dev.rafex.ether.http.core.HttpExchange x) {
+		return (JettyHttpExchange) x;
 	}
 }

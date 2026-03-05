@@ -13,12 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package dev.rafex.kiwi.dtos;
+package dev.rafex.kiwi.server;
 
-import dev.rafex.kiwi.models.SearchItem;
+public interface KiwiModule {
 
-import java.util.List;
+	void registerRoutes(RouteRegistry routes, ModuleContext context);
 
-public record SearchResponse(List<SearchItem> items, int limit, int offset) {
+	default void registerAuthPolicies(final AuthPolicyRegistry authPolicies, final ModuleContext context) {
+	}
+
+	default void registerMiddlewares(final MiddlewareRegistry middlewares, final ModuleContext context) {
+	}
 
 }

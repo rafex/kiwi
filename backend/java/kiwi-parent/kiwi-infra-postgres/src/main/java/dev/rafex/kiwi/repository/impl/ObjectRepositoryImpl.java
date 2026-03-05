@@ -15,6 +15,7 @@
  */
 package dev.rafex.kiwi.repository.impl;
 
+import dev.rafex.kiwi.query.QuerySpec;
 import dev.rafex.kiwi.repository.ObjectRepository;
 
 import java.sql.SQLException;
@@ -30,6 +31,7 @@ import javax.sql.DataSource;
 public class ObjectRepositoryImpl implements ObjectRepository {
 
 	private final DataSource ds;
+	private final ObjectQuerySqlBuilder querySqlBuilder = new ObjectQuerySqlBuilder();
 
 	public ObjectRepositoryImpl(final DataSource ds) {
 		this.ds = ds;
@@ -116,28 +118,10 @@ public class ObjectRepositoryImpl implements ObjectRepository {
 	// --- Queries (RETURNS TABLE) ---
 
 	@Override
-	public List<SearchRow> search(final String query, final String[] tags, final UUID locationId, final int limit)
-			throws SQLException {
-		try (var c = ds.getConnection();
-				var ps = c.prepareStatement(
-						"SELECT object_id, name, rank FROM api_search_objects(?, ?::text[], ?::uuid, ?)")) {
-
-			ps.setString(1, query);
-
-			if (tags == null) {
-				ps.setNull(2, Types.ARRAY);
-			} else {
-				ps.setArray(2, c.createArrayOf("text", tags));
-			}
-
-			if (locationId == null) {
-				ps.setNull(3, Types.OTHER);
-			} else {
-				ps.setObject(3, locationId);
-			}
-
-			ps.setInt(4, limit);
-
+	public List<SearchRow> search(final QuerySpec querySpec) throws SQLException {
+		final var built = querySqlBuilder.build(querySpec);
+		try (var c = ds.getConnection(); var ps = c.prepareStatement(built.sql())) {
+			querySqlBuilder.bind(c, ps, built.params());
 			try (var rs = ps.executeQuery()) {
 				final List<SearchRow> out = new ArrayList<>();
 				while (rs.next()) {
@@ -149,11 +133,12 @@ public class ObjectRepositoryImpl implements ObjectRepository {
 	}
 
 	@Override
-	public List<FuzzyRow> fuzzy(final String text, final int limit) throws SQLException {
+	public List<FuzzyRow> fuzzy(final String text, final int limit, final int offset) throws SQLException {
 		try (var c = ds.getConnection();
-				var ps = c.prepareStatement("SELECT object_id, name, score FROM api_fuzzy_search(?, ?)")) {
+				var ps = c.prepareStatement("SELECT object_id, name, score FROM api_fuzzy_search(?, ?, ?)")) {
 			ps.setString(1, text);
 			ps.setInt(2, limit);
+			ps.setInt(3, offset);
 
 			try (var rs = ps.executeQuery()) {
 				final List<FuzzyRow> out = new ArrayList<>();

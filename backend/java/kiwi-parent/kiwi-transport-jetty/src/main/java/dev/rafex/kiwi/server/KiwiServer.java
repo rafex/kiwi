@@ -16,27 +16,19 @@
 package dev.rafex.kiwi.server;
 
 import dev.rafex.kiwi.bootstrap.KiwiContainer;
-import dev.rafex.kiwi.handlers.CreateUserHandler;
-import dev.rafex.kiwi.handlers.GlowrootNamingHandler;
-import dev.rafex.kiwi.handlers.HealthHandler;
-import dev.rafex.kiwi.handlers.HelloHandler;
-import dev.rafex.kiwi.handlers.JwtAuthHandler;
-import dev.rafex.kiwi.handlers.LocationHandler;
-import dev.rafex.kiwi.handlers.LoginHandler;
-import dev.rafex.kiwi.handlers.NotFoundHandler;
-import dev.rafex.kiwi.handlers.ObjectHandler;
-import dev.rafex.kiwi.handlers.TokenHandler;
-import dev.rafex.kiwi.handlers.CreateAppClientHandler;
-import dev.rafex.kiwi.json.JsonUtil;
-import dev.rafex.kiwi.security.JwtService;
+import dev.rafex.kiwi.security.KiwiJwtService;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Objects;
 import java.util.logging.Logger;
 
-import org.eclipse.jetty.http.pathmap.PathSpec;
-import org.eclipse.jetty.server.Server;
-import org.eclipse.jetty.server.ServerConnector;
-import org.eclipse.jetty.server.handler.PathMappingsHandler;
-import org.eclipse.jetty.util.thread.QueuedThreadPool;
+import dev.rafex.ether.http.jetty12.JettyRouteRegistry;
+import dev.rafex.ether.http.jetty12.JettyServerConfig;
+import dev.rafex.ether.http.jetty12.JettyServerFactory;
+import dev.rafex.ether.http.jetty12.JettyAuthHandler;
+import dev.rafex.ether.http.jetty12.TokenVerificationResult;
+import dev.rafex.ether.json.JacksonJsonCodec;
 
 public final class KiwiServer {
 
@@ -46,62 +38,67 @@ public final class KiwiServer {
 	}
 
 	public static void start(final KiwiContainer container) throws Exception {
-		final var port = Integer.parseInt(System.getenv().getOrDefault("PORT", "8080"));
+		start(container, ServerConfig.fromEnv(), List.of(new DefaultKiwiModule()));
+	}
 
-		final var pool = new QueuedThreadPool();
-		pool.setMaxThreads(Math.max(Runtime.getRuntime().availableProcessors() * 2, 16));
-		pool.setMinThreads(4);
-		pool.setIdleTimeout(30_000);
-		pool.setName("kiwi-http");
+	public static void start(final KiwiContainer container, final ServerConfig config, final List<KiwiModule> modules)
+			throws Exception {
+		final var runner = createRunner(container, config, modules);
+		LOG.info("Starting Kiwi backend on port " + config.port());
+		runner.start();
+		runner.await();
+	}
 
-		final var server = new Server(pool);
+	private static dev.rafex.ether.http.jetty12.JettyServerRunner createRunner(final KiwiContainer container,
+			final ServerConfig config, final List<KiwiModule> modules) {
+		Objects.requireNonNull(container, "container");
+		Objects.requireNonNull(config, "config");
 
-		final var connector = new ServerConnector(server);
-		connector.setPort(port);
-		server.addConnector(connector);
+		final var jsonCodec = JacksonJsonCodec.defaultCodec();
+		final var jwt = new KiwiJwtService(config.jwtIssuer(), config.jwtAudience(), config.jwtSecret());
+		final var context = new ModuleContext(container, config, jwt);
 
-		final var objectService = container.objectService();
-		final var locationService = container.locationService();
-		final var authService = container.authService();
-		final var appClientAuthService = container.appClientAuthService();
-		final var provisioning = container.userProvisioningService();
+		final var routeRegistry = new RouteRegistry();
+		final var authPolicyRegistry = new AuthPolicyRegistry();
+		final var middlewareRegistry = new MiddlewareRegistry();
 
-		// JWT config
-		final var jwt = new JwtService(JsonUtil.MAPPER, System.getenv().getOrDefault("JWT_ISS", "dev.rafex.kiwi"),
-				System.getenv().getOrDefault("JWT_AUD", "kiwi-backend"),
-				System.getenv().getOrDefault("JWT_SECRET", "CHANGE_ME_NOW_32+chars_secret"));
-
-		final var routes = new PathMappingsHandler();
-		routes.addMapping(PathSpec.from("/hello"), new HelloHandler());
-		routes.addMapping(PathSpec.from("/health"), new HealthHandler());
-		routes.addMapping(PathSpec.from("/auth/login"), new LoginHandler(jwt, authService));
-		routes.addMapping(PathSpec.from("/auth/token"), new TokenHandler(jwt, appClientAuthService));
-		routes.addMapping(PathSpec.from("/objects/*"), new ObjectHandler(objectService));
-		routes.addMapping(PathSpec.from("/locations/*"), new LocationHandler(locationService));
-		routes.addMapping(PathSpec.from("/admin/app-clients"), new CreateAppClientHandler(appClientAuthService));
-		routes.addMapping(PathSpec.from("/*"), new NotFoundHandler()); // fallback (según versión/impl)
-
-		final var env = System.getenv().getOrDefault("ENVIRONMENT", "unknown");
-		final var enabledUserProvisioning = "true"
-				.equalsIgnoreCase(System.getenv().getOrDefault("ENABLE_USER_PROVISIONING", "false"));
-		final var sandbox = "work02".equalsIgnoreCase(env) || "sandbox".equalsIgnoreCase(env)
-				|| "dev".equalsIgnoreCase(env);
-
-		if (enabledUserProvisioning && sandbox) {
-			routes.addMapping(PathSpec.from("/admin/users"), new CreateUserHandler(provisioning));
+		for (final var module : modules == null ? List.<KiwiModule>of() : modules) {
+			module.registerRoutes(routeRegistry, context);
+			module.registerAuthPolicies(authPolicyRegistry, context);
+			module.registerMiddlewares(middlewareRegistry, context);
 		}
 
-		// Wrapper: /hello público, /objects y /locations protegidos (ajústalo a tu
-		// gusto)
-		final var auth = new JwtAuthHandler(routes, jwt).publicPath("POST", "/admin/users")
-				.publicPath("POST", "/auth/login").publicPath("POST", "/auth/token").publicPath("GET", "/hello")
-				.publicPath("GET", "/health")
-				.protectedPrefix("/objects/*").protectedPrefix("/locations/*").protectedPrefix("/admin/app-clients");
+		final var etherRoutes = new JettyRouteRegistry();
+		for (final var route : routeRegistry.routes()) {
+			etherRoutes.add(route.pathSpec(), route.handler());
+		}
 
-		server.setHandler(new GlowrootNamingHandler(auth));
+		final var etherMiddlewares = new ArrayList<dev.rafex.ether.http.jetty12.JettyMiddleware>();
+		for (final var middleware : middlewareRegistry.middlewares()) {
+			etherMiddlewares.add(middleware::wrap);
+		}
+		if (!authPolicyRegistry.policies().isEmpty()) {
+			etherMiddlewares.add(next -> {
+				final var auth = new JettyAuthHandler(next, (token, epochSeconds) -> {
+					final var verification = jwt.verify(token, epochSeconds);
+					if (!verification.ok()) {
+						return TokenVerificationResult.failed(verification.code());
+					}
+					return TokenVerificationResult.ok(verification.ctx());
+				}, jsonCodec);
+				for (final var policy : authPolicyRegistry.policies()) {
+					if (policy.type() == AuthPolicy.Type.PUBLIC_PATH) {
+						auth.publicPath(policy.method(), policy.pathSpec());
+					} else {
+						auth.protectedPrefix(policy.pathSpec());
+					}
+				}
+				return auth;
+			});
+		}
 
-		LOG.info("Starting Kiwi backend on port " + port);
-		server.start();
-		server.join();
+		final var etherConfig = new JettyServerConfig(config.port(), config.maxThreads(), config.minThreads(),
+				config.idleTimeoutMs(), config.threadPoolName(), config.environment());
+		return JettyServerFactory.create(etherConfig, etherRoutes, jsonCodec, null, List.of(), etherMiddlewares);
 	}
 }

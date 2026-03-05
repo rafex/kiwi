@@ -14,6 +14,20 @@ function printJson(value) {
   console.log(JSON.stringify(value, null, 2));
 }
 
+function quoteRsqlValue(value) {
+  return `"${String(value).replace(/\\/g, "\\\\").replace(/"/g, '\\"')}"`;
+}
+
+function buildSearchFilter({ rsql, q }) {
+  const rsqlValue = (rsql || "").trim();
+  if (rsqlValue) return rsqlValue;
+
+  const textValue = (q || "").trim();
+  if (!textValue) return "";
+
+  return `name=like=${quoteRsqlValue(`%${textValue}%`)}`;
+}
+
 function usage() {
   console.log(`
 Uso:
@@ -21,11 +35,11 @@ Uso:
 
 Comandos:
   health
-  hello
+  hello [--name NOMBRE]
   login --username USER --password PASS [--basic]
   get-object --id UUID
-  search --q TEXTO [--tags a,b] [--location-id UUID] [--limit N]
-  fuzzy --name TEXTO [--limit N]
+  search (--q TEXTO | --rsql EXPRESION) [--tags a,b] [--location-id UUID] [--limit N] [--offset N]
+  fuzzy --name TEXTO [--limit N] [--offset N]
   create-location --name NOMBRE [--parent-id UUID]
   create-object --name NOMBRE --location-id UUID [--description TXT] [--type TIPO] [--tags a,b] [--metadata '{"k":"v"}']
   move-object --id UUID --new-location-id UUID
@@ -63,7 +77,7 @@ async function main() {
         break;
 
       case "hello":
-        res = await client.hello();
+        res = await client.hello({ name: argValue("--name") || undefined });
         break;
 
       case "login": {
@@ -82,19 +96,26 @@ async function main() {
         res = await client.getObject(argValue("--id"));
         break;
 
-      case "search":
+      case "search": {
+        const filter = buildSearchFilter({
+          rsql: argValue("--rsql"),
+          q: argValue("--q")
+        });
         res = await client.search({
-          q: argValue("--q"),
+          q: filter || undefined,
           tags: argValue("--tags"),
           locationId: argValue("--location-id"),
-          limit: argValue("--limit") ? Number(argValue("--limit")) : undefined
+          limit: argValue("--limit") ? Number(argValue("--limit")) : undefined,
+          offset: argValue("--offset") ? Number(argValue("--offset")) : undefined
         });
         break;
+      }
 
       case "fuzzy":
         res = await client.fuzzy({
           name: argValue("--name"),
-          limit: argValue("--limit") ? Number(argValue("--limit")) : undefined
+          limit: argValue("--limit") ? Number(argValue("--limit")) : undefined,
+          offset: argValue("--offset") ? Number(argValue("--offset")) : undefined
         });
         break;
 

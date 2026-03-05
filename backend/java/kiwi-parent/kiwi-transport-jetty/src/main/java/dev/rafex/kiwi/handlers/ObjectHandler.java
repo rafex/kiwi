@@ -15,6 +15,9 @@
  */
 package dev.rafex.kiwi.handlers;
 
+import dev.rafex.ether.http.core.Route;
+import dev.rafex.ether.http.jetty12.JettyApiErrorResponses;
+import dev.rafex.ether.http.jetty12.JettyApiResponses;
 import dev.rafex.kiwi.dtos.CreateObjectRequest;
 import dev.rafex.kiwi.dtos.FuzzyResponse;
 import dev.rafex.kiwi.dtos.MoveObjectRequest;
@@ -22,123 +25,110 @@ import dev.rafex.kiwi.dtos.SearchResponse;
 import dev.rafex.kiwi.dtos.UpdateTagsRequest;
 import dev.rafex.kiwi.dtos.UpdateTextRequest;
 import dev.rafex.kiwi.errors.KiwiError;
-import dev.rafex.kiwi.http.HttpUtil;
-import dev.rafex.kiwi.json.JsonUtil;
+import dev.rafex.ether.http.jetty12.JettyHttpExchange;
+import dev.rafex.ether.http.jetty12.NonBlockingResourceHandler;
+import dev.rafex.ether.json.JsonCodec;
+import dev.rafex.ether.json.JsonUtils;
+import dev.rafex.kiwi.http.KiwiErrorHttpMapper;
 import dev.rafex.kiwi.logging.Log;
+import dev.rafex.kiwi.query.QuerySpecBuilder;
 import dev.rafex.kiwi.services.ObjectService;
 
-import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
-import org.eclipse.jetty.server.Handler;
-import org.eclipse.jetty.server.Request;
-import org.eclipse.jetty.server.Response;
-import org.eclipse.jetty.util.Callback;
-import org.eclipse.jetty.util.MultiMap;
-import org.eclipse.jetty.util.UrlEncoded;
+public class ObjectHandler extends NonBlockingResourceHandler {
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-
-public class ObjectHandler extends Handler.Abstract {
+	private static final JsonCodec JSON_CODEC = JsonUtils.codec();
+	private static final JettyApiResponses RESPONSES = new JettyApiResponses(JSON_CODEC);
+	private static final JettyApiErrorResponses ERRORS = new JettyApiErrorResponses(JSON_CODEC);
 
 	private final ObjectService service;
-	private final ObjectMapper om;
+	private final QuerySpecBuilder querySpecBuilder;
 
 	public ObjectHandler(final ObjectService service) {
+		super(JSON_CODEC);
 		this.service = service;
-		om = JsonUtil.MAPPER;
+		this.querySpecBuilder = new QuerySpecBuilder();
 	}
 
 	@Override
-	public boolean handle(final Request request, final Response response, final Callback callback) {
-		try {
-			final var method = request.getMethod();
-			final var path = request.getHttpURI().getPath();
-
-			if ("POST".equals(method) && "/objects".equals(path)) {
-				Log.info(getClass(), "Handling object creation request");
-				return create(request, response, callback);
-			}
-
-			if ("PATCH".equals(method) && path.startsWith("/objects/")) {
-				final var uuidStart = 9; // "/objects/".length()
-				final var lastSlash = path.lastIndexOf('/');
-				if (lastSlash > uuidStart) {
-					final var suffix = path.substring(lastSlash); // "/move", "/tags", "/text"
-					final var uuidStr = path.substring(uuidStart, lastSlash);
-					final UUID objectId;
-					try {
-						objectId = UUID.fromString(uuidStr);
-					} catch (final IllegalArgumentException e) {
-						HttpUtil.badRequest(response, callback, "invalid UUID in path");
-						return true;
-					}
-					return switch (suffix) {
-						case "/move" -> moveLocation(request, response, callback, objectId);
-						case "/tags" -> updateTags(request, response, callback, objectId);
-						case "/text" -> updateText(request, response, callback, objectId);
-						default -> {
-							HttpUtil.notFound(response, callback);
-							yield true;
-						}
-					};
-				}
-			}
-
-			if ("GET".equals(method) && "/objects".equals(path)) {
-				HttpUtil.notFound(response, callback);
-				return true;
-			}
-
-			if ("GET".equals(method) && path.startsWith("/objects/") && !path.startsWith("/objects/search")
-					&& !path.startsWith("/objects/fuzzy")) {
-				final var objectIdStr = path.substring("/objects/".length());
-				if (objectIdStr.isBlank() || objectIdStr.contains("/")) {
-					HttpUtil.notFound(response, callback);
-					return true;
-				}
-
-				final UUID objectId;
-				try {
-					objectId = UUID.fromString(objectIdStr);
-				} catch (final IllegalArgumentException e) {
-					HttpUtil.badRequest(response, callback, "invalid UUID in path");
-					return true;
-				}
-
-				return byId(request, response, callback, objectId);
-			}
-
-			if ("GET".equals(method) && "/objects/search".equals(path)) {
-				return search(request, response, callback);
-			}
-
-			if ("GET".equals(method) && "/objects/fuzzy".equals(path)) {
-				return fuzzySearch(request, response, callback);
-			}
-
-			HttpUtil.notFound(response, callback);
-			return true;
-		} catch (final Throwable t) {
-
-			Log.error(getClass(), "Error handling request", t);
-
-			response.setStatus(500);
-			callback.failed(t);
-			return true;
-		}
+	protected String basePath() {
+		return "/objects";
 	}
 
-	private boolean byId(final Request request, final Response response, final Callback callback, final UUID objectId) {
+	@Override
+	protected List<Route> routes() {
+		return List.of(
+				Route.of("/search", Set.of("GET")),
+				Route.of("/fuzzy", Set.of("GET")),
+				Route.of("/{id}/move", Set.of("PATCH")),
+				Route.of("/{id}/tags", Set.of("PATCH")),
+				Route.of("/{id}/text", Set.of("PATCH")),
+				Route.of("/{id}", Set.of("GET")),
+				Route.of("/", Set.of("POST")));
+	}
+
+	@Override
+	public boolean post(final dev.rafex.ether.http.core.HttpExchange x) {
+		Log.info(getClass(), "Handling object creation request");
+		return create(asJetty(x));
+	}
+
+	@Override
+	public boolean get(final dev.rafex.ether.http.core.HttpExchange x) {
+		final var jx = asJetty(x);
+		final var path = jx.path();
+		if (path.endsWith("/search")) {
+			return search(jx);
+		}
+		if (path.endsWith("/fuzzy")) {
+			return fuzzySearch(jx);
+		}
+		final var id = jx.pathParam("id");
+		if (id == null) {
+			ERRORS.notFound(jx.response(), jx.callback());
+			return true;
+		}
+		return byId(jx, parseUuid(id, "invalid UUID in path"));
+	}
+
+	@Override
+	public boolean patch(final dev.rafex.ether.http.core.HttpExchange x) {
+		final var jx = asJetty(x);
+		final var id = jx.pathParam("id");
+		if (id == null) {
+			ERRORS.notFound(jx.response(), jx.callback());
+			return true;
+		}
+		final var objectId = parseUuid(id, "invalid UUID in path");
+		final var path = jx.path();
+		if (path.endsWith("/move")) {
+			return moveLocation(jx, objectId);
+		}
+		if (path.endsWith("/tags")) {
+			return updateTags(jx, objectId);
+		}
+		if (path.endsWith("/text")) {
+			return updateText(jx, objectId);
+		}
+		ERRORS.notFound(jx.response(), jx.callback());
+		return true;
+	}
+
+	@Override
+	public Set<String> supportedMethods() {
+		return Set.of("GET", "POST", "PATCH");
+	}
+
+	private boolean byId(final JettyHttpExchange x, final UUID objectId) {
 		try {
 			final var objectOpt = service.getById(objectId);
 			if (objectOpt.isEmpty()) {
-				HttpUtil.notFound(response, callback);
+				ERRORS.notFound(x.response(), x.callback());
 				return true;
 			}
 
@@ -154,101 +144,197 @@ public class ObjectHandler extends Handler.Abstract {
 			if (object.metadataJson() == null || object.metadataJson().isBlank()) {
 				responseBody.put("metadata", null);
 			} else {
-				responseBody.put("metadata", om.readTree(object.metadataJson()));
+				responseBody.put("metadata", JSON_CODEC.readTree(object.metadataJson()));
 			}
 			responseBody.put("created_at", object.createdAt());
 			responseBody.put("updated_at", object.updatedAt());
 
-			HttpUtil.ok(response, callback, om.writeValueAsString(responseBody));
+			x.json(200, responseBody);
 			return true;
 		} catch (final Exception e) {
 			Log.error(getClass(), "Error getting object by id", e);
-			HttpUtil.json(response, callback, 500, "{\"error\":\"internal_error\"}");
+			ERRORS.internalServerError(x.response(), x.callback(), "internal_error");
 			return true;
 		}
 	}
 
-	private boolean search(final Request request, final Response response, final Callback callback) {
+	private boolean search(final JettyHttpExchange x) {
 		try {
-			final var qp = parseQuery(request.getHttpURI().getQuery());
-			final var q = queryParam(qp, "q");
+			final var spec = querySpecBuilder.fromRawParams(
+					queryParam(x, "q"),
+					queryParam(x, "tags"),
+					queryParam(x, "locationId"),
+					queryParam(x, "enabled"),
+					queryParam(x, "sort"),
+					queryParam(x, "limit"),
+					queryParam(x, "offset"));
 
-			if (q == null || q.isBlank()) {
-				HttpUtil.badRequest(response, callback, "q is required");
+			final var search = service.search(spec);
+			x.json(200, new SearchResponse(search, spec.limit(), spec.offset()));
+			return true;
+		} catch (final IllegalArgumentException e) {
+			ERRORS.badRequest(x.response(), x.callback(), e.getMessage());
+			return true;
+		} catch (final Exception e) {
+			Log.error(getClass(), "Error searching objects", e);
+			ERRORS.internalServerError(x.response(), x.callback(), "internal_error");
+			return true;
+		}
+	}
+
+	private boolean moveLocation(final JettyHttpExchange x, final UUID objectId) {
+		try {
+			Log.info(getClass(), "Handling object move request");
+			final var r = JSON_CODEC.readValue(org.eclipse.jetty.server.Request.asInputStream(x.request()),
+					MoveObjectRequest.class);
+
+			if (r.newLocationId() == null || r.newLocationId().isBlank()) {
+				ERRORS.badRequest(x.response(), x.callback(), "newLocationId is required");
 				return true;
 			}
 
-			final var tagsParam = queryParam(qp, "tags"); // "a,b,c"
-			final var locationParam = queryParam(qp, "locationId"); // uuid
-			final var limitParam = queryParam(qp, "limit"); // int
-
-			final var tags = parseTags(tagsParam);
-			final var locationId = parseUuidOrNull(locationParam);
-			final var limit = parseLimit(limitParam, 20, 1, 200);
-
-			final var search = service.search(q.trim(), tags, locationId, limit);
-
-			HttpUtil.ok(response, callback, om.writeValueAsString(new SearchResponse(search)));
-			return true;
-
-		} catch (final IllegalArgumentException e) {
-			HttpUtil.badRequest(response, callback, e.getMessage());
-			return true;
-
-		} catch (final Exception e) {
-			Log.error(getClass(), "Error searching objects", e);
-			HttpUtil.json(response, callback, 500, "{\"error\":\"internal_error\"}");
-			return true;
-		}
-	}
-
-	// -------- helpers (sin libs extra) --------
-
-	private static MultiMap<String> parseQuery(final String rawQuery) {
-		final var params = new MultiMap<String>();
-		if (rawQuery != null && !rawQuery.isEmpty()) {
-			UrlEncoded.decodeTo(rawQuery, params, StandardCharsets.UTF_8);
-		}
-		return params;
-	}
-
-	private static String queryParam(final MultiMap<String> params, final String key) {
-		final var v = params.getValue(key);
-		return v == null || v.isBlank() ? null : v;
-	}
-
-	private static String[] parseTags(final String tagsParam) {
-		if (tagsParam == null) {
-			return null;
-		}
-		final var t = tagsParam.trim();
-		if (t.isEmpty()) {
-			return null;
-		}
-
-		final var parts = t.split(",");
-		final var list = new ArrayList<String>(parts.length);
-		for (final String p : parts) {
-			final var s = p.trim();
-			if (!s.isEmpty()) {
-				list.add(s);
+			final UUID newLocationId;
+			try {
+				newLocationId = UUID.fromString(r.newLocationId());
+			} catch (final IllegalArgumentException e) {
+				ERRORS.badRequest(x.response(), x.callback(), "invalid UUID in newLocationId");
+				return true;
 			}
+
+			service.move(objectId, newLocationId);
+			RESPONSES.okNoContent(x.response(), x.callback());
+			return true;
+		} catch (final KiwiError e) {
+			Log.error(getClass(), "KiwiError moving object", e);
+			final var mapped = KiwiErrorHttpMapper.map(e, "object.move");
+			ERRORS.error(x.response(), x.callback(), mapped.status(), mapped.error(), mapped.code(), mapped.message(), x.path());
+			return true;
+		} catch (final RuntimeException e) {
+			Log.error(getClass(), "Error moving object", e);
+			ERRORS.badRequest(x.response(), x.callback(), "invalid request body");
+			return true;
 		}
-		return list.isEmpty() ? null : list.toArray(new String[0]);
 	}
 
-	private static UUID parseUuidOrNull(final String uuidStr) {
-		if (uuidStr == null) {
-			return null;
-		}
-		final var v = uuidStr.trim();
-		if (v.isEmpty()) {
-			return null;
-		}
+	private boolean create(final JettyHttpExchange x) {
 		try {
-			return UUID.fromString(v);
+			final var r = JSON_CODEC.readValue(org.eclipse.jetty.server.Request.asInputStream(x.request()),
+					CreateObjectRequest.class);
+
+			if (r.name() == null || r.name().isBlank()) {
+				ERRORS.badRequest(x.response(), x.callback(), "name is required");
+				return true;
+			}
+			if (r.locationId() == null || r.locationId().isBlank()) {
+				ERRORS.badRequest(x.response(), x.callback(), "locationId is required");
+				return true;
+			}
+
+			final var objectId = UUID.randomUUID();
+			final var locationId = UUID.fromString(r.locationId());
+			final var tags = r.tags() == null ? null : r.tags().toArray(new String[0]);
+			final var metadataJson = r.metadata() == null ? null : JSON_CODEC.toJson(r.metadata());
+
+			service.create(objectId, r.name(), r.description(), r.type(), tags, metadataJson, locationId);
+			x.json(201, "{\"object_id\":\"" + objectId + "\"}");
+			return true;
+		} catch (final KiwiError e) {
+			Log.error(getClass(), "KiwiError creating object", e);
+			final var mapped = KiwiErrorHttpMapper.map(e, "object.create");
+			ERRORS.error(x.response(), x.callback(), mapped.status(), mapped.error(), mapped.code(), mapped.message(), x.path());
+			return true;
 		} catch (final IllegalArgumentException e) {
-			throw new IllegalArgumentException("invalid UUID in locationId");
+			Log.error(getClass(), "Invalid UUID format", e);
+			ERRORS.badRequest(x.response(), x.callback(), "invalid UUID");
+			return true;
+		} catch (final Exception e) {
+			Log.error(getClass(), "Error creating object", e);
+			ERRORS.internalServerError(x.response(), x.callback(), "internal_error");
+			return true;
+		}
+	}
+
+	private boolean updateTags(final JettyHttpExchange x, final UUID objectId) {
+		try {
+			Log.info(getClass(), "Handling object tag update request");
+			final var r = JSON_CODEC.readValue(org.eclipse.jetty.server.Request.asInputStream(x.request()),
+					UpdateTagsRequest.class);
+
+			if (r.tags() == null) {
+				ERRORS.badRequest(x.response(), x.callback(), "tags is required");
+				return true;
+			}
+
+			final var tags = r.tags().toArray(String[]::new);
+			service.updateTags(objectId, tags);
+			RESPONSES.okNoContent(x.response(), x.callback());
+			return true;
+		} catch (final KiwiError e) {
+			Log.error(getClass(), "KiwiError updating tags", e);
+			final var mapped = KiwiErrorHttpMapper.map(e, "object.update_tags");
+			ERRORS.error(x.response(), x.callback(), mapped.status(), mapped.error(), mapped.code(), mapped.message(), x.path());
+			return true;
+		} catch (final RuntimeException e1) {
+			Log.error(getClass(), "Error updating tags", e1);
+			ERRORS.badRequest(x.response(), x.callback(), "invalid request body");
+			return true;
+		}
+	}
+
+	private boolean updateText(final JettyHttpExchange x, final UUID objectId) {
+		try {
+			Log.info(getClass(), "Handling object text update request");
+			final var r = JSON_CODEC.readValue(org.eclipse.jetty.server.Request.asInputStream(x.request()),
+					UpdateTextRequest.class);
+
+			if ((r.name() == null || r.name().isBlank()) && (r.description() == null || r.description().isBlank())) {
+				ERRORS.badRequest(x.response(), x.callback(), "name or description is required");
+				return true;
+			}
+
+			service.updateText(objectId, r.name(), r.description());
+			RESPONSES.okNoContent(x.response(), x.callback());
+			return true;
+		} catch (final KiwiError e) {
+			Log.error(getClass(), "KiwiError updating text", e);
+			final var mapped = KiwiErrorHttpMapper.map(e, "object.update_text");
+			ERRORS.error(x.response(), x.callback(), mapped.status(), mapped.error(), mapped.code(), mapped.message(), x.path());
+			return true;
+		} catch (final RuntimeException e1) {
+			Log.error(getClass(), "Error updating text", e1);
+			ERRORS.badRequest(x.response(), x.callback(), "invalid request body");
+			return true;
+		}
+	}
+
+	private boolean fuzzySearch(final JettyHttpExchange x) {
+		try {
+			Log.info(getClass(), "Handling object fuzzy search request");
+			final var name = queryParam(x, "name");
+			final var limitParam = queryParam(x, "limit");
+			final var offsetParam = queryParam(x, "offset");
+			if (name == null || name.isBlank()) {
+				ERRORS.badRequest(x.response(), x.callback(), "name is required");
+				return true;
+			}
+			final var limit = parseLimit(limitParam, 20, 1, 200);
+			final var offset = parseOffset(offsetParam, 0, 0, 100_000);
+
+			final var search = service.fuzzy(name, limit, offset);
+			x.json(200, new FuzzyResponse(search, limit, offset));
+			return true;
+		} catch (final Exception e) {
+			Log.error(getClass(), "Error handling fuzzy search", e);
+			ERRORS.internalServerError(x.response(), x.callback(), "internal_error");
+			return true;
+		}
+	}
+
+	private static UUID parseUuid(final String raw, final String errorMessage) {
+		try {
+			return UUID.fromString(raw);
+		} catch (final IllegalArgumentException e) {
+			throw new IllegalArgumentException(errorMessage);
 		}
 	}
 
@@ -270,181 +356,26 @@ public class ObjectHandler extends Handler.Abstract {
 		}
 	}
 
-	private boolean moveLocation(final Request request, final Response response, final Callback callback,
-			final UUID objectId) {
-
+	private static int parseOffset(final String offsetStr, final int def, final int min, final int max) {
+		if (offsetStr == null || offsetStr.trim().isEmpty()) {
+			return def;
+		}
 		try {
-			Log.info(getClass(), "Handling object move request");
-
-			final var r = om.readValue(Request.asInputStream(request), MoveObjectRequest.class);
-
-			if (r.newLocationId() == null || r.newLocationId().isBlank()) {
-				HttpUtil.badRequest(response, callback, "newLocationId is required");
-				return true;
+			final var v = Integer.parseInt(offsetStr.trim());
+			if (v < min) {
+				return min;
 			}
-
-			UUID newLocationId;
-			try {
-				newLocationId = UUID.fromString(r.newLocationId());
-			} catch (final IllegalArgumentException e) {
-				HttpUtil.badRequest(response, callback, "invalid UUID in newLocationId");
-				return true;
+			if (v > max) {
+				return max;
 			}
-
-			service.move(objectId, newLocationId);
-
-			// 204 No Content
-			HttpUtil.ok_noContent(response, callback);
-			return true;
-
-		} catch (final KiwiError e) {
-
-			return switch (e.getCode()) {
-				case "E-001" -> {
-					HttpUtil.badRequest(response, callback, "newLocationId does not exist");
-					yield true;
-				}
-				case "E-002" -> {
-					HttpUtil.badRequest(response, callback, "invalid new location");
-					yield true;
-				}
-				default -> {
-					Log.error(getClass(), "KiwiError moving object", e);
-					HttpUtil.json(response, callback, 400, "{\"error\":\"" + e.getCode() + "\"}");
-					yield true;
-				}
-			};
-
-		} catch (final IOException e) {
-			Log.error(getClass(), "Error moving object", e);
-			HttpUtil.badRequest(response, callback, "invalid request body");
-			return true;
+			return v;
+		} catch (final NumberFormatException e) {
+			throw new IllegalArgumentException("offset must be an integer");
 		}
 	}
 
-	private boolean create(final Request request, final Response response, final Callback callback) {
-		try {
-
-			final var r = om.readValue(Request.asInputStream(request), CreateObjectRequest.class);
-
-			// validaciones mínimas
-			if (r.name() == null || r.name().isBlank()) {
-				HttpUtil.badRequest(response, callback, "name is required");
-				return true;
-			}
-			if (r.locationId() == null || r.locationId().isBlank()) {
-				HttpUtil.badRequest(response, callback, "locationId is required");
-				return true;
-			}
-
-			final var objectId = UUID.randomUUID();
-			final var locationId = UUID.fromString(r.locationId());
-
-			final var tags = r.tags() == null ? null : r.tags().toArray(new String[0]);
-			final var metadataJson = r.metadata() == null ? null : om.writeValueAsString(r.metadata());
-
-			service.create(objectId, r.name(), r.description(), r.type(), tags, metadataJson, locationId);
-
-			HttpUtil.json(response, callback, 201, "{\"object_id\":\"" + objectId + "\"}");
-			return true;
-
-		} catch (final KiwiError e) {
-			Log.error(getClass(), "KiwiError creating object", e);
-			HttpUtil.json(response, callback, 400, "{\"error\":\"" + e.getCode() + "\"}");
-			return true;
-		} catch (final IllegalArgumentException e) {
-			Log.error(getClass(), "Invalid UUID format", e);
-			HttpUtil.badRequest(response, callback, "invalid UUID");
-			return true;
-		} catch (final Exception e) {
-			Log.error(getClass(), "Error creating object", e);
-			HttpUtil.json(response, callback, 500, "{\"error\":\"internal_error\"}");
-			return true;
-		}
+	private static JettyHttpExchange asJetty(final dev.rafex.ether.http.core.HttpExchange x) {
+		return (JettyHttpExchange) x;
 	}
 
-	private boolean updateTags(final Request request, final Response response, final Callback callback,
-			final UUID objectId) {
-		try {
-			Log.info(getClass(), "Handling object tag update request");
-
-			final var r = om.readValue(Request.asInputStream(request), UpdateTagsRequest.class);
-
-			if (r.tags() == null) {
-				HttpUtil.badRequest(response, callback, "tags is required");
-				return true;
-			}
-
-			final var tags = r.tags().toArray(String[]::new);
-			service.updateTags(objectId, tags);
-
-			// 204 No Content
-			HttpUtil.ok_noContent(response, callback);
-			return true;
-
-		} catch (final KiwiError e) {
-			Log.error(getClass(), "KiwiError updating tags", e);
-			HttpUtil.json(response, callback, 400, "{\"error\":\"" + e.getCode() + "\"}");
-			return true;
-		} catch (final IOException e1) {
-			Log.error(getClass(), "Error updating tags", e1);
-			HttpUtil.json(response, callback, 400, "{\"error\":\"" + e1.getMessage() + "\"}");
-			return true;
-		}
-	}
-
-	private boolean updateText(final Request request, final Response response, final Callback callback,
-			final UUID objectId) {
-
-		try {
-			Log.info(getClass(), "Handling object text update request");
-
-			final var r = om.readValue(Request.asInputStream(request), UpdateTextRequest.class);
-
-			if ((r.name() == null || r.name().isBlank()) && (r.description() == null || r.description().isBlank())) {
-				HttpUtil.badRequest(response, callback, "name or description is required");
-				return true;
-			}
-
-			service.updateText(objectId, r.name(), r.description());
-
-			// 204 No Content
-			HttpUtil.ok_noContent(response, callback);
-			return true;
-
-		} catch (final KiwiError e) {
-			Log.error(getClass(), "KiwiError updating text", e);
-			HttpUtil.json(response, callback, 400, "{\"error\":\"" + e.getCode() + "\"}");
-			return true;
-		} catch (final IOException e1) {
-			Log.error(getClass(), "Error updating text", e1);
-			HttpUtil.json(response, callback, 400, "{\"error\":\"" + e1.getMessage() + "\"}");
-			return true;
-		}
-
-	}
-
-	private boolean fuzzySearch(final Request request, final Response response, final Callback callback) {
-		try {
-			Log.info(getClass(), "Handling object fuzzy search request");
-
-			final var qp = parseQuery(request.getHttpURI().getQuery());
-			final var name = queryParam(qp, "name");
-			if (name == null || name.isBlank()) {
-				HttpUtil.badRequest(response, callback, "name is required");
-				return true;
-			}
-
-			final var search = service.fuzzy(name, 20);
-
-			HttpUtil.ok(response, callback, om.writeValueAsString(new FuzzyResponse(search)));
-
-			return true;
-
-		} catch (final Exception e) {
-			Log.error(getClass(), "Error handling fuzzy search", e);
-			HttpUtil.json(response, callback, 500, "{\"error\":\"internal_error\"}");
-			return true;
-		}
-	}
 }

@@ -53,8 +53,11 @@ export class KiwiClient {
     return { status: response.status, data };
   }
 
-  hello() {
-    return this.request("/hello");
+  hello({ name } = {}) {
+    const params = new URLSearchParams();
+    if (name) params.set("name", name);
+    const query = params.toString();
+    return this.request(`/hello${query ? `?${query}` : ""}`);
   }
 
   health() {
@@ -94,19 +97,21 @@ export class KiwiClient {
     return this.request(`/objects/${objectId}`);
   }
 
-  search({ q, tags, locationId, limit }) {
+  search({ q, tags, locationId, limit, offset }) {
     const params = new URLSearchParams();
     if (q) params.set("q", q);
     if (tags) params.set("tags", Array.isArray(tags) ? tags.join(",") : tags);
     if (locationId) params.set("locationId", locationId);
     if (limit !== undefined) params.set("limit", String(limit));
+    if (offset !== undefined) params.set("offset", String(offset));
     return this.request(`/objects/search?${params.toString()}`);
   }
 
-  fuzzy({ name, limit }) {
+  fuzzy({ name, limit, offset }) {
     const params = new URLSearchParams();
     if (name) params.set("name", name);
     if (limit !== undefined) params.set("limit", String(limit));
+    if (offset !== undefined) params.set("offset", String(offset));
     return this.request(`/objects/fuzzy?${params.toString()}`);
   }
 

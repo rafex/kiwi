@@ -13,12 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package dev.rafex.kiwi.dtos;
+package dev.rafex.kiwi.server;
 
-import dev.rafex.kiwi.models.SearchItem;
+import dev.rafex.kiwi.bootstrap.KiwiContainer;
+import dev.rafex.kiwi.security.KiwiJwtService;
 
-import java.util.List;
-
-public record SearchResponse(List<SearchItem> items, int limit, int offset) {
-
+public record ModuleContext(KiwiContainer container, ServerConfig config, KiwiJwtService jwtService) {
 }

@@ -19,6 +19,6 @@ import dev.rafex.kiwi.models.FuzzyItem;
 
 import java.util.List;
 
-public record FuzzyResponse(List<FuzzyItem> items) {
+public record FuzzyResponse(List<FuzzyItem> items, int limit, int offset) {
 
 }

@@ -13,12 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package dev.rafex.kiwi.dtos;
-
-import dev.rafex.kiwi.models.SearchItem;
+package dev.rafex.kiwi.query;
 
 import java.util.List;
 
-public record SearchResponse(List<SearchItem> items, int limit, int offset) {
+public sealed interface RsqlNode permits RsqlNode.And, RsqlNode.Or, RsqlNode.Comp {
+
+	record And(List<RsqlNode> nodes) implements RsqlNode {
+	}
+
+	record Or(List<RsqlNode> nodes) implements RsqlNode {
+	}
+
+	record Comp(String selector, RsqlOperator operator, List<String> args) implements RsqlNode {
+	}
 
 }

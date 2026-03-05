@@ -15,9 +15,15 @@
  */
 package dev.rafex.kiwi.handlers;
 
-import dev.rafex.kiwi.http.HttpUtil;
-import dev.rafex.kiwi.json.JsonUtil;
-import dev.rafex.kiwi.security.JwtService;
+import dev.rafex.ether.http.core.Route;
+import dev.rafex.ether.http.jetty12.JettyApiErrorResponses;
+import dev.rafex.ether.http.jetty12.JettyApiResponses;
+import dev.rafex.ether.http.jetty12.JettyAuthHandler;
+import dev.rafex.ether.http.jetty12.JettyHttpExchange;
+import dev.rafex.ether.http.jetty12.NonBlockingResourceHandler;
+import dev.rafex.ether.json.JsonCodec;
+import dev.rafex.ether.json.JsonUtils;
+import dev.rafex.kiwi.security.KiwiJwtService;
 import dev.rafex.kiwi.services.AppClientAuthService;
 
 import java.nio.charset.StandardCharsets;
@@ -25,60 +31,73 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 
 import org.eclipse.jetty.http.HttpStatus;
 import org.eclipse.jetty.io.Content;
-import org.eclipse.jetty.server.Handler;
-import org.eclipse.jetty.server.Request;
-import org.eclipse.jetty.server.Response;
-import org.eclipse.jetty.util.Callback;
 
 import com.fasterxml.jackson.databind.JsonNode;
 
-public final class CreateAppClientHandler extends Handler.Abstract.NonBlocking {
+public final class CreateAppClientHandler extends NonBlockingResourceHandler {
+
+	private static final JsonCodec JSON_CODEC = JsonUtils.codec();
+	private static final JettyApiResponses RESPONSES = new JettyApiResponses(JSON_CODEC);
+	private static final JettyApiErrorResponses ERRORS = new JettyApiErrorResponses(JSON_CODEC);
 
 	private final AppClientAuthService appClientService;
 
 	public CreateAppClientHandler(final AppClientAuthService appClientService) {
+		super(JSON_CODEC);
 		this.appClientService = Objects.requireNonNull(appClientService);
 	}
 
 	@Override
-	public boolean handle(final Request request, final Response response, final Callback callback) throws Exception {
-		if (!"POST".equalsIgnoreCase(request.getMethod())) {
-			HttpUtil.json(response, callback, HttpStatus.METHOD_NOT_ALLOWED_405, Map.of("error", "method_not_allowed"));
-			return true;
-		}
+	protected String basePath() {
+		return "/admin/app-clients";
+	}
 
-		final var authObj = request.getAttribute(JwtAuthHandler.REQ_ATTR_AUTH);
-		if (!(authObj instanceof final JwtService.AuthContext ctx)) {
-			HttpUtil.unauthorized(response, callback, "missing_bearer_token");
+	@Override
+	protected List<Route> routes() {
+		return List.of(Route.of("/", Set.of("POST")));
+	}
+
+	@Override
+	public Set<String> supportedMethods() {
+		return Set.of("POST");
+	}
+
+	@Override
+	public boolean post(final dev.rafex.ether.http.core.HttpExchange x) throws Exception {
+		final var jx = asJetty(x);
+		final var authObj = jx.request().getAttribute(JettyAuthHandler.REQ_ATTR_AUTH);
+		if (!(authObj instanceof final KiwiJwtService.AuthContext ctx)) {
+			ERRORS.unauthorized(jx.response(), jx.callback(), "missing_bearer_token");
 			return true;
 		}
 
 		if (!"user".equalsIgnoreCase(ctx.tokenType()) || !ctx.roles().contains("ADMIN")) {
-			HttpUtil.forbidden(response, callback, "missing_admin_role");
+			ERRORS.forbidden(jx.response(), jx.callback(), "missing_admin_role");
 			return true;
 		}
 
 		final String body;
 		try {
-			body = Content.Source.asString(request, StandardCharsets.UTF_8);
+			body = Content.Source.asString(jx.request(), StandardCharsets.UTF_8);
 		} catch (final Exception e) {
-			HttpUtil.badRequest(response, callback, "cannot_read_body");
+			ERRORS.badRequest(jx.response(), jx.callback(), "cannot_read_body");
 			return true;
 		}
 
 		if (body == null || body.isBlank()) {
-			HttpUtil.badRequest(response, callback, "missing_body");
+			ERRORS.badRequest(jx.response(), jx.callback(), "missing_body");
 			return true;
 		}
 
 		final JsonNode json;
 		try {
-			json = JsonUtil.MAPPER.readTree(body);
+			json = JSON_CODEC.readTree(body);
 		} catch (final Exception e) {
-			HttpUtil.badRequest(response, callback, "invalid_json");
+			ERRORS.badRequest(jx.response(), jx.callback(), "invalid_json");
 			return true;
 		}
 
@@ -88,7 +107,7 @@ public final class CreateAppClientHandler extends Handler.Abstract.NonBlocking {
 		final var roles = roles(json.get("roles"));
 
 		if (clientId == null || clientSecret == null) {
-			HttpUtil.badRequest(response, callback, "missing_fields");
+			ERRORS.badRequest(jx.response(), jx.callback(), "missing_fields");
 			return true;
 		}
 
@@ -96,20 +115,24 @@ public final class CreateAppClientHandler extends Handler.Abstract.NonBlocking {
 		if (!res.ok()) {
 			final var code = res.code() == null ? "error" : res.code();
 			if ("client_id_taken".equals(code)) {
-				HttpUtil.json(response, callback, HttpStatus.CONFLICT_409,
-						Map.of("error", "conflict", "code", "client_id_taken"));
+				ERRORS.error(jx.response(), jx.callback(), HttpStatus.CONFLICT_409, "conflict", "client_id_taken",
+						"client id already exists");
 			} else if ("invalid_input".equals(code)) {
-				HttpUtil.badRequest(response, callback, "invalid_input");
+				ERRORS.badRequest(jx.response(), jx.callback(), "invalid_input");
 			} else {
-				HttpUtil.internalServerError(response, callback, code);
+				ERRORS.internalServerError(jx.response(), jx.callback(), code);
 			}
 			return true;
 		}
 
-		HttpUtil.json(response, callback, HttpStatus.CREATED_201,
+		RESPONSES.json(jx.response(), jx.callback(), HttpStatus.CREATED_201,
 				Map.of("app_client_id", res.appClientId().toString(), "client_id", res.clientId(), "name", res.name(),
 						"roles", res.roles()));
 		return true;
+	}
+
+	private static JettyHttpExchange asJetty(final dev.rafex.ether.http.core.HttpExchange x) {
+		return (JettyHttpExchange) x;
 	}
 
 	private static String text(final JsonNode node, final String field) {

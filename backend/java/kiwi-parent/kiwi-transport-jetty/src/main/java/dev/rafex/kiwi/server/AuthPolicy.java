@@ -13,12 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package dev.rafex.kiwi.dtos;
+package dev.rafex.kiwi.server;
 
-import dev.rafex.kiwi.models.SearchItem;
+public record AuthPolicy(Type type, String method, String pathSpec) {
 
-import java.util.List;
+	public enum Type {
+		PUBLIC_PATH,
+		PROTECTED_PREFIX
+	}
 
-public record SearchResponse(List<SearchItem> items, int limit, int offset) {
+	public static AuthPolicy publicPath(final String method, final String pathSpec) {
+		return new AuthPolicy(Type.PUBLIC_PATH, method, pathSpec);
+	}
+
+	public static AuthPolicy protectedPrefix(final String pathSpec) {
+		return new AuthPolicy(Type.PROTECTED_PREFIX, null, pathSpec);
+	}
 
 }

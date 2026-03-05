@@ -13,12 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package dev.rafex.kiwi.dtos;
-
-import dev.rafex.kiwi.models.SearchItem;
+package dev.rafex.kiwi.query;
 
 import java.util.List;
 
-public record SearchResponse(List<SearchItem> items, int limit, int offset) {
+public record QuerySpec(RsqlNode filter, int limit, int offset, List<Sort> sorts) {
+
+	public static final int DEFAULT_LIMIT = 20;
+	public static final int DEFAULT_OFFSET = 0;
+
+	public QuerySpec {
+		sorts = sorts == null ? List.of() : List.copyOf(sorts);
+	}
 
 }

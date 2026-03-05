@@ -13,12 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package dev.rafex.kiwi.dtos;
+package dev.rafex.kiwi.server;
 
-import dev.rafex.kiwi.models.SearchItem;
-
+import java.util.ArrayList;
 import java.util.List;
 
-public record SearchResponse(List<SearchItem> items, int limit, int offset) {
+import org.eclipse.jetty.server.Handler;
+
+public final class RouteRegistry {
+
+	private final List<HttpResourceRegistration> routes = new ArrayList<>();
+
+	public void add(final String pathSpec, final Handler handler) {
+		routes.add(new HttpResourceRegistration(pathSpec, handler));
+	}
+
+	public List<HttpResourceRegistration> routes() {
+		return List.copyOf(routes);
+	}
 
 }

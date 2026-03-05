@@ -13,12 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package dev.rafex.kiwi.dtos;
+package dev.rafex.kiwi.query;
 
-import dev.rafex.kiwi.models.SearchItem;
+public record Sort(String field, Direction direction) {
 
-import java.util.List;
-
-public record SearchResponse(List<SearchItem> items, int limit, int offset) {
+	public enum Direction {
+		ASC,
+		DESC
+	}
 
 }

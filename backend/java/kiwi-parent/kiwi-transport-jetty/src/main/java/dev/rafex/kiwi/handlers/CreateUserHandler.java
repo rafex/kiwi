@@ -15,9 +15,15 @@
  */
 package dev.rafex.kiwi.handlers;
 
-import dev.rafex.kiwi.http.HttpUtil;
-import dev.rafex.kiwi.json.JsonUtil;
-import dev.rafex.kiwi.security.JwtService;
+import dev.rafex.ether.http.core.Route;
+import dev.rafex.ether.http.jetty12.JettyApiErrorResponses;
+import dev.rafex.ether.http.jetty12.JettyApiResponses;
+import dev.rafex.ether.http.jetty12.JettyAuthHandler;
+import dev.rafex.ether.http.jetty12.JettyHttpExchange;
+import dev.rafex.ether.http.jetty12.NonBlockingResourceHandler;
+import dev.rafex.ether.json.JsonCodec;
+import dev.rafex.ether.json.JsonUtils;
+import dev.rafex.kiwi.security.KiwiJwtService;
 import dev.rafex.kiwi.services.UserProvisioningService;
 
 import java.nio.charset.StandardCharsets;
@@ -26,17 +32,19 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 
 import org.eclipse.jetty.http.HttpStatus;
 import org.eclipse.jetty.io.Content;
-import org.eclipse.jetty.server.Handler;
 import org.eclipse.jetty.server.Request;
-import org.eclipse.jetty.server.Response;
-import org.eclipse.jetty.util.Callback;
 
 import com.fasterxml.jackson.databind.JsonNode;
 
-public final class CreateUserHandler extends Handler.Abstract.NonBlocking {
+public final class CreateUserHandler extends NonBlockingResourceHandler {
+
+	private static final JsonCodec JSON_CODEC = JsonUtils.codec();
+	private static final JettyApiResponses RESPONSES = new JettyApiResponses(JSON_CODEC);
+	private static final JettyApiErrorResponses ERRORS = new JettyApiErrorResponses(JSON_CODEC);
 
 	private static final boolean PROVISIONING_ENABLED = "true"
 			.equalsIgnoreCase(System.getenv().getOrDefault("ENABLE_USER_PROVISIONING", "false"));
@@ -48,18 +56,35 @@ public final class CreateUserHandler extends Handler.Abstract.NonBlocking {
 	private final UserProvisioningService provisioning;
 
 	public CreateUserHandler(final UserProvisioningService provisioning) {
+		super(JSON_CODEC);
 		this.provisioning = Objects.requireNonNull(provisioning);
 	}
 
 	@Override
-	public boolean handle(final Request request, final Response response, final Callback callback) throws Exception {
+	protected String basePath() {
+		return "/admin/users";
+	}
+
+	@Override
+	protected List<Route> routes() {
+		return List.of(Route.of("/", Set.of("POST")));
+	}
+
+	@Override
+	public Set<String> supportedMethods() {
+		return Set.of("POST");
+	}
+
+	@Override
+	public boolean post(final dev.rafex.ether.http.core.HttpExchange x) throws Exception {
+		final var jx = asJetty(x);
 
 		if (!PROVISIONING_ENABLED || !isSandbox()) {
-			HttpUtil.notFound(response, callback, request.getHttpURI().getPath());
+			ERRORS.notFound(jx.response(), jx.callback(), jx.request().getHttpURI().getPath());
 			return true;
 		}
 
-		final var bootstrap = hasValidBootstrapToken(request);
+		final var bootstrap = hasValidBootstrapToken(jx.request());
 
 		// Si no hay users -> solo permitimos BOOTSTRAP (para crear el primero)
 		// Si ya hay users -> solo permitimos JWT admin
@@ -68,55 +93,50 @@ public final class CreateUserHandler extends Handler.Abstract.NonBlocking {
 		if (!existsAnyUser) {
 			// primer usuario: debe venir bootstrap token
 			if (!bootstrap) {
-				HttpUtil.notFound(response, callback, request.getHttpURI().getPath());
+				ERRORS.notFound(jx.response(), jx.callback(), jx.request().getHttpURI().getPath());
 				return true;
 			}
 			// si bootstrap ok, NO pedimos JWT (todavía no existe)
 		} else {
 			// ya hay usuarios: bootstrap ya NO debe servir
 			if (bootstrap) {
-				HttpUtil.notFound(response, callback, request.getHttpURI().getPath());
+				ERRORS.notFound(jx.response(), jx.callback(), jx.request().getHttpURI().getPath());
 				return true;
 			}
 
 			// exige JWT admin
-			final var authObj = request.getAttribute(JwtAuthHandler.REQ_ATTR_AUTH);
+			final var authObj = jx.request().getAttribute(JettyAuthHandler.REQ_ATTR_AUTH);
 			if (authObj == null) {
 				// para ocultar endpoint
-				HttpUtil.notFound(response, callback, request.getHttpURI().getPath());
+				ERRORS.notFound(jx.response(), jx.callback(), jx.request().getHttpURI().getPath());
 				return true;
 			}
 
-			if (authObj instanceof final JwtService.AuthContext ctx && !ctx.roles().contains("ADMIN")) {
-				HttpUtil.forbidden(response, callback, "missing_admin_role");
+			if (authObj instanceof final KiwiJwtService.AuthContext ctx && !ctx.roles().contains("ADMIN")) {
+				ERRORS.forbidden(jx.response(), jx.callback(), "missing_admin_role");
 				return true;
 			}
-		}
-
-		if (!"POST".equalsIgnoreCase(request.getMethod())) {
-			HttpUtil.json(response, callback, HttpStatus.METHOD_NOT_ALLOWED_405, Map.of("error", "method_not_allowed"));
-			return true;
 		}
 
 		// ---- Body ----
 		final String body;
 		try {
-			body = Content.Source.asString(request, StandardCharsets.UTF_8);
+			body = Content.Source.asString(jx.request(), StandardCharsets.UTF_8);
 		} catch (final Exception e) {
-			HttpUtil.badRequest(response, callback, "cannot_read_body");
+			ERRORS.badRequest(jx.response(), jx.callback(), "cannot_read_body");
 			return true;
 		}
 
 		if (body == null || body.isBlank()) {
-			HttpUtil.badRequest(response, callback, "missing_body");
+			ERRORS.badRequest(jx.response(), jx.callback(), "missing_body");
 			return true;
 		}
 
 		final JsonNode json;
 		try {
-			json = JsonUtil.MAPPER.readTree(body);
+			json = JSON_CODEC.readTree(body);
 		} catch (final Exception e) {
-			HttpUtil.badRequest(response, callback, "invalid_json");
+			ERRORS.badRequest(jx.response(), jx.callback(), "invalid_json");
 			return true;
 		}
 
@@ -125,7 +145,7 @@ public final class CreateUserHandler extends Handler.Abstract.NonBlocking {
 		final var roles = roles(json.get("roles"));
 
 		if (username == null || username.isBlank() || password == null || password.isBlank()) {
-			HttpUtil.badRequest(response, callback, "missing_fields");
+			ERRORS.badRequest(jx.response(), jx.callback(), "missing_fields");
 			return true;
 		}
 
@@ -134,18 +154,18 @@ public final class CreateUserHandler extends Handler.Abstract.NonBlocking {
 		if (!res.ok()) {
 			final var code = res.code();
 			if ("username_taken".equals(code)) {
-				HttpUtil.json(response, callback, HttpStatus.CONFLICT_409,
-						Map.of("error", "conflict", "code", "username_taken"));
+				ERRORS.error(jx.response(), jx.callback(), HttpStatus.CONFLICT_409, "conflict", "username_taken",
+						"username already exists");
 			} else if ("invalid_input".equals(code)) {
-				HttpUtil.badRequest(response, callback, "invalid_input");
+				ERRORS.badRequest(jx.response(), jx.callback(), "invalid_input");
 			} else {
-				HttpUtil.json(response, callback, HttpStatus.INTERNAL_SERVER_ERROR_500,
-						Map.of("error", "server_error", "code", code));
+				ERRORS.error(jx.response(), jx.callback(), HttpStatus.INTERNAL_SERVER_ERROR_500, "server_error", code,
+						"user provisioning failed");
 			}
 			return true;
 		}
 
-		HttpUtil.ok(response, callback,
+		RESPONSES.ok(jx.response(), jx.callback(),
 				Map.of("user_id", res.userId().toString(), "username", username, "roles", roles));
 		return true;
 	}
@@ -194,5 +214,9 @@ public final class CreateUserHandler extends Handler.Abstract.NonBlocking {
 	private static boolean isSandbox() {
 		// ajusta a tus nombres reales
 		return "work02".equalsIgnoreCase(ENV) || "sandbox".equalsIgnoreCase(ENV) || "dev".equalsIgnoreCase(ENV);
+	}
+
+	private static JettyHttpExchange asJetty(final dev.rafex.ether.http.core.HttpExchange x) {
+		return (JettyHttpExchange) x;
 	}
 }

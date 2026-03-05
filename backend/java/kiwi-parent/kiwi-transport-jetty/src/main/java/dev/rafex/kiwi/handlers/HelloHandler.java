@@ -15,31 +15,63 @@
  */
 package dev.rafex.kiwi.handlers;
 
-import dev.rafex.kiwi.http.HttpUtil;
-import dev.rafex.kiwi.json.JsonUtil;
+import dev.rafex.ether.http.jetty12.JettyHttpExchange;
+import dev.rafex.ether.http.jetty12.NonBlockingResourceHandler;
+import dev.rafex.ether.json.JsonCodec;
+import dev.rafex.ether.json.JsonUtils;
+import dev.rafex.ether.http.core.Route;
+import dev.rafex.ether.http.jetty12.JettyApiResponses;
 import dev.rafex.kiwi.logging.Log;
-import dev.rafex.kiwi.services.HelloService;
-import dev.rafex.kiwi.services.impl.HelloServiceImpl;
+import dev.rafex.kiwi.tools.BuildVersion;
 
-import org.eclipse.jetty.server.Handler;
-import org.eclipse.jetty.server.Request;
-import org.eclipse.jetty.server.Response;
-import org.eclipse.jetty.util.Callback;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
-public class HelloHandler extends Handler.Abstract.NonBlocking {
+public class HelloHandler extends NonBlockingResourceHandler {
 
-	private final HelloService services = new HelloServiceImpl();
+	private static final JsonCodec JSON_CODEC = JsonUtils.codec();
+	private static final JettyApiResponses RESPONSES = new JettyApiResponses(JSON_CODEC);
 
-	// @Instrumentation.Transaction(transactionType = "Web", transactionName =
-	// "{{0.method}} {{0.httpURI.path}}", traceHeadline = "{{0.method}}
-	// {{0.httpURI.path}}", timer = "jetty-handler")
+	public HelloHandler() {
+		super(JSON_CODEC);
+	}
+
 	@Override
-	public boolean handle(final Request request, final Response response, final Callback callback) throws Exception {
+	protected String basePath() {
+		return "/hello";
+	}
 
+	@Override
+	protected List<Route> routes() {
+		return List.of(Route.of("/", Set.of("GET")));
+	}
+
+	@Override
+	public boolean get(final dev.rafex.ether.http.core.HttpExchange x) {
+		final var jx = asJetty(x);
 		Log.debug(getClass(), "GET /hello");
-
-		HttpUtil.ok(response, callback, JsonUtil.toJson(services.sayHello()));
+		final var name = normalize(queryParam(jx, "name"));
+		final var message = name == null ? "Hello!!" : "Hello!! " + name;
+		RESPONSES.ok(jx.response(), jx.callback(), Map.of("message", message, "version", BuildVersion.current()));
 		return true;
+	}
+
+	@Override
+	public Set<String> supportedMethods() {
+		return Set.of("GET");
+	}
+
+	private static String normalize(final String value) {
+		if (value == null) {
+			return null;
+		}
+		final var trimmed = value.trim();
+		return trimmed.isEmpty() ? null : trimmed;
+	}
+
+	private static JettyHttpExchange asJetty(final dev.rafex.ether.http.core.HttpExchange x) {
+		return (JettyHttpExchange) x;
 	}
 
 }

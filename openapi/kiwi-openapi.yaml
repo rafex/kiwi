@@ -24,17 +24,21 @@ paths:
       tags: [Public]
       summary: Saludo de la API
       security: []
+      parameters:
+        - name: name
+          in: query
+          required: false
+          schema:
+            type: string
       responses:
         '200':
           description: OK
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                additionalProperties: true
+                $ref: '#/components/schemas/HelloResponse'
+        '405':
+          description: Método no permitido
 
   /health:
     get:
@@ -394,6 +398,13 @@ paths:
             minimum: 1
             maximum: 200
             default: 20
+        - name: offset
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
       responses:
         '200':
           description: Resultados de búsqueda
@@ -430,6 +441,21 @@ paths:
           required: true
           schema:
             type: string
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 200
+            default: 20
+        - name: offset
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
       responses:
         '200':
           description: Resultados fuzzy
@@ -566,6 +592,15 @@ components:
       scheme: basic
 
   schemas:
+    HelloResponse:
+      type: object
+      required: [message, version]
+      properties:
+        message:
+          type: string
+        version:
+          type: string
+
     LoginRequest:
       type: object
       required: [username, password]
@@ -755,12 +790,19 @@ components:
 
     SearchResponse:
       type: object
-      required: [items]
+      required: [items, limit, offset]
       properties:
         items:
           type: array
           items:
             $ref: '#/components/schemas/SearchItem'
+        limit:
+          type: integer
+          minimum: 1
+          maximum: 200
+        offset:
+          type: integer
+          minimum: 0
 
     SearchItem:
       type: object
@@ -777,12 +819,19 @@ components:
 
     FuzzyResponse:
       type: object
-      required: [items]
+      required: [items, limit, offset]
       properties:
         items:
           type: array
           items:
             $ref: '#/components/schemas/FuzzyItem'
+        limit:
+          type: integer
+          minimum: 1
+          maximum: 200
+        offset:
+          type: integer
+          minimum: 0
 
     FuzzyItem:
       type: object

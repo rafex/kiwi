@@ -15,79 +15,96 @@
  */
 package dev.rafex.kiwi.handlers;
 
-import dev.rafex.kiwi.http.HttpUtil;
-import dev.rafex.kiwi.json.JsonUtil;
-import dev.rafex.kiwi.security.JwtService;
+import dev.rafex.ether.http.core.Route;
+import dev.rafex.ether.http.jetty12.JettyApiErrorResponses;
+import dev.rafex.ether.http.jetty12.JettyApiResponses;
+import dev.rafex.ether.http.jetty12.JettyHttpExchange;
+import dev.rafex.ether.http.jetty12.NonBlockingResourceHandler;
+import dev.rafex.ether.json.JsonCodec;
+import dev.rafex.ether.json.JsonUtils;
+import dev.rafex.kiwi.security.KiwiJwtService;
 import dev.rafex.kiwi.services.AuthService;
 
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 
-import org.eclipse.jetty.http.HttpStatus;
 import org.eclipse.jetty.io.Content;
-import org.eclipse.jetty.server.Handler;
-import org.eclipse.jetty.server.Request;
-import org.eclipse.jetty.server.Response;
-import org.eclipse.jetty.util.Callback;
 
 import com.fasterxml.jackson.databind.JsonNode;
 
-public final class LoginHandler extends Handler.Abstract.NonBlocking {
+public final class LoginHandler extends NonBlockingResourceHandler {
 
-	private final JwtService jwt;
+	private static final JsonCodec JSON_CODEC = JsonUtils.codec();
+	private static final JettyApiResponses RESPONSES = new JettyApiResponses(JSON_CODEC);
+	private static final JettyApiErrorResponses ERRORS = new JettyApiErrorResponses(JSON_CODEC);
+
+	private final KiwiJwtService jwt;
 	private final AuthService authService;
 	private final long ttlSeconds;
 
-	public LoginHandler(final JwtService jwt, final AuthService authService) {
+	public LoginHandler(final KiwiJwtService jwt, final AuthService authService) {
 		this(jwt, authService, Long.parseLong(System.getenv().getOrDefault("JWT_TTL_SECONDS", "3600")));
 	}
 
-	public LoginHandler(final JwtService jwt, final AuthService authService, final long ttlSeconds) {
+	public LoginHandler(final KiwiJwtService jwt, final AuthService authService, final long ttlSeconds) {
+		super(JSON_CODEC);
 		this.jwt = Objects.requireNonNull(jwt);
 		this.authService = Objects.requireNonNull(authService);
 		this.ttlSeconds = ttlSeconds;
 	}
 
 	@Override
-	public boolean handle(final Request request, final Response response, final Callback callback) throws Exception {
+	protected String basePath() {
+		return "/auth/login";
+	}
 
-		if (!"POST".equalsIgnoreCase(request.getMethod())) {
-			HttpUtil.json(response, callback, HttpStatus.METHOD_NOT_ALLOWED_405, Map.of("error", "method_not_allowed"));
-			return true;
-		}
+	@Override
+	protected List<Route> routes() {
+		return List.of(Route.of("/", Set.of("POST")));
+	}
 
+	@Override
+	public Set<String> supportedMethods() {
+		return Set.of("POST");
+	}
+
+	@Override
+	public boolean post(final dev.rafex.ether.http.core.HttpExchange x) throws Exception {
+		final var jx = asJetty(x);
 		// 1) Intenta Basic Auth
-		final var authz = request.getHeaders().get("authorization");
+		final var authz = jx.request().getHeaders().get("authorization");
 		if (authz != null && authz.regionMatches(true, 0, "Basic ", 0, "Basic ".length())) {
 			final var creds = decodeBasic(authz.substring("Basic ".length()).trim());
 			if (creds == null) {
-				HttpUtil.unauthorized(response, callback, "bad_basic_auth");
+				ERRORS.unauthorized(jx.response(), jx.callback(), "bad_basic_auth");
 				return true;
 			}
-			return authenticateAndMint(response, callback, creds.user, creds.pass);
+			return authenticateAndMint(jx, creds.user, creds.pass);
 		}
 
 		// 2) JSON body: {"username":"...","password":"..."}
 		final String body;
 		try {
-			body = Content.Source.asString(request, StandardCharsets.UTF_8);
+			body = Content.Source.asString(jx.request(), StandardCharsets.UTF_8);
 		} catch (final Exception e) {
-			HttpUtil.badRequest(response, callback, "cannot_read_body");
+			ERRORS.badRequest(jx.response(), jx.callback(), "cannot_read_body");
 			return true;
 		}
 
 		if (body == null || body.isBlank()) {
-			HttpUtil.unauthorized(response, callback, "missing_credentials");
+			ERRORS.unauthorized(jx.response(), jx.callback(), "missing_credentials");
 			return true;
 		}
 
 		final JsonNode json;
 		try {
-			json = JsonUtil.MAPPER.readTree(body);
+			json = JSON_CODEC.readTree(body);
 		} catch (final Exception e) {
-			HttpUtil.badRequest(response, callback, "invalid_json");
+			ERRORS.badRequest(jx.response(), jx.callback(), "invalid_json");
 			return true;
 		}
 
@@ -95,14 +112,14 @@ public final class LoginHandler extends Handler.Abstract.NonBlocking {
 		final var pass = text(json, "password");
 
 		if (user == null || pass == null) {
-			HttpUtil.unauthorized(response, callback, "missing_credentials");
+			ERRORS.unauthorized(jx.response(), jx.callback(), "missing_credentials");
 			return true;
 		}
 
-		return authenticateAndMint(response, callback, user, pass);
+		return authenticateAndMint(jx, user, pass);
 	}
 
-	private boolean authenticateAndMint(final Response response, final Callback callback, final String username,
+	private boolean authenticateAndMint(final JettyHttpExchange x, final String username,
 			final String password) throws Exception {
 
 		// Nota: pasamos char[] para poder limpiarlo dentro de AuthServiceImpl
@@ -114,13 +131,11 @@ public final class LoginHandler extends Handler.Abstract.NonBlocking {
 			final var code = result.code() != null ? result.code() : "bad_credentials";
 
 			if ("user_disabled".equals(code)) {
-				HttpUtil.json(response, callback, HttpStatus.FORBIDDEN_403,
-						Map.of("error", "forbidden", "code", "user_disabled"));
+				ERRORS.forbidden(x.response(), x.callback(), "user_disabled");
 			} else if ("bad_credentials".equals(code)) {
-				HttpUtil.unauthorized(response, callback, "bad_credentials");
+				ERRORS.unauthorized(x.response(), x.callback(), "bad_credentials");
 			} else {
-				HttpUtil.json(response, callback, HttpStatus.UNAUTHORIZED_401,
-						Map.of("error", "unauthorized", "code", code));
+				ERRORS.unauthorized(x.response(), x.callback(), code);
 			}
 			return true;
 		}
@@ -134,7 +149,8 @@ public final class LoginHandler extends Handler.Abstract.NonBlocking {
 		// Si lo extiendes para roles/username, aquí es donde lo pasas.
 		final var token = jwt.mint(subject, roles, ttlSeconds);
 
-		HttpUtil.ok(response, callback, Map.of("token_type", "Bearer", "access_token", token, "expires_in", ttlSeconds
+		RESPONSES.ok(x.response(), x.callback(),
+				Map.of("token_type", "Bearer", "access_token", token, "expires_in", ttlSeconds
 		// si quieres devolver roles al cliente:
 		// "roles", result.roles()
 		));
@@ -162,5 +178,9 @@ public final class LoginHandler extends Handler.Abstract.NonBlocking {
 		} catch (final Exception e) {
 			return null;
 		}
+	}
+
+	private static JettyHttpExchange asJetty(final dev.rafex.ether.http.core.HttpExchange x) {
+		return (JettyHttpExchange) x;
 	}
 }

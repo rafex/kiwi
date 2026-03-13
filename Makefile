@@ -14,6 +14,9 @@ ENV_GITIGNORE_ENTRY ?= .env
 
 # Variables requeridas (las que imprimimos)
 REQUIRED_ENV_VARS ?= FLYWAY_URL FLYWAY_USER FLYWAY_PASSWORD DB_URL DB_USER DB_PASSWORD
+TAG_MAJOR ?= 1
+TAG_DATE ?= $(shell date +%Y%m%d)
+TAG_PREFIX ?= v$(TAG_MAJOR).$(TAG_DATE)
 
 define require_file
 	if [[ ! -f "$(1)" ]]; then
@@ -54,11 +57,13 @@ define print_exports_from_env
 	done
 endef
 
-.PHONY: help print_env install-githooks
+.PHONY: help print_env install-githooks print-next-tag release-tag
 help:
 	echo "Targets:"
 	echo "  print_env   Print export commands from .env (use with eval)"
 	echo "  install-githooks   Configure git hooks path to .githooks"
+	echo "  print-next-tag   Calculate the next release tag"
+	echo "  release-tag   Create and push the next release tag"
 	echo ""
 	echo "Usage:"
 	echo "  eval \"\$$(make print_env)\""
@@ -74,3 +79,23 @@ print_env:
 install-githooks:
 	git config core.hooksPath .githooks
 	echo "Git hooks path configured: $$(git config --get core.hooksPath)"
+
+print-next-tag:
+	@prefix="$(TAG_PREFIX)"; \
+	last_tag="$$(git tag --list "$$prefix*" --sort=-v:refname | head -n 1)"; \
+	if [ -z "$$last_tag" ]; then \
+		echo "$$prefix"; \
+	elif [[ "$$last_tag" =~ ^$${prefix}-([0-9]+)$$ ]]; then \
+		next="$$(($${BASH_REMATCH[1]} + 1))"; \
+		echo "$$prefix-$$next"; \
+	elif [ "$$last_tag" = "$$prefix" ]; then \
+		echo "$$prefix-1"; \
+	else \
+		echo "$$prefix"; \
+	fi
+
+release-tag:
+	@next_tag="$$( $(MAKE) --no-print-directory print-next-tag TAG_MAJOR=$(TAG_MAJOR) TAG_DATE=$(TAG_DATE) )"; \
+	echo "Creating tag $$next_tag"; \
+	git tag -a "$$next_tag" -m "Release $$next_tag"; \
+	git push origin "$$next_tag"

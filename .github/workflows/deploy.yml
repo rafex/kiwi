@@ -5,7 +5,7 @@ on:
   workflow_dispatch:
     inputs:
       version_tag:
-        description: 'Tag de imagen a desplegar (opcional, formato vN.YYYYmmDD)'
+        description: 'Tag de imagen a desplegar (opcional, formato vN.YYYYmmDD[-N])'
         required: false
         default: ''
         type: string
@@ -50,9 +50,9 @@ jobs:
             IMAGE_TAG="latest"
           fi
 
-          if [ "$IMAGE_TAG" != "latest" ] && ! echo "$IMAGE_TAG" | grep -Eq '^v[0-9]+\.[0-9]{8}$'; then
+          if [ "$IMAGE_TAG" != "latest" ] && ! echo "$IMAGE_TAG" | grep -Eq '^v[0-9]+\.[0-9]{8}(-[0-9]+)?$'; then
             echo "Invalid deploy tag format: $IMAGE_TAG"
-            echo "Expected format: vN.YYYYmmDD (examples: v1.20260222, v2.20260222)"
+            echo "Expected format: vN.YYYYmmDD[-N] (examples: v1.20260313, v1.20260313-1, v2.20260313)"
             exit 1
           fi
 
@@ -72,6 +72,8 @@ jobs:
           helm lint "$CHART_PATH"
 
       - name: Deploy Helm release
+        id: helm_deploy
+        continue-on-error: true
         run: |
           helm upgrade --install "$RELEASE_NAME" "$CHART_PATH" \
             --namespace "$K3S_NAMESPACE" \
@@ -81,10 +83,90 @@ jobs:
             --wait --timeout 5m
 
       - name: Show rollout status
+        id: rollout_status
+        if: steps.helm_deploy.outcome == 'success'
+        continue-on-error: true
         run: |
           kubectl -n "$K3S_NAMESPACE" rollout status deployment/"$RELEASE_NAME" --timeout=180s
 
+      - name: Dump Helm and Kubernetes diagnostics
+        if: always()
+        run: |
+          dump_dir="$RUNNER_TEMP/helm-dump"
+          mkdir -p "$dump_dir"
+
+          {
+            echo "release_name=$RELEASE_NAME"
+            echo "namespace=$K3S_NAMESPACE"
+            echo "chart_path=$CHART_PATH"
+            echo "image_repository=$IMAGE_REPOSITORY"
+            echo "image_tag=${{ steps.deploy_tag.outputs.value }}"
+            echo "helm_deploy_outcome=${{ steps.helm_deploy.outcome }}"
+            echo "rollout_status_outcome=${{ steps.rollout_status.outcome }}"
+          } > "$dump_dir/summary.txt"
+
+          helm lint "$CHART_PATH" > "$dump_dir/helm-lint.txt" 2>&1 || true
+          helm template "$RELEASE_NAME" "$CHART_PATH" \
+            --namespace "$K3S_NAMESPACE" \
+            --set image.repository="$IMAGE_REPOSITORY" \
+            --set image.tag="${{ steps.deploy_tag.outputs.value }}" \
+            --set existingSecret="$EXISTING_SECRET" \
+            > "$dump_dir/helm-template.yaml" 2> "$dump_dir/helm-template.stderr" || true
+
+          helm status "$RELEASE_NAME" --namespace "$K3S_NAMESPACE" > "$dump_dir/helm-status.txt" 2>&1 || true
+          helm get all "$RELEASE_NAME" --namespace "$K3S_NAMESPACE" > "$dump_dir/helm-get-all.txt" 2>&1 || true
+          helm get values "$RELEASE_NAME" --namespace "$K3S_NAMESPACE" -a > "$dump_dir/helm-values.yaml" 2>&1 || true
+          helm get manifest "$RELEASE_NAME" --namespace "$K3S_NAMESPACE" > "$dump_dir/helm-manifest.yaml" 2> "$dump_dir/helm-manifest.stderr" || true
+          helm history "$RELEASE_NAME" --namespace "$K3S_NAMESPACE" > "$dump_dir/helm-history.txt" 2>&1 || true
+
+          kubectl -n "$K3S_NAMESPACE" get deploy -o wide > "$dump_dir/kubectl-deployments.txt" 2>&1 || true
+          kubectl -n "$K3S_NAMESPACE" get rs -o wide > "$dump_dir/kubectl-replicasets.txt" 2>&1 || true
+          kubectl -n "$K3S_NAMESPACE" get pods -o wide > "$dump_dir/kubectl-pods.txt" 2>&1 || true
+          kubectl -n "$K3S_NAMESPACE" get svc -o wide > "$dump_dir/kubectl-services.txt" 2>&1 || true
+          kubectl -n "$K3S_NAMESPACE" get ingress -o yaml > "$dump_dir/kubectl-ingress.yaml" 2>&1 || true
+          kubectl -n "$K3S_NAMESPACE" get events --sort-by=.lastTimestamp > "$dump_dir/kubectl-events.txt" 2>&1 || true
+          kubectl -n "$K3S_NAMESPACE" describe deployment/"$RELEASE_NAME" > "$dump_dir/kubectl-describe-deployment.txt" 2>&1 || true
+          kubectl -n "$K3S_NAMESPACE" describe pods \
+            -l app.kubernetes.io/name=kiwi-backend,app.kubernetes.io/instance="$RELEASE_NAME" \
+            > "$dump_dir/kubectl-describe-pods.txt" 2>&1 || true
+          kubectl -n "$K3S_NAMESPACE" logs deployment/"$RELEASE_NAME" --all-containers --tail=200 \
+            > "$dump_dir/kubectl-logs.txt" 2>&1 || true
+
+      - name: Upload Helm deployment dump
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: kiwi-backend-helm-dump-${{ github.run_id }}
+          path: ${{ runner.temp }}/helm-dump
+          if-no-files-found: error
+
+      - name: Print deployment diagnostics on failure
+        if: steps.helm_deploy.outcome == 'failure' || steps.rollout_status.outcome == 'failure'
+        run: |
+          dump_dir="$RUNNER_TEMP/helm-dump"
+          echo "=== Deploy summary ==="
+          cat "$dump_dir/summary.txt" || true
+          echo
+          echo "=== Helm status ==="
+          cat "$dump_dir/helm-status.txt" || true
+          echo
+          echo "=== Recent events ==="
+          tail -n 50 "$dump_dir/kubectl-events.txt" || true
+          echo
+          echo "=== Deployment describe ==="
+          cat "$dump_dir/kubectl-describe-deployment.txt" || true
+          echo
+          echo "=== Deployment logs ==="
+          cat "$dump_dir/kubectl-logs.txt" || true
+
+      - name: Fail if Helm deploy did not succeed
+        if: steps.helm_deploy.outcome == 'failure' || steps.rollout_status.outcome == 'failure'
+        run: |
+          echo "Helm deploy no alcanzo estado Ready dentro del timeout" >&2
+          exit 1
+
       - name: Print deployed image reference
+        if: steps.helm_deploy.outcome == 'success' && steps.rollout_status.outcome == 'success'
         run: |
           IMAGE_URL="${IMAGE_REPOSITORY}:${{ steps.deploy_tag.outputs.value }}"
           echo "Deployed image URL: $IMAGE_URL"

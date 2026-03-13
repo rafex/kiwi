@@ -9,7 +9,7 @@ on:
   workflow_dispatch:
     inputs:
       version_tag:
-        description: 'Tag de versión para la imagen (formato vN.YYYYmmDD, ej: v2.20260222)'
+        description: 'Tag de versión para la imagen (formato vN.YYYYmmDD[-N], ej: v1.20260313 o v1.20260313-1)'
         required: true
         type: string
 
@@ -63,9 +63,9 @@ jobs:
           else
             IMAGE_TAG="${GITHUB_REF_NAME}"
           fi
-          if [ "$IMAGE_TAG" != "latest" ] && ! echo "$IMAGE_TAG" | grep -Eq '^v[0-9]+\.[0-9]{8}$'; then
+          if [ "$IMAGE_TAG" != "latest" ] && ! echo "$IMAGE_TAG" | grep -Eq '^v[0-9]+\.[0-9]{8}(-[0-9]+)?$'; then
             echo "Invalid tag format: $IMAGE_TAG"
-            echo "Expected format: vN.YYYYmmDD (examples: v1.20260222, v2.20260222)"
+            echo "Expected format: vN.YYYYmmDD[-N] (examples: v1.20260313, v1.20260313-1, v2.20260313)"
             exit 1
           fi
           echo "value=$IMAGE_TAG" >> "$GITHUB_OUTPUT"

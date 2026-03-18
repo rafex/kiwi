@@ -223,16 +223,16 @@
   "instrumentation": [
     {
       "className": "dev.rafex.ether.glowroot.jetty12.GlowrootJettyHandler",
-      "methodName": "*",
+      "methodName": "handle",
       "methodParameterTypes": [
         ".."
       ],
       "order": 0,
       "captureKind": "transaction",
       "transactionType": "Web",
-      "transactionNameTemplate": "kiwi web",
+      "transactionNameTemplate": "{{0.method}} {{0.httpURI.path}}",
       "alreadyInTransactionBehavior": "capture-trace-entry",
-      "traceEntryMessageTemplate": "{{0.httpURI.path}}",
+      "traceEntryMessageTemplate": "{{0.method}} {{0.httpURI.path}}",
       "timerName": "jetty handler"
     },
     {

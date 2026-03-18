@@ -65,8 +65,7 @@ public final class DefaultKiwiModule implements KiwiModule {
 	@Override
 	public void registerMiddlewares(final MiddlewareRegistry middlewares, final ModuleContext context) {
 		final var glowroot = GlowrootJettyHandler.builder().healthPath("/health").requestIdHeader("X-Request-Id", true)
-				.defaultSlowThreshold(2_000L)
-				.userExtractor(ctx -> ctx instanceof KiwiJwtService.AuthContext a ? a.sub() : null);
+				.defaultSlowThreshold(2_000L);
 		middlewares.add(glowroot::wrap);
 	}
 

@@ -236,17 +236,114 @@
       "timerName": "jetty handler"
     },
     {
-      "className": "dev.rafex.kiwi.services.ObjectServices",
+      "className": "dev.rafex.kiwi.services.impl.ObjectServiceImpl",
       "methodName": "search",
       "methodParameterTypes": [
         ".."
       ],
       "order": 0,
       "captureKind": "trace-entry",
-      "transactionType": "Services",
-      "transactionNameTemplate": "ObjectServices:Search",
-      "traceEntryMessageTemplate": "{{this.class.name}}.{{methodName}}",
-      "timerName": "Search"
+      "traceEntryMessageTemplate": "{{this.class.simpleName}}.search",
+      "timerName": "ObjectService: search"
+    },
+    {
+      "className": "dev.rafex.kiwi.services.impl.ObjectServiceImpl",
+      "methodName": "fuzzy",
+      "methodParameterTypes": [
+        ".."
+      ],
+      "order": 0,
+      "captureKind": "trace-entry",
+      "traceEntryMessageTemplate": "{{this.class.simpleName}}.fuzzy",
+      "timerName": "ObjectService: fuzzy"
+    },
+    {
+      "className": "dev.rafex.kiwi.services.impl.ObjectServiceImpl",
+      "methodName": "getById",
+      "methodParameterTypes": [
+        ".."
+      ],
+      "order": 0,
+      "captureKind": "trace-entry",
+      "traceEntryMessageTemplate": "{{this.class.simpleName}}.getById",
+      "timerName": "ObjectService: getById"
+    },
+    {
+      "className": "dev.rafex.kiwi.services.impl.ObjectServiceImpl",
+      "methodName": "create",
+      "methodParameterTypes": [
+        ".."
+      ],
+      "order": 0,
+      "captureKind": "trace-entry",
+      "traceEntryMessageTemplate": "{{this.class.simpleName}}.create",
+      "timerName": "ObjectService: create"
+    },
+    {
+      "className": "dev.rafex.kiwi.services.impl.ObjectServiceImpl",
+      "methodName": "move",
+      "methodParameterTypes": [
+        ".."
+      ],
+      "order": 0,
+      "captureKind": "trace-entry",
+      "traceEntryMessageTemplate": "{{this.class.simpleName}}.move",
+      "timerName": "ObjectService: move"
+    },
+    {
+      "className": "dev.rafex.kiwi.services.impl.ObjectServiceImpl",
+      "methodName": "updateTags",
+      "methodParameterTypes": [
+        ".."
+      ],
+      "order": 0,
+      "captureKind": "trace-entry",
+      "traceEntryMessageTemplate": "{{this.class.simpleName}}.updateTags",
+      "timerName": "ObjectService: updateTags"
+    },
+    {
+      "className": "dev.rafex.kiwi.services.impl.ObjectServiceImpl",
+      "methodName": "updateText",
+      "methodParameterTypes": [
+        ".."
+      ],
+      "order": 0,
+      "captureKind": "trace-entry",
+      "traceEntryMessageTemplate": "{{this.class.simpleName}}.updateText",
+      "timerName": "ObjectService: updateText"
+    },
+    {
+      "className": "dev.rafex.kiwi.services.impl.AuthServiceImpl",
+      "methodName": "authenticate",
+      "methodParameterTypes": [
+        ".."
+      ],
+      "order": 0,
+      "captureKind": "trace-entry",
+      "traceEntryMessageTemplate": "{{this.class.simpleName}}.authenticate",
+      "timerName": "AuthService: authenticate"
+    },
+    {
+      "className": "dev.rafex.kiwi.services.impl.AppClientAuthServiceImpl",
+      "methodName": "authenticate",
+      "methodParameterTypes": [
+        ".."
+      ],
+      "order": 0,
+      "captureKind": "trace-entry",
+      "traceEntryMessageTemplate": "{{this.class.simpleName}}.authenticate",
+      "timerName": "AppClientAuthService: authenticate"
+    },
+    {
+      "className": "dev.rafex.kiwi.services.impl.LocationServiceImpl",
+      "methodName": "create",
+      "methodParameterTypes": [
+        ".."
+      ],
+      "order": 0,
+      "captureKind": "trace-entry",
+      "traceEntryMessageTemplate": "{{this.class.simpleName}}.create",
+      "timerName": "LocationService: create"
     }
   ]
 }

@@ -17,4 +17,3 @@ package dev.rafex.kiwi.http;
 
 public record MappedHttpError(int status, String error, String code, String message) {
 }
-

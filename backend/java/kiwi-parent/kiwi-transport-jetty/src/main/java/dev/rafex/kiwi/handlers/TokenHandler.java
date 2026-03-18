@@ -120,8 +120,8 @@ public final class TokenHandler extends NonBlockingResourceHandler {
 				value(form, "grant_type"));
 	}
 
-	private boolean authenticateAndMint(final JettyHttpExchange x, final String clientId,
-			final String clientSecret, final String grantType) throws Exception {
+	private boolean authenticateAndMint(final JettyHttpExchange x, final String clientId, final String clientSecret,
+			final String grantType) throws Exception {
 		if (grantType == null || !"client_credentials".equals(grantType)) {
 			ERRORS.badRequest(x.response(), x.callback(), "unsupported_grant_type");
 			return true;
@@ -146,9 +146,8 @@ public final class TokenHandler extends NonBlockingResourceHandler {
 		}
 
 		final var token = jwt.mintApp("app:" + result.clientId(), result.clientId(), result.roles(), ttlSeconds);
-		RESPONSES.ok(x.response(), x.callback(),
-				Map.of("token_type", "Bearer", "access_token", token, "expires_in", ttlSeconds, "grant_type",
-						"client_credentials"));
+		RESPONSES.ok(x.response(), x.callback(), Map.of("token_type", "Bearer", "access_token", token, "expires_in",
+				ttlSeconds, "grant_type", "client_credentials"));
 		return true;
 	}
 

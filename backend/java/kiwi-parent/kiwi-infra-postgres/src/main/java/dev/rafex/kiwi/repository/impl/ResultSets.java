@@ -21,12 +21,12 @@ import java.time.Instant;
 
 final class ResultSets {
 
-    private ResultSets() {
-    }
+	private ResultSets() {
+	}
 
-    static Instant asInstant(final ResultSet rs, final String column) throws SQLException {
-        final var ts = rs.getTimestamp(column);
-        return ts == null ? null : ts.toInstant();
-    }
+	static Instant asInstant(final ResultSet rs, final String column) throws SQLException {
+		final var ts = rs.getTimestamp(column);
+		return ts == null ? null : ts.toInstant();
+	}
 
 }

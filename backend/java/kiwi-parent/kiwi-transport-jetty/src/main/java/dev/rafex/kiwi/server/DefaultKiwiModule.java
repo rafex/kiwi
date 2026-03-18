@@ -15,9 +15,9 @@
  */
 package dev.rafex.kiwi.server;
 
+import dev.rafex.ether.glowroot.jetty12.GlowrootJettyHandler;
 import dev.rafex.kiwi.handlers.CreateAppClientHandler;
 import dev.rafex.kiwi.handlers.CreateUserHandler;
-import dev.rafex.kiwi.handlers.GlowrootNamingHandler;
 import dev.rafex.kiwi.handlers.HealthHandler;
 import dev.rafex.kiwi.handlers.HelloHandler;
 import dev.rafex.kiwi.handlers.LocationHandler;
@@ -63,7 +63,9 @@ public final class DefaultKiwiModule implements KiwiModule {
 
 	@Override
 	public void registerMiddlewares(final MiddlewareRegistry middlewares, final ModuleContext context) {
-		middlewares.add(GlowrootNamingHandler::new);
+		final var glowroot = GlowrootJettyHandler.builder().healthPath("/health").requestIdHeader("X-Request-Id", true)
+				.defaultSlowThreshold(2_000L);
+		middlewares.add(glowroot::wrap);
 	}
 
 }

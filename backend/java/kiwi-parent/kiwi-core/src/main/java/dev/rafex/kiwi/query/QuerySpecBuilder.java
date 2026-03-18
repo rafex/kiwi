@@ -163,13 +163,8 @@ public final class QuerySpecBuilder {
 	}
 
 	private static boolean isFreeTextCandidate(final String value) {
-		return value.indexOf('=') < 0
-				&& value.indexOf('!') < 0
-				&& value.indexOf(';') < 0
-				&& value.indexOf(',') < 0
-				&& value.indexOf('(') < 0
-				&& value.indexOf(')') < 0
-				&& value.indexOf('"') < 0;
+		return value.indexOf('=') < 0 && value.indexOf('!') < 0 && value.indexOf(';') < 0 && value.indexOf(',') < 0
+				&& value.indexOf('(') < 0 && value.indexOf(')') < 0 && value.indexOf('"') < 0;
 	}
 
 }

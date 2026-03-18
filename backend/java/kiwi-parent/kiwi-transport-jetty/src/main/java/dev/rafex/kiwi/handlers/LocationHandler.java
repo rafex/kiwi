@@ -17,12 +17,12 @@ package dev.rafex.kiwi.handlers;
 
 import dev.rafex.ether.http.core.Route;
 import dev.rafex.ether.http.jetty12.JettyApiErrorResponses;
-import dev.rafex.kiwi.dtos.CreateLocationRequest;
-import dev.rafex.kiwi.errors.KiwiError;
 import dev.rafex.ether.http.jetty12.JettyHttpExchange;
 import dev.rafex.ether.http.jetty12.NonBlockingResourceHandler;
 import dev.rafex.ether.json.JsonCodec;
 import dev.rafex.ether.json.JsonUtils;
+import dev.rafex.kiwi.dtos.CreateLocationRequest;
+import dev.rafex.kiwi.errors.KiwiError;
 import dev.rafex.kiwi.http.KiwiErrorHttpMapper;
 import dev.rafex.kiwi.logging.Log;
 import dev.rafex.kiwi.services.LocationService;

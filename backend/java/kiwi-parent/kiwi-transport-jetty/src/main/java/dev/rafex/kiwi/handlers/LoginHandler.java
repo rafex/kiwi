@@ -119,8 +119,8 @@ public final class LoginHandler extends NonBlockingResourceHandler {
 		return authenticateAndMint(jx, user, pass);
 	}
 
-	private boolean authenticateAndMint(final JettyHttpExchange x, final String username,
-			final String password) throws Exception {
+	private boolean authenticateAndMint(final JettyHttpExchange x, final String username, final String password)
+			throws Exception {
 
 		// Nota: pasamos char[] para poder limpiarlo dentro de AuthServiceImpl
 		final var result = authService.authenticate(username, password.toCharArray());
@@ -151,9 +151,9 @@ public final class LoginHandler extends NonBlockingResourceHandler {
 
 		RESPONSES.ok(x.response(), x.callback(),
 				Map.of("token_type", "Bearer", "access_token", token, "expires_in", ttlSeconds
-		// si quieres devolver roles al cliente:
-		// "roles", result.roles()
-		));
+				// si quieres devolver roles al cliente:
+				// "roles", result.roles()
+				));
 		return true;
 	}
 

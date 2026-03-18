@@ -16,9 +16,5 @@
 package dev.rafex.kiwi.query;
 
 public enum RsqlOperator {
-	EQ,
-	NEQ,
-	IN,
-	OUT,
-	LIKE
+	EQ, NEQ, IN, OUT, LIKE
 }

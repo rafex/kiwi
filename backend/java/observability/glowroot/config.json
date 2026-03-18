@@ -222,7 +222,7 @@
   ],
   "instrumentation": [
     {
-      "className": "dev.rafex.kiwi.handlers.GlowrootNamingHandler",
+      "className": "dev.rafex.ether.glowroot.jetty12.GlowrootJettyHandler",
       "methodName": "handle",
       "methodParameterTypes": [
         "org.eclipse.jetty.server.Request",
@@ -232,9 +232,9 @@
       "order": 0,
       "captureKind": "transaction",
       "transactionType": "Web",
-      "transactionNameTemplate": "kiwi web",
+      "transactionNameTemplate": "{{0.method}} {{0.httpURI.path}}",
       "alreadyInTransactionBehavior": "capture-trace-entry",
-      "traceEntryMessageTemplate": "{{0.httpURI.path}}",
+      "traceEntryMessageTemplate": "{{0.method}} {{0.httpURI.path}}",
       "timerName": "jetty handler"
     },
     {

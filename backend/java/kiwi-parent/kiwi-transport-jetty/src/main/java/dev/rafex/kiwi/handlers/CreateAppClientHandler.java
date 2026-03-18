@@ -125,9 +125,8 @@ public final class CreateAppClientHandler extends NonBlockingResourceHandler {
 			return true;
 		}
 
-		RESPONSES.json(jx.response(), jx.callback(), HttpStatus.CREATED_201,
-				Map.of("app_client_id", res.appClientId().toString(), "client_id", res.clientId(), "name", res.name(),
-						"roles", res.roles()));
+		RESPONSES.json(jx.response(), jx.callback(), HttpStatus.CREATED_201, Map.of("app_client_id",
+				res.appClientId().toString(), "client_id", res.clientId(), "name", res.name(), "roles", res.roles()));
 		return true;
 	}
 

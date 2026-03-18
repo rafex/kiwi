@@ -75,6 +75,7 @@
 		<ether.http.jetty12.version>4.0.0-v20260304</ether.http.jetty12.version>
 		<ether.json.version>4.0.0-v20260304</ether.json.version>
 		<ether.jwt.version>4.0.0-v20260304</ether.jwt.version>
+		<ether.glowroot.jetty12.version>1.0.0-SNAPSHOT</ether.glowroot.jetty12.version>
 
 		<!-- Plugin versions -->
 		<exec.maven.plugin.version>3.6.3</exec.maven.plugin.version>
@@ -110,6 +111,11 @@
 				<groupId>dev.rafex.ether.jwt</groupId>
 				<artifactId>ether-jwt</artifactId>
 				<version>${ether.jwt.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>dev.rafex.ether.glowroot</groupId>
+				<artifactId>ether-glowroot-jetty12</artifactId>
+				<version>${ether.glowroot.jetty12.version}</version>
 			</dependency>
 			<dependency>
 				<groupId>org.eclipse.jetty</groupId>

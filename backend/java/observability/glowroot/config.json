@@ -222,12 +222,10 @@
   ],
   "instrumentation": [
     {
-      "className": "dev.rafex.kiwi.handlers.GlowrootNamingHandler",
-      "methodName": "handle",
+      "className": "dev.rafex.ether.glowroot.jetty12.GlowrootJettyHandler",
+      "methodName": "*",
       "methodParameterTypes": [
-        "org.eclipse.jetty.server.Request",
-        "org.eclipse.jetty.server.Response",
-        "org.eclipse.jetty.util.Callback"
+        ".."
       ],
       "order": 0,
       "captureKind": "transaction",

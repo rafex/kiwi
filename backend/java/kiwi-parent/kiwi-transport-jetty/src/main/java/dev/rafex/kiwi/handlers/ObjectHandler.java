@@ -18,6 +18,10 @@ package dev.rafex.kiwi.handlers;
 import dev.rafex.ether.http.core.Route;
 import dev.rafex.ether.http.jetty12.JettyApiErrorResponses;
 import dev.rafex.ether.http.jetty12.JettyApiResponses;
+import dev.rafex.ether.http.jetty12.JettyHttpExchange;
+import dev.rafex.ether.http.jetty12.NonBlockingResourceHandler;
+import dev.rafex.ether.json.JsonCodec;
+import dev.rafex.ether.json.JsonUtils;
 import dev.rafex.kiwi.dtos.CreateObjectRequest;
 import dev.rafex.kiwi.dtos.FuzzyResponse;
 import dev.rafex.kiwi.dtos.MoveObjectRequest;
@@ -25,10 +29,6 @@ import dev.rafex.kiwi.dtos.SearchResponse;
 import dev.rafex.kiwi.dtos.UpdateTagsRequest;
 import dev.rafex.kiwi.dtos.UpdateTextRequest;
 import dev.rafex.kiwi.errors.KiwiError;
-import dev.rafex.ether.http.jetty12.JettyHttpExchange;
-import dev.rafex.ether.http.jetty12.NonBlockingResourceHandler;
-import dev.rafex.ether.json.JsonCodec;
-import dev.rafex.ether.json.JsonUtils;
 import dev.rafex.kiwi.http.KiwiErrorHttpMapper;
 import dev.rafex.kiwi.logging.Log;
 import dev.rafex.kiwi.query.QuerySpecBuilder;
@@ -62,13 +62,9 @@ public class ObjectHandler extends NonBlockingResourceHandler {
 
 	@Override
 	protected List<Route> routes() {
-		return List.of(
-				Route.of("/search", Set.of("GET")),
-				Route.of("/fuzzy", Set.of("GET")),
-				Route.of("/{id}/move", Set.of("PATCH")),
-				Route.of("/{id}/tags", Set.of("PATCH")),
-				Route.of("/{id}/text", Set.of("PATCH")),
-				Route.of("/{id}", Set.of("GET")),
+		return List.of(Route.of("/search", Set.of("GET")), Route.of("/fuzzy", Set.of("GET")),
+				Route.of("/{id}/move", Set.of("PATCH")), Route.of("/{id}/tags", Set.of("PATCH")),
+				Route.of("/{id}/text", Set.of("PATCH")), Route.of("/{id}", Set.of("GET")),
 				Route.of("/", Set.of("POST")));
 	}
 
@@ -160,14 +156,9 @@ public class ObjectHandler extends NonBlockingResourceHandler {
 
 	private boolean search(final JettyHttpExchange x) {
 		try {
-			final var spec = querySpecBuilder.fromRawParams(
-					queryParam(x, "q"),
-					queryParam(x, "tags"),
-					queryParam(x, "locationId"),
-					queryParam(x, "enabled"),
-					queryParam(x, "sort"),
-					queryParam(x, "limit"),
-					queryParam(x, "offset"));
+			final var spec = querySpecBuilder.fromRawParams(queryParam(x, "q"), queryParam(x, "tags"),
+					queryParam(x, "locationId"), queryParam(x, "enabled"), queryParam(x, "sort"),
+					queryParam(x, "limit"), queryParam(x, "offset"));
 
 			final var search = service.search(spec);
 			x.json(200, new SearchResponse(search, spec.limit(), spec.offset()));
@@ -207,7 +198,8 @@ public class ObjectHandler extends NonBlockingResourceHandler {
 		} catch (final KiwiError e) {
 			Log.error(getClass(), "KiwiError moving object", e);
 			final var mapped = KiwiErrorHttpMapper.map(e, "object.move");
-			ERRORS.error(x.response(), x.callback(), mapped.status(), mapped.error(), mapped.code(), mapped.message(), x.path());
+			ERRORS.error(x.response(), x.callback(), mapped.status(), mapped.error(), mapped.code(), mapped.message(),
+					x.path());
 			return true;
 		} catch (final RuntimeException e) {
 			Log.error(getClass(), "Error moving object", e);
@@ -241,7 +233,8 @@ public class ObjectHandler extends NonBlockingResourceHandler {
 		} catch (final KiwiError e) {
 			Log.error(getClass(), "KiwiError creating object", e);
 			final var mapped = KiwiErrorHttpMapper.map(e, "object.create");
-			ERRORS.error(x.response(), x.callback(), mapped.status(), mapped.error(), mapped.code(), mapped.message(), x.path());
+			ERRORS.error(x.response(), x.callback(), mapped.status(), mapped.error(), mapped.code(), mapped.message(),
+					x.path());
 			return true;
 		} catch (final IllegalArgumentException e) {
 			Log.error(getClass(), "Invalid UUID format", e);
@@ -272,7 +265,8 @@ public class ObjectHandler extends NonBlockingResourceHandler {
 		} catch (final KiwiError e) {
 			Log.error(getClass(), "KiwiError updating tags", e);
 			final var mapped = KiwiErrorHttpMapper.map(e, "object.update_tags");
-			ERRORS.error(x.response(), x.callback(), mapped.status(), mapped.error(), mapped.code(), mapped.message(), x.path());
+			ERRORS.error(x.response(), x.callback(), mapped.status(), mapped.error(), mapped.code(), mapped.message(),
+					x.path());
 			return true;
 		} catch (final RuntimeException e1) {
 			Log.error(getClass(), "Error updating tags", e1);
@@ -298,7 +292,8 @@ public class ObjectHandler extends NonBlockingResourceHandler {
 		} catch (final KiwiError e) {
 			Log.error(getClass(), "KiwiError updating text", e);
 			final var mapped = KiwiErrorHttpMapper.map(e, "object.update_text");
-			ERRORS.error(x.response(), x.callback(), mapped.status(), mapped.error(), mapped.code(), mapped.message(), x.path());
+			ERRORS.error(x.response(), x.callback(), mapped.status(), mapped.error(), mapped.code(), mapped.message(),
+					x.path());
 			return true;
 		} catch (final RuntimeException e1) {
 			Log.error(getClass(), "Error updating text", e1);

@@ -48,6 +48,10 @@
 			<artifactId>glowroot-agent-api</artifactId>
 			<scope>provided</scope>
 		</dependency>
+		<dependency>
+			<groupId>dev.rafex.ether.glowroot</groupId>
+			<artifactId>ether-glowroot-jetty12</artifactId>
+		</dependency>
 
 		<dependency>
 			<groupId>org.slf4j</groupId>

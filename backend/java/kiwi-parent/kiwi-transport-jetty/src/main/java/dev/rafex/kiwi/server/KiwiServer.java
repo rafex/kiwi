@@ -15,6 +15,12 @@
  */
 package dev.rafex.kiwi.server;
 
+import dev.rafex.ether.http.jetty12.JettyAuthHandler;
+import dev.rafex.ether.http.jetty12.JettyRouteRegistry;
+import dev.rafex.ether.http.jetty12.JettyServerConfig;
+import dev.rafex.ether.http.jetty12.JettyServerFactory;
+import dev.rafex.ether.http.jetty12.TokenVerificationResult;
+import dev.rafex.ether.json.JacksonJsonCodec;
 import dev.rafex.kiwi.bootstrap.KiwiContainer;
 import dev.rafex.kiwi.security.KiwiJwtService;
 
@@ -22,13 +28,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.logging.Logger;
-
-import dev.rafex.ether.http.jetty12.JettyRouteRegistry;
-import dev.rafex.ether.http.jetty12.JettyServerConfig;
-import dev.rafex.ether.http.jetty12.JettyServerFactory;
-import dev.rafex.ether.http.jetty12.JettyAuthHandler;
-import dev.rafex.ether.http.jetty12.TokenVerificationResult;
-import dev.rafex.ether.json.JacksonJsonCodec;
 
 public final class KiwiServer {
 

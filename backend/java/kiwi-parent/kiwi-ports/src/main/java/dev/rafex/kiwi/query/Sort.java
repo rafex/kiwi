@@ -18,8 +18,7 @@ package dev.rafex.kiwi.query;
 public record Sort(String field, Direction direction) {
 
 	public enum Direction {
-		ASC,
-		DESC
+		ASC, DESC
 	}
 
 }

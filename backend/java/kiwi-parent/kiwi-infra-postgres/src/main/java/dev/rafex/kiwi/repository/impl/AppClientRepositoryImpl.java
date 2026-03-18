@@ -69,9 +69,10 @@ public final class AppClientRepositoryImpl implements AppClientRepository {
 				if (!rs.next()) {
 					return Optional.empty();
 				}
-				return Optional.of(new AppClientRow(rs.getObject("app_client_id", UUID.class), rs.getString("client_id"),
-						rs.getString("name"), rs.getBytes("secret_hash"), rs.getBytes("salt"), rs.getInt("iterations"),
-						toStringList(rs.getArray("roles")), rs.getString("status"), ResultSets.asInstant(rs, "last_used_at"),
+				return Optional.of(new AppClientRow(rs.getObject("app_client_id", UUID.class),
+						rs.getString("client_id"), rs.getString("name"), rs.getBytes("secret_hash"),
+						rs.getBytes("salt"), rs.getInt("iterations"), toStringList(rs.getArray("roles")),
+						rs.getString("status"), ResultSets.asInstant(rs, "last_used_at"),
 						ResultSets.asInstant(rs, "created_at"), ResultSets.asInstant(rs, "updated_at")));
 			}
 		}

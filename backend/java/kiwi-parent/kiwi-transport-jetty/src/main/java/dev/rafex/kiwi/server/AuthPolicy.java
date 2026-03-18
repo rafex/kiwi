@@ -18,8 +18,7 @@ package dev.rafex.kiwi.server;
 public record AuthPolicy(Type type, String method, String pathSpec) {
 
 	public enum Type {
-		PUBLIC_PATH,
-		PROTECTED_PREFIX
+		PUBLIC_PATH, PROTECTED_PREFIX
 	}
 
 	public static AuthPolicy publicPath(final String method, final String pathSpec) {

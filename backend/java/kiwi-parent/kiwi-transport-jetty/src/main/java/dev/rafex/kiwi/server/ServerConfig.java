@@ -17,29 +17,16 @@ package dev.rafex.kiwi.server;
 
 import java.util.Set;
 
-public record ServerConfig(
-		int port,
-		int maxThreads,
-		int minThreads,
-		int idleTimeoutMs,
-		String threadPoolName,
-		String jwtIssuer,
-		String jwtAudience,
-		String jwtSecret,
-		String environment,
-		boolean enableUserProvisioning) {
+public record ServerConfig(int port, int maxThreads, int minThreads, int idleTimeoutMs, String threadPoolName,
+		String jwtIssuer, String jwtAudience, String jwtSecret, String environment, boolean enableUserProvisioning) {
 
 	public static ServerConfig fromEnv() {
 		final var env = System.getenv();
 		final var cpus = Runtime.getRuntime().availableProcessors();
-		return new ServerConfig(
-				parseInt(env.get("PORT"), 8080),
-				parseInt(env.get("HTTP_MAX_THREADS"), Math.max(cpus * 2, 16)),
-				parseInt(env.get("HTTP_MIN_THREADS"), 4),
-				parseInt(env.get("HTTP_IDLE_TIMEOUT_MS"), 30_000),
-				env.getOrDefault("HTTP_POOL_NAME", "kiwi-http"),
-				env.getOrDefault("JWT_ISS", "dev.rafex.kiwi"),
-				env.getOrDefault("JWT_AUD", "kiwi-backend"),
+		return new ServerConfig(parseInt(env.get("PORT"), 8080),
+				parseInt(env.get("HTTP_MAX_THREADS"), Math.max(cpus * 2, 16)), parseInt(env.get("HTTP_MIN_THREADS"), 4),
+				parseInt(env.get("HTTP_IDLE_TIMEOUT_MS"), 30_000), env.getOrDefault("HTTP_POOL_NAME", "kiwi-http"),
+				env.getOrDefault("JWT_ISS", "dev.rafex.kiwi"), env.getOrDefault("JWT_AUD", "kiwi-backend"),
 				env.getOrDefault("JWT_SECRET", "CHANGE_ME_NOW_32+chars_secret"),
 				env.getOrDefault("ENVIRONMENT", "unknown"),
 				"true".equalsIgnoreCase(env.getOrDefault("ENABLE_USER_PROVISIONING", "false")));

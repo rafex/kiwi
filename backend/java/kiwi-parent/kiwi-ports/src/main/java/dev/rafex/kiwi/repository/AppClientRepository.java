@@ -31,6 +31,7 @@ public interface AppClientRepository {
 	void touchLastUsed(UUID appClientId) throws SQLException;
 
 	public record AppClientRow(UUID appClientId, String clientId, String name, byte[] secretHash, byte[] salt,
-			int iterations, List<String> roles, String status, Instant lastUsedAt, Instant createdAt, Instant updatedAt) {
+			int iterations, List<String> roles, String status, Instant lastUsedAt, Instant createdAt,
+			Instant updatedAt) {
 	}
 }

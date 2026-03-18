@@ -32,7 +32,8 @@ import java.util.List;
 import java.util.Objects;
 
 /**
- * Kiwi adapter over ether-jwt preserving the auth contract expected by handlers.
+ * Kiwi adapter over ether-jwt preserving the auth contract expected by
+ * handlers.
  */
 public final class KiwiJwtService {
 
@@ -63,40 +64,25 @@ public final class KiwiJwtService {
 		}
 
 		final var keyProvider = KeyProvider.hmac(secret);
-		final var config = JwtConfig.builder(keyProvider)
-				.expectedIssuer(iss)
-				.expectedAudience(aud)
-				.build();
+		final var config = JwtConfig.builder(keyProvider).expectedIssuer(iss).expectedAudience(aud).build();
 		this.issuer = new DefaultTokenIssuer(config);
 		this.verifier = new DefaultTokenVerifier(config);
 	}
 
 	public String mint(final String sub, final Collection<String> roles, final long ttlSeconds) {
 		final var now = Instant.now();
-		final var spec = TokenSpec.builder()
-				.subject(sub)
-				.issuer(iss)
-				.audience(aud)
-				.issuedAt(now)
-				.ttl(Duration.ofSeconds(ttlSeconds))
-				.roles(roles == null ? new String[0] : roles.toArray(String[]::new))
-				.tokenType(TokenType.USER)
-				.build();
+		final var spec = TokenSpec.builder().subject(sub).issuer(iss).audience(aud).issuedAt(now)
+				.ttl(Duration.ofSeconds(ttlSeconds)).roles(roles == null ? new String[0] : roles.toArray(String[]::new))
+				.tokenType(TokenType.USER).build();
 		return issuer.issue(spec);
 	}
 
-	public String mintApp(final String sub, final String clientId, final Collection<String> roles, final long ttlSeconds) {
+	public String mintApp(final String sub, final String clientId, final Collection<String> roles,
+			final long ttlSeconds) {
 		final var now = Instant.now();
-		final var spec = TokenSpec.builder()
-				.subject(sub)
-				.issuer(iss)
-				.audience(aud)
-				.issuedAt(now)
-				.ttl(Duration.ofSeconds(ttlSeconds))
-				.roles(roles == null ? new String[0] : roles.toArray(String[]::new))
-				.tokenType(TokenType.APP)
-				.clientId(clientId)
-				.build();
+		final var spec = TokenSpec.builder().subject(sub).issuer(iss).audience(aud).issuedAt(now)
+				.ttl(Duration.ofSeconds(ttlSeconds)).roles(roles == null ? new String[0] : roles.toArray(String[]::new))
+				.tokenType(TokenType.APP).clientId(clientId).build();
 		return issuer.issue(spec);
 	}
 
@@ -115,13 +101,7 @@ public final class KiwiJwtService {
 	private static AuthContext toContext(final TokenClaims claims) {
 		final var tokenType = claims.tokenType() == null ? "user" : claims.tokenType().claimValue();
 		final var audience = claims.audience().isEmpty() ? null : claims.audience().get(0);
-		return new AuthContext(
-				claims.subject(),
-				claims.expiresAt() == null ? 0L : claims.expiresAt().getEpochSecond(),
-				claims.issuer(),
-				audience,
-				claims.roles(),
-				tokenType,
-				claims.clientId());
+		return new AuthContext(claims.subject(), claims.expiresAt() == null ? 0L : claims.expiresAt().getEpochSecond(),
+				claims.issuer(), audience, claims.roles(), tokenType, claims.clientId());
 	}
 }

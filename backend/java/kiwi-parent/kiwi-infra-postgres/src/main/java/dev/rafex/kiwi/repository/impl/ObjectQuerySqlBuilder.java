@@ -55,8 +55,7 @@ final class ObjectQuerySqlBuilder {
 
 	BuiltQuery build(final QuerySpec spec) {
 		final var sql = new StringBuilder();
-		sql.append("SELECT o.object_id, o.name, 0::real AS rank ")
-				.append("FROM objects o ")
+		sql.append("SELECT o.object_id, o.name, 0::real AS rank ").append("FROM objects o ")
 				.append("LEFT JOIN locations l ON l.id = o.current_location_fk");
 
 		final var params = new ArrayList<SqlParam>();
@@ -171,8 +170,8 @@ final class ObjectQuerySqlBuilder {
 	}
 
 	private static String toTagsSql(final RsqlNode.Comp comp, final List<SqlParam> params) {
-		if (comp.operator() != RsqlOperator.IN && comp.operator() != RsqlOperator.OUT && comp.operator() != RsqlOperator.EQ
-				&& comp.operator() != RsqlOperator.NEQ) {
+		if (comp.operator() != RsqlOperator.IN && comp.operator() != RsqlOperator.OUT
+				&& comp.operator() != RsqlOperator.EQ && comp.operator() != RsqlOperator.NEQ) {
 			throw new IllegalArgumentException("operator not supported for tags: " + comp.operator());
 		}
 

@@ -28,3 +28,5 @@ replay_pid*
 .Trashes
 .VolumeIcon.icns
 .com.apple.timemachine.donotpresent
+
+.claude/

@@ -26,6 +26,7 @@ import dev.rafex.kiwi.dtos.CreateObjectRequest;
 import dev.rafex.kiwi.dtos.FuzzyResponse;
 import dev.rafex.kiwi.dtos.MoveObjectRequest;
 import dev.rafex.kiwi.dtos.SearchResponse;
+import dev.rafex.kiwi.dtos.UpdateMetadataRequest;
 import dev.rafex.kiwi.dtos.UpdateTagsRequest;
 import dev.rafex.kiwi.dtos.UpdateTextRequest;
 import dev.rafex.kiwi.errors.KiwiError;
@@ -61,12 +62,16 @@ public class ObjectHandler extends NonBlockingResourceHandler {
 		return "/objects";
 	}
 
+	private static final int MAX_TAGS = 50;
+	private static final int MAX_TAG_LENGTH = 100;
+	private static final int MAX_METADATA_BYTES = 64 * 1024;
+
 	@Override
 	protected List<Route> routes() {
 		return List.of(Route.of("/search", Set.of("GET")), Route.of("/fuzzy", Set.of("GET")),
 				Route.of("/{id}/move", Set.of("PATCH")), Route.of("/{id}/tags", Set.of("PATCH")),
-				Route.of("/{id}/text", Set.of("PATCH")), Route.of("/{id}", Set.of("GET")),
-				Route.of("/", Set.of("POST")));
+				Route.of("/{id}/text", Set.of("PATCH")), Route.of("/{id}/metadata", Set.of("PATCH")),
+				Route.of("/{id}", Set.of("GET")), Route.of("/", Set.of("POST")));
 	}
 
 	@Override
@@ -124,6 +129,9 @@ public class ObjectHandler extends NonBlockingResourceHandler {
 		}
 		if (path.endsWith("/text")) {
 			return updateText(jx, objectId);
+		}
+		if (path.endsWith("/metadata")) {
+			return updateMetadata(jx, objectId);
 		}
 		ERRORS.notFound(jx.response(), jx.callback());
 		return true;
@@ -224,8 +232,19 @@ public class ObjectHandler extends NonBlockingResourceHandler {
 
 	private boolean create(final JettyHttpExchange x) {
 		try {
-			final var r = JSON_CODEC.readValue(org.eclipse.jetty.server.Request.asInputStream(x.request()),
-					CreateObjectRequest.class);
+			final String body;
+			try {
+				body = BodyReader.read(x.request(), BodyReader.OBJECT_LIMIT);
+			} catch (final java.io.IOException e) {
+				ERRORS.badRequest(x.response(), x.callback(), "cannot_read_body");
+				return true;
+			}
+			if (body == null) {
+				ERRORS.error(x.response(), x.callback(), 413, "payload_too_large", "body_too_large",
+						"request body exceeds maximum allowed size");
+				return true;
+			}
+			final var r = JSON_CODEC.readValue(body, CreateObjectRequest.class);
 
 			if (r.name() == null || r.name().isBlank()) {
 				ERRORS.badRequest(x.response(), x.callback(), "name is required");
@@ -239,7 +258,28 @@ public class ObjectHandler extends NonBlockingResourceHandler {
 			final var objectId = UUID.randomUUID();
 			final var locationId = UUID.fromString(r.locationId());
 			final var tags = r.tags() == null ? null : r.tags().toArray(new String[0]);
+
+			// Validación de tags: máximo 50, cada una <= 100 caracteres
+			if (tags != null) {
+				if (tags.length > MAX_TAGS) {
+					ERRORS.badRequest(x.response(), x.callback(), "too many tags, max " + MAX_TAGS);
+					return true;
+				}
+				for (final var tag : tags) {
+					if (tag != null && tag.length() > MAX_TAG_LENGTH) {
+						ERRORS.badRequest(x.response(), x.callback(), "tag too long, max " + MAX_TAG_LENGTH + " chars");
+						return true;
+					}
+				}
+			}
+
 			final var metadataJson = r.metadata() == null ? null : JSON_CODEC.toJson(r.metadata());
+
+			// Validación de metadata: <= 64 KB
+			if (metadataJson != null && metadataJson.length() > MAX_METADATA_BYTES) {
+				ERRORS.badRequest(x.response(), x.callback(), "metadata too large, max 64 KB");
+				return true;
+			}
 
 			service.create(objectId, r.name(), r.description(), r.type(), tags, metadataJson, locationId);
 			x.json(201, Map.of("object_id", objectId.toString()));
@@ -273,6 +313,18 @@ public class ObjectHandler extends NonBlockingResourceHandler {
 			}
 
 			final var tags = r.tags().toArray(String[]::new);
+
+			if (tags.length > MAX_TAGS) {
+				ERRORS.badRequest(x.response(), x.callback(), "too many tags, max " + MAX_TAGS);
+				return true;
+			}
+			for (final var tag : tags) {
+				if (tag != null && tag.length() > MAX_TAG_LENGTH) {
+					ERRORS.badRequest(x.response(), x.callback(), "tag too long, max " + MAX_TAG_LENGTH + " chars");
+					return true;
+				}
+			}
+
 			service.updateTags(objectId, tags);
 			RESPONSES.okNoContent(x.response(), x.callback());
 			return true;
@@ -311,6 +363,35 @@ public class ObjectHandler extends NonBlockingResourceHandler {
 			return true;
 		} catch (final RuntimeException e1) {
 			Log.error(getClass(), "Error updating text", e1);
+			ERRORS.badRequest(x.response(), x.callback(), "invalid request body");
+			return true;
+		}
+	}
+
+	private boolean updateMetadata(final JettyHttpExchange x, final UUID objectId) {
+		try {
+			Log.info(getClass(), "Handling object metadata update request");
+			final var r = JSON_CODEC.readValue(org.eclipse.jetty.server.Request.asInputStream(x.request()),
+					UpdateMetadataRequest.class);
+
+			final var metadataJson = r.metadata() == null ? null : JSON_CODEC.toJson(r.metadata());
+
+			if (metadataJson != null && metadataJson.length() > MAX_METADATA_BYTES) {
+				ERRORS.badRequest(x.response(), x.callback(), "metadata too large, max 64 KB");
+				return true;
+			}
+
+			service.updateMetadata(objectId, metadataJson);
+			RESPONSES.okNoContent(x.response(), x.callback());
+			return true;
+		} catch (final KiwiError e) {
+			Log.error(getClass(), "KiwiError updating metadata", e);
+			final var mapped = KiwiErrorHttpMapper.map(e, "object.update_metadata");
+			ERRORS.error(x.response(), x.callback(), mapped.status(), mapped.error(), mapped.code(), mapped.message(),
+					x.path());
+			return true;
+		} catch (final RuntimeException e) {
+			Log.error(getClass(), "Error updating metadata", e);
 			ERRORS.badRequest(x.response(), x.callback(), "invalid request body");
 			return true;
 		}

@@ -36,7 +36,6 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 
-import org.eclipse.jetty.io.Content;
 import org.eclipse.jetty.util.MultiMap;
 import org.eclipse.jetty.util.UrlEncoded;
 
@@ -107,13 +106,18 @@ public final class TokenHandler extends NonBlockingResourceHandler {
 
 		final String body;
 		try {
-			body = Content.Source.asString(jx.request(), StandardCharsets.UTF_8);
+			body = BodyReader.read(jx.request(), BodyReader.AUTH_LIMIT);
 		} catch (final Exception e) {
 			ERRORS.badRequest(jx.response(), jx.callback(), "cannot_read_body");
 			return true;
 		}
+		if (body == null) {
+			ERRORS.error(jx.response(), jx.callback(), 413, "payload_too_large", "body_too_large",
+					"request body exceeds maximum allowed size");
+			return true;
+		}
 
-		if (body == null || body.isBlank()) {
+		if (body.isBlank()) {
 			ERRORS.badRequest(jx.response(), jx.callback(), "missing_body");
 			return true;
 		}

@@ -100,6 +100,16 @@ public class ObjectServiceImpl implements ObjectService {
 	}
 
 	@Override
+	public void updateMetadata(final UUID objectId, final String metadataJson) throws KiwiError {
+		try {
+			repo.updateMetadata(objectId, metadataJson);
+		} catch (final SQLException e) {
+			Log.error(getClass(), "Error updating metadata", e);
+			throw new KiwiError("E-007", "Error updating metadata", e);
+		}
+	}
+
+	@Override
 	public List<FuzzyItem> fuzzy(final String text, final int limit, final int offset) throws KiwiError {
 		try {
 			final var rows = repo.fuzzy(text, limit, offset);

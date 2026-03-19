@@ -26,7 +26,7 @@ import dev.rafex.ether.json.JsonUtils;
 import dev.rafex.kiwi.security.KiwiJwtService;
 import dev.rafex.kiwi.services.AppClientAuthService;
 
-import java.nio.charset.StandardCharsets;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -34,7 +34,6 @@ import java.util.Objects;
 import java.util.Set;
 
 import org.eclipse.jetty.http.HttpStatus;
-import org.eclipse.jetty.io.Content;
 
 import com.fasterxml.jackson.databind.JsonNode;
 
@@ -82,13 +81,18 @@ public final class CreateAppClientHandler extends NonBlockingResourceHandler {
 
 		final String body;
 		try {
-			body = Content.Source.asString(jx.request(), StandardCharsets.UTF_8);
-		} catch (final Exception e) {
+			body = BodyReader.read(jx.request(), BodyReader.AUTH_LIMIT);
+		} catch (final IOException e) {
 			ERRORS.badRequest(jx.response(), jx.callback(), "cannot_read_body");
 			return true;
 		}
+		if (body == null) {
+			ERRORS.error(jx.response(), jx.callback(), 413, "payload_too_large", "body_too_large",
+					"request body exceeds maximum allowed size");
+			return true;
+		}
 
-		if (body == null || body.isBlank()) {
+		if (body.isBlank()) {
 			ERRORS.badRequest(jx.response(), jx.callback(), "missing_body");
 			return true;
 		}

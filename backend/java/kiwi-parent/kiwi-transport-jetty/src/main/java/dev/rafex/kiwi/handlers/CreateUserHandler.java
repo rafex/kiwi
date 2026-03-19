@@ -24,8 +24,10 @@ import dev.rafex.ether.http.jetty12.NonBlockingResourceHandler;
 import dev.rafex.ether.json.JsonCodec;
 import dev.rafex.ether.json.JsonUtils;
 import dev.rafex.kiwi.security.KiwiJwtService;
+import dev.rafex.kiwi.server.ServerConfig;
 import dev.rafex.kiwi.services.UserProvisioningService;
 
+import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.util.ArrayList;
@@ -36,7 +38,6 @@ import java.util.Objects;
 import java.util.Set;
 
 import org.eclipse.jetty.http.HttpStatus;
-import org.eclipse.jetty.io.Content;
 import org.eclipse.jetty.server.Request;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -47,18 +48,17 @@ public final class CreateUserHandler extends NonBlockingResourceHandler {
 	private static final JettyApiResponses RESPONSES = new JettyApiResponses(JSON_CODEC);
 	private static final JettyApiErrorResponses ERRORS = new JettyApiErrorResponses(JSON_CODEC);
 
-	private static final boolean PROVISIONING_ENABLED = "true"
-			.equalsIgnoreCase(System.getenv().getOrDefault("ENABLE_USER_PROVISIONING", "false"));
-
-	private static final String ENV = System.getenv().getOrDefault("ENVIRONMENT", "unknown"); // ej: work02 | live02
-
-	private static final String BOOTSTRAP_TOKEN = System.getenv().getOrDefault("BOOTSTRAP_TOKEN", "");
-
 	private final UserProvisioningService provisioning;
+	private final ServerConfig config;
+	/** Bytes UTF-8 del bootstrap token; permite comparación constante y puede zerificarse. */
+	private final byte[] bootstrapTokenBytes;
 
-	public CreateUserHandler(final UserProvisioningService provisioning) {
+	public CreateUserHandler(final UserProvisioningService provisioning, final ServerConfig config) {
 		super(JSON_CODEC);
 		this.provisioning = Objects.requireNonNull(provisioning);
+		this.config = Objects.requireNonNull(config);
+		final var token = System.getenv().getOrDefault("BOOTSTRAP_TOKEN", "");
+		this.bootstrapTokenBytes = token.isEmpty() ? new byte[0] : token.getBytes(StandardCharsets.UTF_8);
 	}
 
 	@Override
@@ -80,7 +80,7 @@ public final class CreateUserHandler extends NonBlockingResourceHandler {
 	public boolean post(final dev.rafex.ether.http.core.HttpExchange x) throws Exception {
 		final var jx = asJetty(x);
 
-		if (!PROVISIONING_ENABLED || !isSandbox()) {
+		if (!config.enableUserProvisioning() || !config.isSandbox()) {
 			ERRORS.notFound(jx.response(), jx.callback(), jx.request().getHttpURI().getPath());
 			return true;
 		}
@@ -122,9 +122,14 @@ public final class CreateUserHandler extends NonBlockingResourceHandler {
 		// ---- Body ----
 		final String body;
 		try {
-			body = Content.Source.asString(jx.request(), StandardCharsets.UTF_8);
-		} catch (final Exception e) {
+			body = BodyReader.read(jx.request(), BodyReader.AUTH_LIMIT);
+		} catch (final IOException e) {
 			ERRORS.badRequest(jx.response(), jx.callback(), "cannot_read_body");
+			return true;
+		}
+		if (body == null) {
+			ERRORS.error(jx.response(), jx.callback(), 413, "payload_too_large", "body_too_large",
+					"request body exceeds maximum allowed size");
 			return true;
 		}
 
@@ -210,15 +215,10 @@ public final class CreateUserHandler extends NonBlockingResourceHandler {
 		return out;
 	}
 
-	private static boolean hasValidBootstrapToken(final Request request) {
+	private boolean hasValidBootstrapToken(final Request request) {
 		final var t = request.getHeaders().get("x-bootstrap-token");
-		return t != null && !BOOTSTRAP_TOKEN.isBlank() && MessageDigest.isEqual(t.getBytes(StandardCharsets.UTF_8),
-				BOOTSTRAP_TOKEN.getBytes(StandardCharsets.UTF_8));
-	}
-
-	private static boolean isSandbox() {
-		// ajusta a tus nombres reales
-		return "work02".equalsIgnoreCase(ENV) || "sandbox".equalsIgnoreCase(ENV) || "dev".equalsIgnoreCase(ENV);
+		return t != null && bootstrapTokenBytes.length > 0
+				&& MessageDigest.isEqual(t.getBytes(StandardCharsets.UTF_8), bootstrapTokenBytes);
 	}
 
 	private static JettyHttpExchange asJetty(final dev.rafex.ether.http.core.HttpExchange x) {

@@ -38,6 +38,8 @@ public interface ObjectService {
 
 	void updateText(UUID objectId, String name, String description) throws KiwiError;
 
+	void updateMetadata(UUID objectId, String metadataJson) throws KiwiError;
+
 	List<FuzzyItem> fuzzy(String text, int limit, int offset) throws Exception;
 
 	Optional<ObjectDetail> getById(UUID objectId) throws Exception;

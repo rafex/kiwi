@@ -42,7 +42,7 @@ public final class DefaultKiwiModule implements KiwiModule {
 		routes.add("/admin/app-clients", new CreateAppClientHandler(container.appClientAuthService()));
 
 		if (context.config().enableUserProvisioning() && context.config().isSandbox()) {
-			routes.add("/admin/users", new CreateUserHandler(container.userProvisioningService()));
+			routes.add("/admin/users", new CreateUserHandler(container.userProvisioningService(), context.config()));
 		}
 
 		routes.add("/*", new NotFoundHandler());

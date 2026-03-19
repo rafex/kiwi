@@ -15,10 +15,14 @@
  */
 package dev.rafex.kiwi.server;
 
+import java.security.SecureRandom;
+import java.util.HexFormat;
 import java.util.Set;
 
 public record ServerConfig(int port, int maxThreads, int minThreads, int idleTimeoutMs, String threadPoolName,
 		String jwtIssuer, String jwtAudience, String jwtSecret, String environment, boolean enableUserProvisioning) {
+
+	private static final String KNOWN_DEFAULT_SECRET = "CHANGE_ME_NOW_32+chars_secret";
 
 	public static ServerConfig fromEnv() {
 		final var env = System.getenv();
@@ -27,9 +31,28 @@ public record ServerConfig(int port, int maxThreads, int minThreads, int idleTim
 				parseInt(env.get("HTTP_MAX_THREADS"), Math.max(cpus * 2, 16)), parseInt(env.get("HTTP_MIN_THREADS"), 4),
 				parseInt(env.get("HTTP_IDLE_TIMEOUT_MS"), 30_000), env.getOrDefault("HTTP_POOL_NAME", "kiwi-http"),
 				env.getOrDefault("JWT_ISS", "dev.rafex.kiwi"), env.getOrDefault("JWT_AUD", "kiwi-backend"),
-				env.getOrDefault("JWT_SECRET", "CHANGE_ME_NOW_32+chars_secret"),
+				resolveJwtSecret(env.get("JWT_SECRET")),
 				env.getOrDefault("ENVIRONMENT", "unknown"),
 				"true".equalsIgnoreCase(env.getOrDefault("ENABLE_USER_PROVISIONING", "false")));
+	}
+
+	/**
+	 * Si JWT_SECRET no está configurado o usa el valor por defecto conocido,
+	 * genera un secreto aleatorio de 256 bits y emite una advertencia.
+	 * El secreto generado no persiste entre reinicios — todos los tokens
+	 * emitidos pierden validez. En producción debe configurarse JWT_SECRET.
+	 */
+	private static String resolveJwtSecret(final String envValue) {
+		if (envValue == null || envValue.isBlank() || KNOWN_DEFAULT_SECRET.equals(envValue)) {
+			final var bytes = new byte[32];
+			new SecureRandom().nextBytes(bytes);
+			final var generated = HexFormat.of().formatHex(bytes);
+			System.err.println("[KIWI] ADVERTENCIA: JWT_SECRET no configurado o usa valor por defecto. "
+					+ "Se generó un secreto aleatorio — los tokens perderán validez al reiniciar. "
+					+ "Configure JWT_SECRET en variables de entorno para producción.");
+			return generated;
+		}
+		return envValue;
 	}
 
 	public boolean isSandbox() {

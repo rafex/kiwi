@@ -25,7 +25,9 @@ import dev.rafex.ether.json.JsonUtils;
 import dev.rafex.kiwi.security.KiwiJwtService;
 import dev.rafex.kiwi.services.AppClientAuthService;
 
+import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
 import java.util.Base64;
 import java.util.List;
 import java.util.Map;
@@ -110,17 +112,19 @@ public final class TokenHandler extends NonBlockingResourceHandler {
 				return true;
 			}
 
-			return authenticateAndMint(jx, text(json, "client_id"), text(json, "client_secret"),
-					text(json, "grant_type"));
+			final var secretNode = json.get("client_secret");
+			final var secretChars = secretNode != null && secretNode.isTextual() ? secretNode.asText().toCharArray() : null;
+			return authenticateAndMint(jx, text(json, "client_id"), secretChars, text(json, "grant_type"));
 		}
 
 		final var form = new MultiMap<String>();
 		UrlEncoded.decodeTo(body, form, StandardCharsets.UTF_8);
-		return authenticateAndMint(jx, value(form, "client_id"), value(form, "client_secret"),
+		final var secretStr = value(form, "client_secret");
+		return authenticateAndMint(jx, value(form, "client_id"), secretStr != null ? secretStr.toCharArray() : null,
 				value(form, "grant_type"));
 	}
 
-	private boolean authenticateAndMint(final JettyHttpExchange x, final String clientId, final String clientSecret,
+	private boolean authenticateAndMint(final JettyHttpExchange x, final String clientId, final char[] clientSecret,
 			final String grantType) throws Exception {
 		if (grantType == null || !"client_credentials".equals(grantType)) {
 			ERRORS.badRequest(x.response(), x.callback(), "unsupported_grant_type");
@@ -132,7 +136,7 @@ public final class TokenHandler extends NonBlockingResourceHandler {
 			return true;
 		}
 
-		final var result = authService.authenticate(clientId, clientSecret.toCharArray());
+		final var result = authService.authenticate(clientId, clientSecret);
 		if (!result.ok()) {
 			final var code = result.code() != null ? result.code() : "invalid_client";
 			if ("client_disabled".equals(code)) {
@@ -164,17 +168,29 @@ public final class TokenHandler extends NonBlockingResourceHandler {
 		return v == null || v.isBlank() ? null : v;
 	}
 
-	private record BasicCreds(String clientId, String clientSecret) {
+	private record BasicCreds(String clientId, char[] clientSecret) {
 	}
 
 	private static BasicCreds decodeBasic(final String base64Part) {
 		try {
-			final var decoded = new String(Base64.getDecoder().decode(base64Part), StandardCharsets.UTF_8);
-			final var idx = decoded.indexOf(':');
+			final var bytes = Base64.getDecoder().decode(base64Part);
+			int idx = -1;
+			for (int i = 0; i < bytes.length; i++) {
+				if (bytes[i] == (byte) ':') {
+					idx = i;
+					break;
+				}
+			}
 			if (idx <= 0) {
+				Arrays.fill(bytes, (byte) 0);
 				return null;
 			}
-			return new BasicCreds(decoded.substring(0, idx), decoded.substring(idx + 1));
+			final var clientId = new String(bytes, 0, idx, StandardCharsets.UTF_8);
+			final var charBuf = StandardCharsets.UTF_8.decode(ByteBuffer.wrap(bytes, idx + 1, bytes.length - idx - 1));
+			final var clientSecret = new char[charBuf.remaining()];
+			charBuf.get(clientSecret);
+			Arrays.fill(bytes, (byte) 0);
+			return new BasicCreds(clientId, clientSecret);
 		} catch (final Exception e) {
 			return null;
 		}

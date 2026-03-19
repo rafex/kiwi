@@ -29,6 +29,7 @@ import dev.rafex.kiwi.services.UserProvisioningService;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -141,15 +142,19 @@ public final class CreateUserHandler extends NonBlockingResourceHandler {
 		}
 
 		final var username = text(json, "username");
-		final var password = text(json, "password");
+		final var passNode = json.get("password");
+		final var password = passNode != null && passNode.isTextual() ? passNode.asText().toCharArray() : null;
 		final var roles = roles(json.get("roles"));
 
-		if (username == null || username.isBlank() || password == null || password.isBlank()) {
+		if (username == null || username.isBlank() || password == null || password.length == 0) {
+			if (password != null) {
+				Arrays.fill(password, '\0');
+			}
 			ERRORS.badRequest(jx.response(), jx.callback(), "missing_fields");
 			return true;
 		}
 
-		final var res = provisioning.createUser(username, password.toCharArray(), roles);
+		final var res = provisioning.createUser(username, password, roles);
 
 		if (!res.ok()) {
 			final var code = res.code();

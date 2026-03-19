@@ -25,7 +25,6 @@ import dev.rafex.kiwi.handlers.LoginHandler;
 import dev.rafex.kiwi.handlers.NotFoundHandler;
 import dev.rafex.kiwi.handlers.ObjectHandler;
 import dev.rafex.kiwi.handlers.TokenHandler;
-import dev.rafex.kiwi.security.KiwiJwtService;
 
 public final class DefaultKiwiModule implements KiwiModule {
 

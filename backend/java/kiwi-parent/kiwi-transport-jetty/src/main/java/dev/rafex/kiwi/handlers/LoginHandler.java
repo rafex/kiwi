@@ -25,7 +25,9 @@ import dev.rafex.ether.json.JsonUtils;
 import dev.rafex.kiwi.security.KiwiJwtService;
 import dev.rafex.kiwi.services.AuthService;
 
+import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
 import java.util.Base64;
 import java.util.List;
 import java.util.Map;
@@ -109,7 +111,8 @@ public final class LoginHandler extends NonBlockingResourceHandler {
 		}
 
 		final var user = text(json, "username");
-		final var pass = text(json, "password");
+		final var passNode = json.get("password");
+		final var pass = passNode != null && passNode.isTextual() ? passNode.asText().toCharArray() : null;
 
 		if (user == null || pass == null) {
 			ERRORS.unauthorized(jx.response(), jx.callback(), "missing_credentials");
@@ -119,11 +122,10 @@ public final class LoginHandler extends NonBlockingResourceHandler {
 		return authenticateAndMint(jx, user, pass);
 	}
 
-	private boolean authenticateAndMint(final JettyHttpExchange x, final String username, final String password)
+	private boolean authenticateAndMint(final JettyHttpExchange x, final String username, final char[] password)
 			throws Exception {
 
-		// Nota: pasamos char[] para poder limpiarlo dentro de AuthServiceImpl
-		final var result = authService.authenticate(username, password.toCharArray());
+		final var result = authService.authenticate(username, password);
 
 		if (!result.ok()) {
 			// Mantén esto simple (evita user enumeration). "user_disabled" sí es útil
@@ -162,18 +164,28 @@ public final class LoginHandler extends NonBlockingResourceHandler {
 		return v != null && v.isTextual() ? v.asText() : null;
 	}
 
-	private record BasicCreds(String user, String pass) {
+	private record BasicCreds(String user, char[] pass) {
 	}
 
 	private static BasicCreds decodeBasic(final String base64Part) {
 		try {
-			final var decoded = new String(Base64.getDecoder().decode(base64Part), StandardCharsets.UTF_8);
-			final var idx = decoded.indexOf(':');
+			final var bytes = Base64.getDecoder().decode(base64Part);
+			int idx = -1;
+			for (int i = 0; i < bytes.length; i++) {
+				if (bytes[i] == (byte) ':') {
+					idx = i;
+					break;
+				}
+			}
 			if (idx <= 0) {
+				Arrays.fill(bytes, (byte) 0);
 				return null;
 			}
-			final var user = decoded.substring(0, idx);
-			final var pass = decoded.substring(idx + 1);
+			final var user = new String(bytes, 0, idx, StandardCharsets.UTF_8);
+			final var charBuf = StandardCharsets.UTF_8.decode(ByteBuffer.wrap(bytes, idx + 1, bytes.length - idx - 1));
+			final var pass = new char[charBuf.remaining()];
+			charBuf.get(pass);
+			Arrays.fill(bytes, (byte) 0);
 			return new BasicCreds(user, pass);
 		} catch (final Exception e) {
 			return null;

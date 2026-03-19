@@ -20,7 +20,7 @@ import java.util.UUID;
 
 public interface AuthService {
 
-	AuthResult authenticate(String username, char[] password) throws Exception;
+	AuthResult authenticate(String username, char[] password);
 
 	public record AuthResult(boolean ok, UUID userId, String username, List<String> roles, String code) {
 		public static AuthResult ok(final UUID userId, final String username, final List<String> roles) {

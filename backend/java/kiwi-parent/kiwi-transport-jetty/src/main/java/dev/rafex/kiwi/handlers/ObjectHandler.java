@@ -37,6 +37,7 @@ import dev.rafex.kiwi.services.ObjectService;
 import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
@@ -89,7 +90,14 @@ public class ObjectHandler extends NonBlockingResourceHandler {
 			ERRORS.notFound(jx.response(), jx.callback());
 			return true;
 		}
-		return byId(jx, parseUuid(id, "invalid UUID in path"));
+		final UUID objectId;
+		try {
+			objectId = parseUuid(id, "invalid UUID in path");
+		} catch (final IllegalArgumentException e) {
+			ERRORS.badRequest(jx.response(), jx.callback(), "invalid_uuid");
+			return true;
+		}
+		return byId(jx, objectId);
 	}
 
 	@Override
@@ -100,7 +108,13 @@ public class ObjectHandler extends NonBlockingResourceHandler {
 			ERRORS.notFound(jx.response(), jx.callback());
 			return true;
 		}
-		final var objectId = parseUuid(id, "invalid UUID in path");
+		final UUID objectId;
+		try {
+			objectId = parseUuid(id, "invalid UUID in path");
+		} catch (final IllegalArgumentException e) {
+			ERRORS.badRequest(jx.response(), jx.callback(), "invalid_uuid");
+			return true;
+		}
 		final var path = jx.path();
 		if (path.endsWith("/move")) {
 			return moveLocation(jx, objectId);
@@ -228,7 +242,7 @@ public class ObjectHandler extends NonBlockingResourceHandler {
 			final var metadataJson = r.metadata() == null ? null : JSON_CODEC.toJson(r.metadata());
 
 			service.create(objectId, r.name(), r.description(), r.type(), tags, metadataJson, locationId);
-			x.json(201, "{\"object_id\":\"" + objectId + "\"}");
+			x.json(201, Map.of("object_id", objectId.toString()));
 			return true;
 		} catch (final KiwiError e) {
 			Log.error(getClass(), "KiwiError creating object", e);

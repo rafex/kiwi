@@ -22,9 +22,11 @@ import dev.rafex.ether.http.jetty12.JettyHttpExchange;
 import dev.rafex.ether.http.jetty12.NonBlockingResourceHandler;
 import dev.rafex.ether.json.JsonCodec;
 import dev.rafex.ether.json.JsonUtils;
+import dev.rafex.kiwi.security.InMemoryRateLimiter;
 import dev.rafex.kiwi.security.KiwiJwtService;
 import dev.rafex.kiwi.services.AuthService;
 
+import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
@@ -47,16 +49,23 @@ public final class LoginHandler extends NonBlockingResourceHandler {
 	private final KiwiJwtService jwt;
 	private final AuthService authService;
 	private final long ttlSeconds;
+	private final InMemoryRateLimiter rateLimiter;
 
 	public LoginHandler(final KiwiJwtService jwt, final AuthService authService) {
 		this(jwt, authService, Long.parseLong(System.getenv().getOrDefault("JWT_TTL_SECONDS", "3600")));
 	}
 
 	public LoginHandler(final KiwiJwtService jwt, final AuthService authService, final long ttlSeconds) {
+		this(jwt, authService, ttlSeconds, new InMemoryRateLimiter(10, 300));
+	}
+
+	public LoginHandler(final KiwiJwtService jwt, final AuthService authService, final long ttlSeconds,
+			final InMemoryRateLimiter rateLimiter) {
 		super(JSON_CODEC);
 		this.jwt = Objects.requireNonNull(jwt);
 		this.authService = Objects.requireNonNull(authService);
 		this.ttlSeconds = ttlSeconds;
+		this.rateLimiter = Objects.requireNonNull(rateLimiter);
 	}
 
 	@Override
@@ -77,6 +86,13 @@ public final class LoginHandler extends NonBlockingResourceHandler {
 	@Override
 	public boolean post(final dev.rafex.ether.http.core.HttpExchange x) throws Exception {
 		final var jx = asJetty(x);
+
+		// Rate limit: verificar antes de cualquier procesamiento
+		final var key = clientIp(jx.request());
+		if (!rateLimiter.tryAcquire(key)) {
+			return rejectRateLimit(jx, key);
+		}
+
 		// 1) Intenta Basic Auth
 		final var authz = jx.request().getHeaders().get("authorization");
 		if (authz != null && authz.regionMatches(true, 0, "Basic ", 0, "Basic ".length())) {
@@ -85,7 +101,7 @@ public final class LoginHandler extends NonBlockingResourceHandler {
 				ERRORS.unauthorized(jx.response(), jx.callback(), "bad_basic_auth");
 				return true;
 			}
-			return authenticateAndMint(jx, creds.user, creds.pass);
+			return authenticateAndMint(jx, creds.user, creds.pass, key);
 		}
 
 		// 2) JSON body: {"username":"...","password":"..."}
@@ -119,11 +135,11 @@ public final class LoginHandler extends NonBlockingResourceHandler {
 			return true;
 		}
 
-		return authenticateAndMint(jx, user, pass);
+		return authenticateAndMint(jx, user, pass, key);
 	}
 
-	private boolean authenticateAndMint(final JettyHttpExchange x, final String username, final char[] password)
-			throws Exception {
+	private boolean authenticateAndMint(final JettyHttpExchange x, final String username, final char[] password,
+			final String rateLimitKey) {
 
 		final var result = authService.authenticate(username, password);
 
@@ -142,21 +158,31 @@ public final class LoginHandler extends NonBlockingResourceHandler {
 			return true;
 		}
 
-		// Recomendación: sub = userId (estable)
-		final var subject = result.userId().toString();
-		final var roles = result.roles(); // si quieres incluir roles en el token, aquí es donde los obtienes (si no los
-											// tienes ya en el contexto de autenticación)
+		// Autenticación exitosa: resetear el contador de la IP
+		rateLimiter.reset(rateLimitKey);
 
-		// Si tu JwtService actual solo soporta mint(sub, ttl), deja esto así.
-		// Si lo extiendes para roles/username, aquí es donde lo pasas.
+		final var subject = result.userId().toString();
+		final var roles = result.roles();
 		final var token = jwt.mint(subject, roles, ttlSeconds);
 
 		RESPONSES.ok(x.response(), x.callback(),
-				Map.of("token_type", "Bearer", "access_token", token, "expires_in", ttlSeconds
-				// si quieres devolver roles al cliente:
-				// "roles", result.roles()
-				));
+				Map.of("token_type", "Bearer", "access_token", token, "expires_in", ttlSeconds));
 		return true;
+	}
+
+	private boolean rejectRateLimit(final JettyHttpExchange x, final String key) {
+		x.response().getHeaders().add("Retry-After", String.valueOf(rateLimiter.retryAfterSeconds(key)));
+		ERRORS.error(x.response(), x.callback(), 429, "too_many_requests", "rate_limit_exceeded",
+				"too many authentication attempts, try again later");
+		return true;
+	}
+
+	private static String clientIp(final org.eclipse.jetty.server.Request request) {
+		final var addr = request.getConnectionMetaData().getRemoteSocketAddress();
+		if (addr instanceof final InetSocketAddress isa) {
+			return isa.getAddress().getHostAddress();
+		}
+		return "unknown";
 	}
 
 	private static String text(final JsonNode node, final String field) {

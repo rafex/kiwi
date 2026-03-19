@@ -35,7 +35,7 @@ public final class AuthServiceImpl implements AuthService {
 	}
 
 	@Override
-	public AuthResult authenticate(final String username, final char[] password) throws Exception {
+	public AuthResult authenticate(final String username, final char[] password) {
 		if (username == null || username.isBlank() || password == null || password.length == 0) {
 			return AuthResult.bad("bad_credentials");
 		}

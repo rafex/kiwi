@@ -57,7 +57,7 @@ public final class AppClientAuthServiceImpl implements AppClientAuthService {
 	}
 
 	@Override
-	public AuthResult authenticate(final String clientId, final char[] clientSecret) throws Exception {
+	public AuthResult authenticate(final String clientId, final char[] clientSecret) {
 		if (clientId == null || clientId.isBlank() || clientSecret == null || clientSecret.length == 0) {
 			return AuthResult.bad("invalid_client");
 		}
@@ -90,7 +90,7 @@ public final class AppClientAuthServiceImpl implements AppClientAuthService {
 
 	@Override
 	public CreateClientResult createClient(final String clientId, final String name, final char[] clientSecret,
-			final List<String> roles) throws Exception {
+			final List<String> roles) {
 		if (clientId == null || clientId.isBlank() || clientSecret == null || clientSecret.length == 0) {
 			return CreateClientResult.bad("invalid_input");
 		}

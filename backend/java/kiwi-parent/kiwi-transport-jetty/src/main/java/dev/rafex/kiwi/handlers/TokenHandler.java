@@ -22,9 +22,11 @@ import dev.rafex.ether.http.jetty12.JettyHttpExchange;
 import dev.rafex.ether.http.jetty12.NonBlockingResourceHandler;
 import dev.rafex.ether.json.JsonCodec;
 import dev.rafex.ether.json.JsonUtils;
+import dev.rafex.kiwi.security.InMemoryRateLimiter;
 import dev.rafex.kiwi.security.KiwiJwtService;
 import dev.rafex.kiwi.services.AppClientAuthService;
 
+import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
@@ -49,16 +51,23 @@ public final class TokenHandler extends NonBlockingResourceHandler {
 	private final KiwiJwtService jwt;
 	private final AppClientAuthService authService;
 	private final long ttlSeconds;
+	private final InMemoryRateLimiter rateLimiter;
 
 	public TokenHandler(final KiwiJwtService jwt, final AppClientAuthService authService) {
 		this(jwt, authService, Long.parseLong(System.getenv().getOrDefault("JWT_APP_TTL_SECONDS", "1800")));
 	}
 
 	public TokenHandler(final KiwiJwtService jwt, final AppClientAuthService authService, final long ttlSeconds) {
+		this(jwt, authService, ttlSeconds, new InMemoryRateLimiter(10, 300));
+	}
+
+	public TokenHandler(final KiwiJwtService jwt, final AppClientAuthService authService, final long ttlSeconds,
+			final InMemoryRateLimiter rateLimiter) {
 		super(JSON_CODEC);
 		this.jwt = Objects.requireNonNull(jwt);
 		this.authService = Objects.requireNonNull(authService);
 		this.ttlSeconds = ttlSeconds;
+		this.rateLimiter = Objects.requireNonNull(rateLimiter);
 	}
 
 	@Override
@@ -79,6 +88,13 @@ public final class TokenHandler extends NonBlockingResourceHandler {
 	@Override
 	public boolean post(final dev.rafex.ether.http.core.HttpExchange x) throws Exception {
 		final var jx = asJetty(x);
+
+		// Rate limit: verificar antes de cualquier procesamiento
+		final var key = clientIp(jx.request());
+		if (!rateLimiter.tryAcquire(key)) {
+			return rejectRateLimit(jx, key);
+		}
+
 		final var authz = jx.request().getHeaders().get("authorization");
 		if (authz != null && authz.regionMatches(true, 0, "Basic ", 0, "Basic ".length())) {
 			final var creds = decodeBasic(authz.substring("Basic ".length()).trim());
@@ -86,7 +102,7 @@ public final class TokenHandler extends NonBlockingResourceHandler {
 				ERRORS.unauthorized(jx.response(), jx.callback(), "invalid_client");
 				return true;
 			}
-			return authenticateAndMint(jx, creds.clientId(), creds.clientSecret(), "client_credentials");
+			return authenticateAndMint(jx, creds.clientId(), creds.clientSecret(), "client_credentials", key);
 		}
 
 		final String body;
@@ -114,18 +130,18 @@ public final class TokenHandler extends NonBlockingResourceHandler {
 
 			final var secretNode = json.get("client_secret");
 			final var secretChars = secretNode != null && secretNode.isTextual() ? secretNode.asText().toCharArray() : null;
-			return authenticateAndMint(jx, text(json, "client_id"), secretChars, text(json, "grant_type"));
+			return authenticateAndMint(jx, text(json, "client_id"), secretChars, text(json, "grant_type"), key);
 		}
 
 		final var form = new MultiMap<String>();
 		UrlEncoded.decodeTo(body, form, StandardCharsets.UTF_8);
 		final var secretStr = value(form, "client_secret");
 		return authenticateAndMint(jx, value(form, "client_id"), secretStr != null ? secretStr.toCharArray() : null,
-				value(form, "grant_type"));
+				value(form, "grant_type"), key);
 	}
 
 	private boolean authenticateAndMint(final JettyHttpExchange x, final String clientId, final char[] clientSecret,
-			final String grantType) throws Exception {
+			final String grantType, final String rateLimitKey) {
 		if (grantType == null || !"client_credentials".equals(grantType)) {
 			ERRORS.badRequest(x.response(), x.callback(), "unsupported_grant_type");
 			return true;
@@ -149,10 +165,28 @@ public final class TokenHandler extends NonBlockingResourceHandler {
 			return true;
 		}
 
+		// Autenticación exitosa: resetear el contador de la IP
+		rateLimiter.reset(rateLimitKey);
+
 		final var token = jwt.mintApp("app:" + result.clientId(), result.clientId(), result.roles(), ttlSeconds);
 		RESPONSES.ok(x.response(), x.callback(), Map.of("token_type", "Bearer", "access_token", token, "expires_in",
 				ttlSeconds, "grant_type", "client_credentials"));
 		return true;
+	}
+
+	private boolean rejectRateLimit(final JettyHttpExchange x, final String key) {
+		x.response().getHeaders().add("Retry-After", String.valueOf(rateLimiter.retryAfterSeconds(key)));
+		ERRORS.error(x.response(), x.callback(), 429, "too_many_requests", "rate_limit_exceeded",
+				"too many authentication attempts, try again later");
+		return true;
+	}
+
+	private static String clientIp(final org.eclipse.jetty.server.Request request) {
+		final var addr = request.getConnectionMetaData().getRemoteSocketAddress();
+		if (addr instanceof final InetSocketAddress isa) {
+			return isa.getAddress().getHostAddress();
+		}
+		return "unknown";
 	}
 
 	private static String text(final JsonNode node, final String field) {

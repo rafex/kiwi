@@ -20,10 +20,9 @@ import java.util.UUID;
 
 public interface AppClientAuthService {
 
-	AuthResult authenticate(String clientId, char[] clientSecret) throws Exception;
+	AuthResult authenticate(String clientId, char[] clientSecret);
 
-	CreateClientResult createClient(String clientId, String name, char[] clientSecret, List<String> roles)
-			throws Exception;
+	CreateClientResult createClient(String clientId, String name, char[] clientSecret, List<String> roles);
 
 	public record AuthResult(boolean ok, UUID appClientId, String clientId, List<String> roles, String code) {
 		public static AuthResult ok(final UUID appClientId, final String clientId, final List<String> roles) {

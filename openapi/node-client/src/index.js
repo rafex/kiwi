@@ -45,6 +45,7 @@ Comandos:
   move-object --id UUID --new-location-id UUID
   update-tags --id UUID --tags a,b,c
   update-text --id UUID [--name NOMBRE] [--description DESC]
+  update-metadata --id UUID --metadata '{"clave":"valor"}'
   demo
 
 Variables de entorno:
@@ -158,6 +159,17 @@ async function main() {
           description: argValue("--description") || undefined
         });
         break;
+
+      case "update-metadata": {
+        const metadataRaw = argValue("--metadata");
+        if (!metadataRaw) {
+          console.error("Error: se requiere --metadata '{...}'");
+          process.exit(1);
+        }
+        const metadata = JSON.parse(metadataRaw);
+        res = await client.updateMetadata(argValue("--id"), metadata);
+        break;
+      }
 
       case "demo": {
         const hello = await client.hello();

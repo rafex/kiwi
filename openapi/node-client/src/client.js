@@ -135,4 +135,11 @@ export class KiwiClient {
       body: { name, description }
     });
   }
+
+  updateMetadata(objectId, metadata) {
+    return this.request(`/objects/${objectId}/metadata`, {
+      method: "PATCH",
+      body: { metadata }
+    });
+  }
 }

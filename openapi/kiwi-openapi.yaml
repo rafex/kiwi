@@ -69,6 +69,7 @@ paths:
       summary: Autenticación y emisión de JWT
       description: |
         Acepta credenciales por `Authorization: Basic base64(user:pass)` o por body JSON.
+        El body no puede superar 8 KB. Se aplica rate limiting de 10 intentos por 5 minutos por IP.
       security:
         - basicAuth: []
         - {}
@@ -110,6 +111,23 @@ paths:
                 $ref: '#/components/schemas/ErrorResponse'
         '405':
           description: Método no permitido
+        '413':
+          description: Body demasiado grande (supera 8 KB)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '429':
+          description: Demasiados intentos — rate limit excedido
+          headers:
+            Retry-After:
+              description: Segundos hasta que se pueda reintentar
+              schema:
+                type: integer
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
 
   /auth/token:
     post:
@@ -118,6 +136,7 @@ paths:
       description: |
         Acepta `client_id` y `client_secret` por Basic Auth (`Authorization: Basic base64(client_id:client_secret)`)
         o por body (`application/json` o `application/x-www-form-urlencoded`).
+        El body no puede superar 8 KB. Se aplica rate limiting de 10 intentos por 5 minutos por IP.
       security:
         - basicAuth: []
         - {}
@@ -157,6 +176,23 @@ paths:
                 $ref: '#/components/schemas/ErrorResponse'
         '405':
           description: Método no permitido
+        '413':
+          description: Body demasiado grande (supera 8 KB)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '429':
+          description: Demasiados intentos — rate limit excedido
+          headers:
+            Retry-After:
+              description: Segundos hasta que se pueda reintentar
+              schema:
+                type: integer
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
 
   /admin/users:
     post:
@@ -165,6 +201,7 @@ paths:
       description: |
         Endpoint habilitado solo cuando `ENABLE_USER_PROVISIONING=true` y entorno sandbox/dev.
         Primer usuario puede crearse con `x-bootstrap-token`; después requiere JWT con rol ADMIN.
+        El body no puede superar 8 KB.
       parameters:
         - name: x-bootstrap-token
           in: header
@@ -208,6 +245,12 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorCodeResponse'
+        '413':
+          description: Body demasiado grande (supera 8 KB)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
 
   /admin/app-clients:
     post:
@@ -215,6 +258,7 @@ paths:
       summary: Crear cliente de aplicación
       description: |
         Requiere JWT de usuario con rol `ADMIN`. Responde 201 con el cliente creado.
+        El body no puede superar 8 KB.
       requestBody:
         required: true
         content:
@@ -252,6 +296,12 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorCodeResponse'
+        '413':
+          description: Body demasiado grande (supera 8 KB)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
 
   /locations:
     post:
@@ -295,6 +345,9 @@ paths:
     post:
       tags: [Objects]
       summary: Crear objeto
+      description: |
+        El body no puede superar 256 KB. Se admiten hasta 50 tags de máximo 100 caracteres cada una.
+        El campo `metadata` no puede superar 64 KB serializado como JSON.
       requestBody:
         required: true
         content:
@@ -318,6 +371,12 @@ paths:
                   - $ref: '#/components/schemas/ErrorSimple'
         '401':
           description: Sin token Bearer
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '413':
+          description: Body demasiado grande (supera 256 KB)
           content:
             application/json:
               schema:
@@ -572,6 +631,52 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
 
+  /objects/{objectId}/metadata:
+    patch:
+      tags: [Objects]
+      summary: Actualizar metadata de un objeto
+      description: |
+        Reemplaza el campo `metadata` del objeto con el valor proporcionado.
+        El body no puede superar 256 KB y el valor de `metadata` no puede superar 64 KB serializado.
+      parameters:
+        - $ref: '#/components/parameters/ObjectIdPath'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateMetadataRequest'
+            examples:
+              example:
+                value:
+                  metadata:
+                    serial: "SN-1234"
+                    color: "negro"
+                    warranty_until: "2027-01-01"
+      responses:
+        '204':
+          description: Metadata actualizada sin contenido
+        '400':
+          description: UUID inválido, JSON inválido o metadata demasiado grande
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: '#/components/schemas/ErrorResponse'
+                  - $ref: '#/components/schemas/ErrorSimple'
+        '401':
+          description: Sin token Bearer
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '413':
+          description: Body demasiado grande (supera 256 KB)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
 components:
   parameters:
     ObjectIdPath:
@@ -746,11 +851,14 @@ components:
           type: string
         tags:
           type: array
+          maxItems: 50
           items:
             type: string
+            maxLength: 100
         metadata:
           type: object
           additionalProperties: true
+          description: Máximo 64 KB serializado como JSON
         locationId:
           type: string
           format: uuid
@@ -777,8 +885,10 @@ components:
       properties:
         tags:
           type: array
+          maxItems: 50
           items:
             type: string
+            maxLength: 100
 
     UpdateTextRequest:
       type: object
@@ -787,6 +897,15 @@ components:
           type: string
         description:
           type: string
+
+    UpdateMetadataRequest:
+      type: object
+      required: [metadata]
+      properties:
+        metadata:
+          type: object
+          additionalProperties: true
+          description: Objeto JSON arbitrario. Máximo 64 KB serializado.
 
     SearchResponse:
       type: object

@@ -16,11 +16,11 @@
 package dev.rafex.kiwi;
 
 import dev.rafex.kiwi.bootstrap.KiwiBootstrap;
+import dev.rafex.kiwi.logging.Log;
 import dev.rafex.kiwi.server.KiwiServer;
 
 import java.util.Locale;
 import java.util.TimeZone;
-import java.util.logging.Handler;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -63,37 +63,14 @@ public class App {
 			}
 		}
 
-		final var level = parseAllowedLevel(levelStr);
-
-		// Config root logger + handlers
-		final var root = Logger.getLogger("");
-		root.setLevel(level);
-		for (final Handler h : root.getHandlers()) {
-			h.setLevel(level);
+		if (levelStr != null && !levelStr.isBlank() && !Log.isSupportedLevel(levelStr)) {
+			System.err.println("[kiwi] Invalid LOG_LEVEL/--log value: '" + levelStr
+					+ "'. Allowed: DEBUG, INFO, WARN, ERROR. Defaulting to INFO.");
 		}
+
+		final var level = Log.parseLevel(levelStr, Level.INFO);
+		Log.configureRootLogger(level);
 
 		LOG.info("Log level set to " + level.getName());
-	}
-
-	private static Level parseAllowedLevel(final String levelStr) {
-		if (levelStr == null || levelStr.isBlank()) {
-			return Level.INFO;
-		}
-
-		final var v = levelStr.trim().toUpperCase(Locale.ROOT);
-
-		return switch (v) {
-			case "DEBUG" -> Level.FINE;
-			case "INFO" -> Level.INFO;
-			case "WARN" -> Level.WARNING;
-			case "ERROR" -> Level.SEVERE;
-			default -> {
-				// validación fuerte: si te pasan un valor inválido, lo fuerzas a INFO y lo
-				// avisas
-				System.err.println("[kiwi] Invalid LOG_LEVEL/--log value: '" + levelStr
-						+ "'. Allowed: DEBUG, INFO, WARN, ERROR. Defaulting to INFO.");
-				yield Level.INFO;
-			}
-		};
 	}
 }

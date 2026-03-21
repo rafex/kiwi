@@ -31,6 +31,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
+
 public class ObjectServiceImpl implements ObjectService {
 
 	private final ObjectRepository repo;
@@ -105,7 +106,7 @@ public class ObjectServiceImpl implements ObjectService {
 	public void updateMetadata(final UUID objectId, final String metadataJson) throws KiwiError {
 		try {
 			repo.updateMetadata(objectId, metadataJson);
-		} catch (final SQLException e) {
+		} catch (final DatabaseAccessException e) {
 			Log.error(getClass(), "Error updating metadata", e);
 			throw new KiwiError("E-007", "Error updating metadata", e);
 		}

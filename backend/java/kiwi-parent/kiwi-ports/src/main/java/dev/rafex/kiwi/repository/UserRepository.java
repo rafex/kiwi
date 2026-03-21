@@ -15,7 +15,6 @@
  */
 package dev.rafex.kiwi.repository;
 
-import java.sql.SQLException;
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
@@ -23,16 +22,15 @@ import java.util.UUID;
 
 public interface UserRepository {
 
-	void createUser(final UUID userId, String username, byte[] passwordHash, byte[] salt, int iterations)
-			throws SQLException;
+	void createUser(final UUID userId, String username, byte[] passwordHash, byte[] salt, int iterations);
 
-	Optional<UserRow> findByUsername(String username) throws SQLException;
+	Optional<UserRow> findByUsername(String username);
 
-	List<String> findRoleNamesByUserId(UUID userId) throws SQLException;
+	List<String> findRoleNamesByUserId(UUID userId);
 
-	Optional<UserWithRoles> findByUsernameWithRoles(String username) throws SQLException;
+	Optional<UserWithRoles> findByUsernameWithRoles(String username);
 
-	int countUsers() throws SQLException;
+	int countUsers();
 
 	public record UserRow(UUID userId, String username, byte[] passwordHash, byte[] salt, int iterations, String status,
 			Instant createdAt, Instant updatedAt) {

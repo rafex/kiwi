@@ -22,9 +22,10 @@ import dev.rafex.kiwi.models.ObjectDetail;
 import dev.rafex.kiwi.models.SearchItem;
 import dev.rafex.kiwi.query.QuerySpec;
 import dev.rafex.kiwi.repository.ObjectRepository;
+import dev.rafex.ether.database.core.exceptions.DatabaseAccessException;
+import dev.rafex.ether.database.postgres.errors.PostgresErrorClassifier;
 import dev.rafex.kiwi.services.ObjectService;
 
-import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -43,7 +44,7 @@ public class ObjectServiceImpl implements ObjectService {
 			final String[] tags, final String metadataJson, final UUID locationId) throws KiwiError {
 		try {
 			repo.createObject(objectId, name, description, type, tags, metadataJson, locationId);
-		} catch (final SQLException e) {
+		} catch (final DatabaseAccessException e) {
 			Log.error(getClass(), "Error creating object in DB", e);
 			throw new KiwiError("E-003", "Error creating object in DB", e);
 		}
@@ -53,9 +54,10 @@ public class ObjectServiceImpl implements ObjectService {
 	public void move(final UUID objectId, final UUID newLocationId) throws KiwiError {
 		try {
 			repo.moveObject(objectId, newLocationId);
-		} catch (final SQLException e) {
+		} catch (final DatabaseAccessException e) {
 			Log.error(getClass(), "DB error moving object", e);
-			if ("23503".equals(e.getSQLState())) {
+			if (e.getCause() instanceof final java.sql.SQLException sqle
+					&& PostgresErrorClassifier.Category.FOREIGN_KEY_VIOLATION == PostgresErrorClassifier.classify(sqle)) {
 				throw new KiwiError("E-001", "newLocationId does not exist", e);
 			}
 			throw new KiwiError("E-002", "DB error moving object", e);
@@ -73,7 +75,7 @@ public class ObjectServiceImpl implements ObjectService {
 				result.add(new SearchItem(r.objectId(), r.name(), r.rank()));
 			}
 			return result;
-		} catch (final SQLException e) {
+		} catch (final DatabaseAccessException e) {
 			Log.error(getClass(), "Error searching for objects", e);
 			return List.of(); // immutable empty, zero-alloc
 		}
@@ -83,7 +85,7 @@ public class ObjectServiceImpl implements ObjectService {
 	public void updateTags(final UUID objectId, final String[] tags) throws KiwiError {
 		try {
 			repo.updateTags(objectId, tags);
-		} catch (final SQLException e) {
+		} catch (final DatabaseAccessException e) {
 			Log.error(getClass(), "Error updating tags", e);
 			throw new KiwiError("E-004", "Error updating tags", e);
 		}
@@ -93,7 +95,7 @@ public class ObjectServiceImpl implements ObjectService {
 	public void updateText(final UUID objectId, final String name, final String description) throws KiwiError {
 		try {
 			repo.updateText(objectId, name, description);
-		} catch (final SQLException e) {
+		} catch (final DatabaseAccessException e) {
 			Log.error(getClass(), "Error updating text fields", e);
 			throw new KiwiError("E-005", "Error updating text fields", e);
 		}
@@ -118,7 +120,7 @@ public class ObjectServiceImpl implements ObjectService {
 				result.add(new FuzzyItem(r.objectId(), r.name(), r.score()));
 			}
 			return result;
-		} catch (final SQLException e) {
+		} catch (final DatabaseAccessException e) {
 			Log.error(getClass(), "Error performing fuzzy search", e);
 			// Decide si lanzar error o retornar vacío
 			return List.of();
@@ -135,7 +137,7 @@ public class ObjectServiceImpl implements ObjectService {
 			final var row = rowOpt.get();
 			return Optional.of(new ObjectDetail(row.objectId(), row.name(), row.description(), row.type(), row.status(),
 					row.currentLocationId(), row.tags(), row.metadataJson(), row.createdAt(), row.updatedAt()));
-		} catch (final SQLException e) {
+		} catch (final DatabaseAccessException e) {
 			Log.error(getClass(), "Error obtaining object by id", e);
 			throw new KiwiError("E-006", "Error obtaining object by id", e);
 		}

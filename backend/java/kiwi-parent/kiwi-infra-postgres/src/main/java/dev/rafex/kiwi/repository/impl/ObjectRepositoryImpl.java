@@ -15,164 +15,95 @@
  */
 package dev.rafex.kiwi.repository.impl;
 
+import dev.rafex.ether.database.core.DatabaseClient;
+import dev.rafex.ether.database.core.mapping.ResultSets;
+import dev.rafex.ether.database.core.sql.SqlParameter;
+import dev.rafex.ether.database.core.sql.SqlQuery;
+import dev.rafex.ether.database.postgres.sql.PostgresParameters;
 import dev.rafex.kiwi.query.QuerySpec;
 import dev.rafex.kiwi.repository.ObjectRepository;
 
-import java.sql.SQLException;
 import java.sql.Types;
-import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
-import javax.sql.DataSource;
-
 public class ObjectRepositoryImpl implements ObjectRepository {
 
-	private final DataSource ds;
+	private final DatabaseClient db;
 	private final ObjectQuerySqlBuilder querySqlBuilder = new ObjectQuerySqlBuilder();
 
-	public ObjectRepositoryImpl(final DataSource ds) {
-		this.ds = ds;
+	public ObjectRepositoryImpl(final DatabaseClient db) {
+		this.db = db;
 	}
-
-	// --- Commands (RETURNS void) ---
 
 	@Override
 	public void createObject(final UUID objectId, final String name, final String description, final String type,
-			final String[] tags, final String metadataJson, final UUID locationId) throws SQLException {
-		try (var c = ds.getConnection();
-				var ps = c
-						.prepareStatement("SELECT api_create_object(?::uuid, ?, ?, ?, ?::text[], ?::jsonb, ?::uuid)")) {
-
-			ps.setObject(1, objectId);
-			ps.setString(2, name);
-			ps.setString(3, description);
-			ps.setString(4, type);
-
-			if (tags == null) {
-				ps.setNull(5, Types.ARRAY);
-			} else {
-				ps.setArray(5, c.createArrayOf("text", tags));
-			}
-
-			if (metadataJson == null) {
-				ps.setNull(6, Types.OTHER);
-			} else {
-				ps.setString(6, metadataJson);
-			}
-
-			ps.setObject(7, locationId);
-
-			ps.execute(); // void
-		}
+			final String[] tags, final String metadataJson, final UUID locationId) {
+		final var params = new ArrayList<SqlParameter>();
+		params.add(SqlParameter.of(objectId));
+		params.add(SqlParameter.text(name));
+		params.add(description == null ? SqlParameter.nullOf(Types.VARCHAR) : SqlParameter.text(description));
+		params.add(type == null ? SqlParameter.nullOf(Types.VARCHAR) : SqlParameter.text(type));
+		params.add(tags == null ? SqlParameter.nullOf(Types.ARRAY) : PostgresParameters.textArray(tags));
+		params.add(metadataJson == null ? SqlParameter.nullOf(Types.OTHER) : PostgresParameters.jsonb(metadataJson));
+		params.add(SqlParameter.of(locationId));
+		db.execute(new SqlQuery("SELECT api_create_object(?::uuid, ?, ?, ?, ?::text[], ?::jsonb, ?::uuid)", params));
 	}
 
 	@Override
-	public void moveObject(final UUID objectId, final UUID newLocationId) throws SQLException {
-		try (var c = ds.getConnection(); var ps = c.prepareStatement("SELECT api_move_object(?::uuid, ?::uuid)")) {
-			ps.setObject(1, objectId);
-			ps.setObject(2, newLocationId);
-			ps.execute();
-		}
+	public void moveObject(final UUID objectId, final UUID newLocationId) {
+		db.execute(new SqlQuery("SELECT api_move_object(?::uuid, ?::uuid)",
+				List.of(SqlParameter.of(objectId), SqlParameter.of(newLocationId))));
 	}
 
 	@Override
-	public void updateTags(final UUID objectId, final String[] tags) throws SQLException {
-		try (var c = ds.getConnection(); var ps = c.prepareStatement("SELECT api_update_tags(?::uuid, ?::text[])")) {
-			ps.setObject(1, objectId);
-			if (tags == null) {
-				ps.setNull(2, Types.ARRAY);
-			} else {
-				ps.setArray(2, c.createArrayOf("text", tags));
-			}
-			ps.execute();
-		}
+	public void updateTags(final UUID objectId, final String[] tags) {
+		final var tagsParam = tags == null ? SqlParameter.nullOf(Types.ARRAY) : PostgresParameters.textArray(tags);
+		db.execute(new SqlQuery("SELECT api_update_tags(?::uuid, ?::text[])",
+				List.of(SqlParameter.of(objectId), tagsParam)));
 	}
 
 	@Override
-	public void updateText(final UUID objectId, final String name, final String description) throws SQLException {
-		try (var c = ds.getConnection(); var ps = c.prepareStatement("SELECT api_update_text(?::uuid, ?, ?)")) {
-			ps.setObject(1, objectId);
-			ps.setString(2, name);
-			ps.setString(3, description);
-			ps.execute();
-		}
-	}
-
-	// actualiza metadata JSONB
-	@Override
-	public void updateMetadata(final UUID objectId, final String metadataJson) throws SQLException {
-		try (var c = ds.getConnection(); var ps = c.prepareStatement("SELECT api_update_metadata(?::uuid, ?::jsonb)")) {
-			ps.setObject(1, objectId);
-			if (metadataJson == null) {
-				ps.setNull(2, Types.OTHER);
-			} else {
-				ps.setString(2, metadataJson);
-			}
-			ps.execute();
-		}
-	}
-
-	// --- Queries (RETURNS TABLE) ---
-
-	@Override
-	public List<SearchRow> search(final QuerySpec querySpec) throws SQLException {
-		final var built = querySqlBuilder.build(querySpec);
-		try (var c = ds.getConnection(); var ps = c.prepareStatement(built.sql())) {
-			querySqlBuilder.bind(c, ps, built.params());
-			try (var rs = ps.executeQuery()) {
-				final List<SearchRow> out = new ArrayList<>();
-				while (rs.next()) {
-					out.add(new SearchRow((UUID) rs.getObject("object_id"), rs.getString("name"), rs.getFloat("rank")));
-				}
-				return out;
-			}
-		}
+	public void updateText(final UUID objectId, final String name, final String description) {
+		db.execute(new SqlQuery("SELECT api_update_text(?::uuid, ?, ?)",
+				List.of(SqlParameter.of(objectId), SqlParameter.text(name), SqlParameter.text(description))));
 	}
 
 	@Override
-	public List<FuzzyRow> fuzzy(final String text, final int limit, final int offset) throws SQLException {
-		try (var c = ds.getConnection();
-				var ps = c.prepareStatement("SELECT object_id, name, score FROM api_fuzzy_search(?, ?, ?)")) {
-			ps.setString(1, text);
-			ps.setInt(2, limit);
-			ps.setInt(3, offset);
-
-			try (var rs = ps.executeQuery()) {
-				final List<FuzzyRow> out = new ArrayList<>();
-				while (rs.next()) {
-					out.add(new FuzzyRow((UUID) rs.getObject("object_id"), rs.getString("name"), rs.getFloat("score")));
-				}
-				return out;
-			}
-		}
+	public void updateMetadata(final UUID objectId, final String metadataJson) {
+		final var metaParam = metadataJson == null ? SqlParameter.nullOf(Types.OTHER)
+				: PostgresParameters.jsonb(metadataJson);
+		db.execute(new SqlQuery("SELECT api_update_metadata(?::uuid, ?::jsonb)",
+				List.of(SqlParameter.of(objectId), metaParam)));
 	}
 
 	@Override
-	public Optional<ObjectDetailRow> findById(final UUID objectId) throws SQLException {
-		try (var c = ds.getConnection();
-				var ps = c.prepareStatement(
-						"SELECT object_id, name, description, type, status, current_location_id, tags, metadata::text AS metadata, created_at, updated_at FROM api_get_object(?::uuid)")) {
-			ps.setObject(1, objectId);
-			try (var rs = ps.executeQuery()) {
-				if (!rs.next()) {
-					return Optional.empty();
-				}
-
-				final var tagsArray = rs.getArray("tags");
-				final var tags = tagsArray == null ? null : (String[]) tagsArray.getArray();
-
-				final Instant createdAt = ResultSets.asInstant(rs, "created_at");
-				final Instant updatedAt = ResultSets.asInstant(rs, "updated_at");
-
-				return Optional.of(new ObjectDetailRow(rs.getObject("object_id", UUID.class), rs.getString("name"),
-						rs.getString("description"), rs.getString("type"), rs.getString("status"),
-						rs.getObject("current_location_id", UUID.class), tags, rs.getString("metadata"), createdAt,
-						updatedAt));
-			}
-		}
+	public List<SearchRow> search(final QuerySpec querySpec) {
+		final var query = querySqlBuilder.build(querySpec);
+		return db.queryList(query,
+				rs -> new SearchRow(ResultSets.getUuid(rs, "object_id"), rs.getString("name"), rs.getFloat("rank")));
 	}
 
+	@Override
+	public List<FuzzyRow> fuzzy(final String text, final int limit, final int offset) {
+		return db.queryList(
+				new SqlQuery("SELECT object_id, name, score FROM api_fuzzy_search(?, ?, ?)",
+						List.of(SqlParameter.text(text), SqlParameter.of(limit), SqlParameter.of(offset))),
+				rs -> new FuzzyRow(ResultSets.getUuid(rs, "object_id"), rs.getString("name"), rs.getFloat("score")));
+	}
+
+	@Override
+	public Optional<ObjectDetailRow> findById(final UUID objectId) {
+		final var sql = "SELECT object_id, name, description, type, status, current_location_id, "
+				+ "tags, metadata::text AS metadata, created_at, updated_at FROM api_get_object(?::uuid)";
+		return db.queryOne(new SqlQuery(sql, List.of(SqlParameter.of(objectId))), rs -> {
+			final var tags = ResultSets.getStringArray(rs, "tags");
+			return new ObjectDetailRow(ResultSets.getUuid(rs, "object_id"), rs.getString("name"),
+					rs.getString("description"), rs.getString("type"), rs.getString("status"),
+					ResultSets.getUuid(rs, "current_location_id"), tags, rs.getString("metadata"),
+					ResultSets.getInstant(rs, "created_at"), ResultSets.getInstant(rs, "updated_at"));
+		});
+	}
 }

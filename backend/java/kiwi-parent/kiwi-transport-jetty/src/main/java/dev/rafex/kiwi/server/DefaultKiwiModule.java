@@ -16,6 +16,12 @@
 package dev.rafex.kiwi.server;
 
 import dev.rafex.ether.glowroot.jetty12.GlowrootJettyHandler;
+import dev.rafex.ether.http.security.cors.CorsPolicy;
+import dev.rafex.ether.http.security.headers.SecurityHeadersPolicy;
+import org.eclipse.jetty.server.Handler;
+import org.eclipse.jetty.server.Request;
+import org.eclipse.jetty.server.Response;
+import org.eclipse.jetty.util.Callback;
 import dev.rafex.kiwi.handlers.CreateAppClientHandler;
 import dev.rafex.kiwi.handlers.CreateUserHandler;
 import dev.rafex.kiwi.handlers.HealthHandler;
@@ -34,7 +40,7 @@ public final class DefaultKiwiModule implements KiwiModule {
 		final var jwt = context.jwtService();
 
 		routes.add("/hello", new HelloHandler());
-		routes.add("/health", new HealthHandler());
+		routes.add("/health", new HealthHandler(container.dataSource()));
 		routes.add("/auth/login", new LoginHandler(jwt, container.authService()));
 		routes.add("/auth/token", new TokenHandler(jwt, container.appClientAuthService()));
 		routes.add("/objects/*", new ObjectHandler(container.objectService()));
@@ -66,6 +72,19 @@ public final class DefaultKiwiModule implements KiwiModule {
 		final var glowroot = GlowrootJettyHandler.builder().healthPath("/health").requestIdHeader("X-Request-Id", true)
 				.defaultSlowThreshold(2_000L);
 		middlewares.add(glowroot::wrap);
+
+		final var cors = CorsPolicy.permissive();
+		final var secHeaders = SecurityHeadersPolicy.defaults();
+		middlewares.add(next -> new Handler.Wrapper(next) {
+			@Override
+			public boolean handle(final Request request, final Response response, final Callback callback)
+					throws Exception {
+				final var origin = request.getHeaders().get("Origin");
+				cors.responseHeaders(origin).forEach((k, v) -> response.getHeaders().add(k, v));
+				secHeaders.headers().forEach((k, v) -> response.getHeaders().add(k, v));
+				return super.handle(request, response, callback);
+			}
+		});
 	}
 
 }

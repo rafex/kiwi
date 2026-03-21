@@ -17,7 +17,6 @@ package dev.rafex.kiwi.repository;
 
 import dev.rafex.kiwi.query.QuerySpec;
 
-import java.sql.SQLException;
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
@@ -26,21 +25,21 @@ import java.util.UUID;
 public interface ObjectRepository {
 
 	void createObject(UUID objectId, String name, String description, String type, String[] tags, String metadataJson,
-			UUID locationId) throws SQLException;
+			UUID locationId);
 
-	void moveObject(UUID objectId, UUID newLocationId) throws SQLException;
+	void moveObject(UUID objectId, UUID newLocationId);
 
-	void updateTags(UUID objectId, String[] tags) throws SQLException;
+	void updateTags(UUID objectId, String[] tags);
 
-	void updateText(UUID objectId, String name, String description) throws SQLException;
+	void updateText(UUID objectId, String name, String description);
 
-	void updateMetadata(UUID objectId, String metadataJson) throws SQLException;
+	void updateMetadata(UUID objectId, String metadataJson);
 
-	Optional<ObjectDetailRow> findById(UUID objectId) throws SQLException;
+	Optional<ObjectDetailRow> findById(UUID objectId);
 
-	List<SearchRow> search(QuerySpec querySpec) throws SQLException;
+	List<SearchRow> search(QuerySpec querySpec);
 
-	List<FuzzyRow> fuzzy(String text, int limit, int offset) throws SQLException;
+	List<FuzzyRow> fuzzy(String text, int limit, int offset);
 
 	record SearchRow(UUID objectId, String name, float rank) {
 	}

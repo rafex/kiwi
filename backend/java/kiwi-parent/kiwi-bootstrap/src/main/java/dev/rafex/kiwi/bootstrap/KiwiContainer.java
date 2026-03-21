@@ -38,6 +38,10 @@ import dev.rafex.kiwi.services.impl.LocationServiceImpl;
 import dev.rafex.kiwi.services.impl.ObjectServiceImpl;
 import dev.rafex.kiwi.services.impl.UserProvisioningServiceImpl;
 
+import dev.rafex.ether.config.EtherConfig;
+import dev.rafex.ether.config.sources.EnvironmentConfigSource;
+import dev.rafex.ether.database.core.DatabaseClient;
+
 import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Supplier;
@@ -179,6 +183,7 @@ public final class KiwiContainer {
 
 	private final Lazy<KiwiConfig> config;
 	private final Lazy<DataSource> dataSource;
+	private final Lazy<DatabaseClient> databaseClient;
 	private final Lazy<ObjectRepository> objectRepository;
 	private final Lazy<ObjectService> objectService;
 	private final Lazy<LocationRepository> locationRepository;
@@ -200,19 +205,20 @@ public final class KiwiContainer {
 
 		config = new Lazy<>(select(overrides.config(), KiwiConfig::fromEnv));
 		dataSource = new Lazy<>(select(overrides.dataSource(), () -> DataSourceFactory.create(config())));
+		databaseClient = new Lazy<>(() -> Db.databaseClient());
 		passwordHasher = new Lazy<>(select(overrides.passwordHasher(), () -> PasswordHasherFactory.create(config())));
 
 		objectRepository = new Lazy<>(
-				select(overrides.objectRepository(), () -> new ObjectRepositoryImpl(dataSource())));
+				select(overrides.objectRepository(), () -> new ObjectRepositoryImpl(databaseClient())));
 		objectService = new Lazy<>(select(overrides.objectService(), () -> new ObjectServiceImpl(objectRepository())));
 		locationRepository = new Lazy<>(
-				select(overrides.locationRepository(), () -> new LocationRepositoryImpl(dataSource())));
+				select(overrides.locationRepository(), () -> new LocationRepositoryImpl(databaseClient())));
 		locationService = new Lazy<>(
 				select(overrides.locationService(), () -> new LocationServiceImpl(locationRepository())));
-		userRepository = new Lazy<>(select(overrides.userRepository(), () -> new UserRepositoryImpl(dataSource())));
-		roleRepository = new Lazy<>(select(overrides.roleRepository(), () -> new RoleRepositoryImpl(dataSource())));
+		userRepository = new Lazy<>(select(overrides.userRepository(), () -> new UserRepositoryImpl(databaseClient())));
+		roleRepository = new Lazy<>(select(overrides.roleRepository(), () -> new RoleRepositoryImpl(databaseClient())));
 		appClientRepository = new Lazy<>(
-				select(overrides.appClientRepository(), () -> new AppClientRepositoryImpl(dataSource())));
+				select(overrides.appClientRepository(), () -> new AppClientRepositoryImpl(databaseClient())));
 		authService = new Lazy<>(
 				select(overrides.authService(), () -> new AuthServiceImpl(userRepository(), passwordHasher())));
 		appClientAuthService = new Lazy<>(select(overrides.appClientAuthService(),
@@ -229,6 +235,10 @@ public final class KiwiContainer {
 
 	public DataSource dataSource() {
 		return dataSource.get();
+	}
+
+	public DatabaseClient databaseClient() {
+		return databaseClient.get();
 	}
 
 	public PasswordHasherPBKDF2 passwordHasher() {
@@ -282,6 +292,7 @@ public final class KiwiContainer {
 	public void warmup() {
 		config();
 		dataSource();
+		databaseClient();
 		passwordHasher();
 		objectRepository();
 		locationRepository();
@@ -314,8 +325,8 @@ public final class KiwiContainer {
 		}
 
 		public static KiwiConfig fromEnv() {
-			// Validate env vars here (fail fast)
-			final var rawHashBytes = System.getenv(ENV_HASH_BYTES);
+			final var cfg = EtherConfig.of(new EnvironmentConfigSource());
+			final var rawHashBytes = cfg.get(ENV_HASH_BYTES).orElse(null);
 			final int hashBytes;
 			if (rawHashBytes == null || rawHashBytes.isBlank()) {
 				hashBytes = DEFAULT_HASH_BYTES;

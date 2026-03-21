@@ -107,6 +107,12 @@ sequenceDiagram
 
 ## Notas técnicas
 
+- [Modelo de lenguaje utilizado por los agentes](model.md)
+
+## Filtrado y consultas
+
+- [Manejo de consultas y filtrado](query_handling.md)
+
 - `kiwi-transport-jetty` define `main.class=dev.rafex.kiwi.App`.
 - Se genera fat JAR con `maven-assembly-plugin`.
 - `kiwi-tools` también declara `main.class` para utilidades.

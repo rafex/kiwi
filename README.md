@@ -186,6 +186,63 @@ Este proyecto está licenciado bajo **Apache License 2.0**.
 
 ## Índice de documentación
 
+## Arquitectura HTTP
+
+La capa de transporte se basa en **Jetty 12** y Java 21. Cada recurso HTTP se modela mediante la interfaz **`HttpResource`**, que define los hooks de los métodos HTTP (`GET`, `POST`, `PUT`, `DELETE`, `PATCH`, `OPTIONS`).
+
+Un **`ResourceHandler`** centraliza el enrutamiento:
+- Coincide con el `basePath()` del recurso.
+- Extrae parámetros de ruta y de query.
+- Construye un **`QuerySpec`** que combina filtros RSQL (`q`) y parámetros estándar (`limit`, `offset`, `sort`, `tags`, `locationId`, `enabled`).
+- Despacha la solicitud al método correspondiente del `HttpResource` registrado.
+- Gestiona respuestas comunes (JSON, texto, errores) y errores de validación.
+
+### `QuerySpec`
+- **filter**: árbol AST de RSQL (`RsqlNode`).
+- **limit**: número máximo de resultados (default 20, clamped 1‑200).
+- **offset**: desplazamiento (default 0).
+- **sort**: lista de `Sort` (campo + dirección ASC/DESC).
+
+### Soporte RSQL ligero
+Operadores soportados: `==`, `!=`, `=in=`, `=out=`, `=like=`, combinadores `;` (AND) y `,` (OR), y agrupación con paréntesis.
+Ejemplo: `q=(status==active;name=like="%portero%")`.
+El traductor genera cláusulas **WHERE** seguras usando placeholders (`?`) y valida los selectores mediante **`FieldMapper`** y **`SortMapper`** (whitelisting).
+
+### Modelo de seguridad
+1. Whitelist de campos para filtros y ordenación.
+2. Uso exclusivo de `PreparedStatement` (sin concatenación de valores).
+3. Clamping de `limit` y validación de tipos numéricos.
+4. Rechazo de selectores desconocidos.
+
+### Flujo de ejemplo
+```
+GET /object/search?q=status==active&tags=football&limit=10&sort=-createdAt
+```
+1. `ResourceHandler` recibe la petición.
+2. `QuerySpecBuilder` combina el filtro RSQL y los parámetros (`tags`, `limit`, `sort`).
+3. `RsqlParser` parsea `q`.
+4. `QuerySpecToSql` genera `WHERE (status = ?) AND (tags && ?)` + `ORDER BY created_at DESC LIMIT ? OFFSET ?`.
+5. El repositorio ejecuta el `PreparedStatement`.
+6. Se devuelve la respuesta JSON.
+
+Para crear un nuevo recurso basta con:
+```java
+public class MyResource implements HttpResource {
+    @Override public void get(HttpExchange ex) { /*...*/ }
+    // implementar solo los métodos necesarios
+    @Override public String basePath() { return "/myresource"; }
+}
+
+public class MyResourceHandler extends ResourceHandler {
+    public MyResourceHandler() {
+        registerResource(new MyResource());
+    }
+}
+```
+Esta arquitectura sigue los principios hexagonales, separando dominio (`QuerySpec`), aplicación (`RSQL parsing`), infraestructura (`SQL translation`) y transporte (`ResourceHandler`).
+
+## Índice de documentación
+
 ### Documentación principal
 
 - [README del backend Java](backend/java/README.md)

@@ -21,8 +21,9 @@ import dev.rafex.kiwi.repository.UserRepository;
 import dev.rafex.kiwi.security.PasswordHasherPBKDF2;
 import dev.rafex.kiwi.services.UserProvisioningService;
 
+import dev.rafex.ether.database.core.exceptions.DatabaseAccessException;
+import dev.rafex.ether.database.postgres.errors.PostgresErrorClassifier;
 import java.security.SecureRandom;
-import java.sql.SQLException;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
@@ -90,17 +91,13 @@ public class UserProvisioningServiceImpl implements UserProvisioningService {
 
 			return CreateUserResult.ok(userId);
 
-		} catch (final SQLException e) {
-
-			// Si quieres, aquí detectas violación UNIQUE(username)
-			// sin depender del vendor, lo dejamos genérico:
-			final var msg = e.getMessage() != null ? e.getMessage().toLowerCase() : "";
-			if (msg.contains("duplicate") || msg.contains("unique") || msg.contains("users_username_key")) {
+		} catch (final DatabaseAccessException e) {
+			if (e.getCause() instanceof final java.sql.SQLException sqle
+					&& PostgresErrorClassifier.Category.UNIQUE_VIOLATION == PostgresErrorClassifier.classify(sqle)) {
 				return CreateUserResult.bad("username_taken");
 			}
 			return CreateUserResult.bad("db_error");
 		} finally {
-			// higiene: borra password
 			Arrays.fill(password, '\0');
 		}
 	}
@@ -110,7 +107,7 @@ public class UserProvisioningServiceImpl implements UserProvisioningService {
 		try {
 			final var countUsers = userRepo.countUsers();
 			return countUsers > 0;
-		} catch (final SQLException e) {
+		} catch (final DatabaseAccessException e) {
 			throw new KiwiError("E-201", "Error checking if any user exists", e);
 		}
 	}

@@ -15,12 +15,14 @@
  */
 package dev.rafex.kiwi.repository.impl;
 
+import dev.rafex.ether.database.core.sql.SqlParameter;
+import dev.rafex.ether.database.core.sql.SqlQuery;
+import dev.rafex.ether.database.postgres.sql.PostgresParameters;
 import dev.rafex.kiwi.query.QuerySpec;
 import dev.rafex.kiwi.query.RsqlNode;
 import dev.rafex.kiwi.query.RsqlOperator;
 import dev.rafex.kiwi.query.Sort;
 
-import java.sql.Connection;
 import java.sql.Types;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -30,12 +32,6 @@ import java.util.Map;
 import java.util.UUID;
 
 final class ObjectQuerySqlBuilder {
-
-	record BuiltQuery(String sql, List<SqlParam> params) {
-	}
-
-	record SqlParam(Object value, Integer sqlType) {
-	}
 
 	private static final Map<String, String> SORT_MAPPER = new HashMap<>();
 	private static final Map<String, String> FIELD_MAPPER = new HashMap<>();
@@ -53,12 +49,12 @@ final class ObjectQuerySqlBuilder {
 		FIELD_MAPPER.put("locationId", "l.location_id");
 	}
 
-	BuiltQuery build(final QuerySpec spec) {
+	SqlQuery build(final QuerySpec spec) {
 		final var sql = new StringBuilder();
 		sql.append("SELECT o.object_id, o.name, 0::real AS rank ").append("FROM objects o ")
 				.append("LEFT JOIN locations l ON l.id = o.current_location_fk");
 
-		final var params = new ArrayList<SqlParam>();
+		final var params = new ArrayList<SqlParameter>();
 		if (spec.filter() != null) {
 			final var where = toSql(spec.filter(), params);
 			sql.append(" WHERE ").append(where);
@@ -66,29 +62,10 @@ final class ObjectQuerySqlBuilder {
 
 		appendOrderBy(spec.sorts(), sql);
 		sql.append(" LIMIT ? OFFSET ?");
-		params.add(new SqlParam(spec.limit(), null));
-		params.add(new SqlParam(spec.offset(), null));
+		params.add(SqlParameter.of(spec.limit()));
+		params.add(SqlParameter.of(spec.offset()));
 
-		return new BuiltQuery(sql.toString(), params);
-	}
-
-	void bind(final Connection connection, final java.sql.PreparedStatement ps, final List<SqlParam> params)
-			throws java.sql.SQLException {
-		for (int i = 0; i < params.size(); i++) {
-			final var p = params.get(i);
-			final int idx = i + 1;
-			if (p.sqlType() != null && p.value() == null) {
-				ps.setNull(idx, p.sqlType());
-				continue;
-			}
-			if (p.value() instanceof UUID uuid) {
-				ps.setObject(idx, uuid);
-			} else if (p.value() instanceof String[] arr) {
-				ps.setArray(idx, connection.createArrayOf("text", arr));
-			} else {
-				ps.setObject(idx, p.value());
-			}
-		}
+		return new SqlQuery(sql.toString(), params);
 	}
 
 	private static void appendOrderBy(final List<Sort> sorts, final StringBuilder sql) {
@@ -108,7 +85,7 @@ final class ObjectQuerySqlBuilder {
 		sql.append(" ORDER BY ").append(String.join(", ", chunks));
 	}
 
-	private static String toSql(final RsqlNode node, final List<SqlParam> params) {
+	private static String toSql(final RsqlNode node, final List<SqlParameter> params) {
 		if (node instanceof RsqlNode.And and) {
 			return joinChildren(and.nodes(), " AND ", params);
 		}
@@ -121,7 +98,7 @@ final class ObjectQuerySqlBuilder {
 		throw new IllegalArgumentException("unsupported rsql node");
 	}
 
-	private static String joinChildren(final List<RsqlNode> nodes, final String op, final List<SqlParam> params) {
+	private static String joinChildren(final List<RsqlNode> nodes, final String op, final List<SqlParameter> params) {
 		if (nodes == null || nodes.isEmpty()) {
 			throw new IllegalArgumentException("empty rsql node list");
 		}
@@ -132,7 +109,7 @@ final class ObjectQuerySqlBuilder {
 		return String.join(op, chunks);
 	}
 
-	private static String toSqlComp(final RsqlNode.Comp comp, final List<SqlParam> params) {
+	private static String toSqlComp(final RsqlNode.Comp comp, final List<SqlParameter> params) {
 		final var selector = comp.selector();
 		if ("tags".equals(selector)) {
 			return toTagsSql(comp, params);
@@ -147,15 +124,15 @@ final class ObjectQuerySqlBuilder {
 		}
 		return switch (comp.operator()) {
 			case EQ -> {
-				params.add(new SqlParam(castArg(selector, comp.args().get(0)), null));
+				params.add(SqlParameter.of(castArg(selector, comp.args().get(0))));
 				yield field + " = ?";
 			}
 			case NEQ -> {
-				params.add(new SqlParam(castArg(selector, comp.args().get(0)), null));
+				params.add(SqlParameter.of(castArg(selector, comp.args().get(0))));
 				yield field + " <> ?";
 			}
 			case LIKE -> {
-				params.add(new SqlParam(comp.args().get(0), null));
+				params.add(SqlParameter.text(comp.args().get(0)));
 				yield field + " ILIKE ?";
 			}
 			case IN -> {
@@ -169,28 +146,28 @@ final class ObjectQuerySqlBuilder {
 		};
 	}
 
-	private static String toTagsSql(final RsqlNode.Comp comp, final List<SqlParam> params) {
+	private static String toTagsSql(final RsqlNode.Comp comp, final List<SqlParameter> params) {
 		if (comp.operator() != RsqlOperator.IN && comp.operator() != RsqlOperator.OUT
 				&& comp.operator() != RsqlOperator.EQ && comp.operator() != RsqlOperator.NEQ) {
 			throw new IllegalArgumentException("operator not supported for tags: " + comp.operator());
 		}
 
 		if (comp.operator() == RsqlOperator.IN) {
-			params.add(new SqlParam(comp.args().toArray(new String[0]), null));
+			params.add(PostgresParameters.textArray(comp.args().toArray(new String[0])));
 			return "o.tags && ?";
 		}
 		if (comp.operator() == RsqlOperator.OUT) {
-			params.add(new SqlParam(comp.args().toArray(new String[0]), null));
+			params.add(PostgresParameters.textArray(comp.args().toArray(new String[0])));
 			return "NOT (o.tags && ?)";
 		}
-		params.add(new SqlParam(comp.args().get(0), null));
+		params.add(SqlParameter.text(comp.args().get(0)));
 		if (comp.operator() == RsqlOperator.EQ) {
 			return "? = ANY(o.tags)";
 		}
 		return "NOT (? = ANY(o.tags))";
 	}
 
-	private static String toEnabledSql(final RsqlNode.Comp comp, final List<SqlParam> params) {
+	private static String toEnabledSql(final RsqlNode.Comp comp, final List<SqlParameter> params) {
 		if (comp.operator() != RsqlOperator.EQ && comp.operator() != RsqlOperator.NEQ) {
 			throw new IllegalArgumentException("enabled only supports == and !=");
 		}
@@ -200,17 +177,17 @@ final class ObjectQuerySqlBuilder {
 		}
 		final boolean enabled = Boolean.parseBoolean(v);
 		final boolean wantActive = comp.operator() == RsqlOperator.EQ ? enabled : !enabled;
-		params.add(new SqlParam("active", Types.VARCHAR));
+		params.add(SqlParameter.text("active"));
 		return wantActive ? "o.status::text = ?" : "o.status::text <> ?";
 	}
 
-	private static String addArgs(final String selector, final List<String> args, final List<SqlParam> params) {
+	private static String addArgs(final String selector, final List<String> args, final List<SqlParameter> params) {
 		if (args == null || args.isEmpty()) {
 			throw new IllegalArgumentException("operator requires arguments");
 		}
 		final var placeholders = new ArrayList<String>();
 		for (final var arg : args) {
-			params.add(new SqlParam(castArg(selector, arg), null));
+			params.add(SqlParameter.of(castArg(selector, arg)));
 			placeholders.add("?");
 		}
 		return String.join(",", placeholders);
@@ -226,5 +203,4 @@ final class ObjectQuerySqlBuilder {
 		}
 		return arg;
 	}
-
 }

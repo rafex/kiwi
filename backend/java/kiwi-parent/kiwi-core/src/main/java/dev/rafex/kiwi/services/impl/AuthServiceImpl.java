@@ -20,7 +20,7 @@ import dev.rafex.kiwi.repository.UserRepository;
 import dev.rafex.kiwi.security.PasswordHasherPBKDF2;
 import dev.rafex.kiwi.services.AuthService;
 
-import java.sql.SQLException;
+import dev.rafex.ether.database.core.exceptions.DatabaseAccessException;
 import java.util.Arrays;
 import java.util.Objects;
 
@@ -65,7 +65,7 @@ public final class AuthServiceImpl implements AuthService {
 
 			return AuthResult.ok(user.userId(), user.username(), roles);
 
-		} catch (final SQLException e) {
+		} catch (final DatabaseAccessException e) {
 			// loguea arriba (handler) si quieres; aquí regresamos genérico
 			Log.error(getClass(), e, "Error authenticating user {}", username);
 			return AuthResult.bad("error");

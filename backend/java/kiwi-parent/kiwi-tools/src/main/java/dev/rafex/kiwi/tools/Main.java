@@ -43,11 +43,11 @@ public final class Main {
 		final var password = readPassword(a);
 		final var roles = parseRoles(a.roles);
 
-		final var ds = Db.dataSource();
+		final var db = Db.databaseClient();
 
 		// wiring repos + service
-		final var userRepo = new UserRepositoryImpl(ds);
-		final var roleRepo = new RoleRepositoryImpl(ds);
+		final var userRepo = new UserRepositoryImpl(db);
+		final var roleRepo = new RoleRepositoryImpl(db);
 		final var hasher = new PasswordHasherPBKDF2(32); // 32 bytes si tu password_hash es 32 bytes
 		final var provisioning = new UserProvisioningServiceImpl(userRepo, roleRepo, hasher);
 

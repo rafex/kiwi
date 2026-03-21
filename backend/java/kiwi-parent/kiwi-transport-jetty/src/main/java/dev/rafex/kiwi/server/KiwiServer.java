@@ -96,8 +96,8 @@ public final class KiwiServer {
 			});
 		}
 
-		final var etherConfig = new JettyServerConfig(config.port(), config.maxThreads(), config.minThreads(),
-				config.idleTimeoutMs(), config.threadPoolName(), config.environment());
-		return JettyServerFactory.create(etherConfig, etherRoutes, jsonCodec, null, List.of(), etherMiddlewares);
+		final var etherConfig = JettyServerConfig.fromEnv();
+		return JettyServerFactory.create(etherConfig, etherRoutes, jsonCodec,
+				null, List.of(), etherMiddlewares);
 	}
 }

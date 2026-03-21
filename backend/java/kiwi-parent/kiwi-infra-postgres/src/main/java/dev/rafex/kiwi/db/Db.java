@@ -15,6 +15,8 @@
  */
 package dev.rafex.kiwi.db;
 
+import dev.rafex.ether.database.core.DatabaseClient;
+import dev.rafex.ether.jdbc.client.JdbcDatabaseClient;
 import dev.rafex.kiwi.logging.Log;
 
 import java.net.URI;
@@ -27,6 +29,7 @@ import com.zaxxer.hikari.HikariDataSource;
 public final class Db {
 
 	private static final HikariDataSource DS = create();
+	private static final DatabaseClient CLIENT = new JdbcDatabaseClient(DS);
 
 	private Db() {
 	}
@@ -81,6 +84,10 @@ public final class Db {
 
 	public static DataSource dataSource() {
 		return DS;
+	}
+
+	public static DatabaseClient databaseClient() {
+		return CLIENT;
 	}
 
 	private static int parseIntEnv(final String name, final int def) {

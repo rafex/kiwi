@@ -2,7 +2,7 @@
 
 ## Requisitos
 
-- JDK compatible con **Java 21** para compilar.
+- JDK compatible con **Java 25** para compilar.
 - Maven Wrapper (`./mvnw`, ya incluido).
 - PostgreSQL accesible por `DB_URL`.
 
@@ -69,5 +69,5 @@ Comportamiento operativo:
 
 ## Nota de versión runtime
 
-El compilador está configurado para Java 21, mientras que la imagen de contenedor usa `eclipse-temurin:25.0.2_10-jre`.
-Eso funciona hacia adelante para bytecode Java 21, pero si quieres máxima simetría dev/prod puedes alinear también runtime a Java 21.
+El compilador está configurado para Java 25, mientras que la imagen de contenedor usa `eclipse-temurin:25.0.2_10-jre`.
+Eso funciona hacia adelante para bytecode Java 25, pero si quieres máxima simetría dev/prod puedes alinear también runtime a Java 25.

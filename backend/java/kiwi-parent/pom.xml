@@ -85,6 +85,7 @@
 		<ether.http.problem.version>8.0.4</ether.http.problem.version>
 		<ether.http.jetty12.version>8.0.3</ether.http.jetty12.version>
 		<ether.glowroot.jetty12.version>8.0.3</ether.glowroot.jetty12.version>
+		<ether.logging.core.version>8.0.0-SNAPSHOT</ether.logging.core.version>
 
 		<!-- Plugin versions -->
 		<exec.maven.plugin.version>3.6.3</exec.maven.plugin.version>
@@ -166,6 +167,11 @@
 				<groupId>dev.rafex.ether.glowroot</groupId>
 				<artifactId>ether-glowroot-jetty12</artifactId>
 				<version>${ether.glowroot.jetty12.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>dev.rafex.ether.logging</groupId>
+				<artifactId>ether-logging-core</artifactId>
+				<version>${ether.logging.core.version}</version>
 			</dependency>
 			<dependency>
 				<groupId>org.eclipse.jetty</groupId>

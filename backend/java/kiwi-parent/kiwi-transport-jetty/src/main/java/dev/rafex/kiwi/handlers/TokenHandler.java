@@ -25,6 +25,7 @@ import dev.rafex.ether.json.JsonUtils;
 import dev.rafex.kiwi.security.InMemoryRateLimiter;
 import dev.rafex.kiwi.security.KiwiJwtService;
 import dev.rafex.kiwi.services.AppClientAuthService;
+import dev.rafex.kiwi.config.JwtConfig;
 
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
@@ -54,6 +55,9 @@ public final class TokenHandler extends NonBlockingResourceHandler {
 
 	public TokenHandler(final KiwiJwtService jwt, final AppClientAuthService authService) {
 		this(jwt, authService, Long.parseLong(System.getenv().getOrDefault("JWT_APP_TTL_SECONDS", "1800")));
+	}
+	public TokenHandler(final KiwiJwtService jwt, final AppClientAuthService authService, final JwtConfig jwtConfig) {
+		this(jwt, authService, jwtConfig.appTtlSeconds());
 	}
 
 	public TokenHandler(final KiwiJwtService jwt, final AppClientAuthService authService, final long ttlSeconds) {

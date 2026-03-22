@@ -31,6 +31,7 @@ import dev.rafex.kiwi.handlers.LoginHandler;
 import dev.rafex.kiwi.handlers.NotFoundHandler;
 import dev.rafex.kiwi.handlers.ObjectHandler;
 import dev.rafex.kiwi.handlers.TokenHandler;
+import dev.rafex.kiwi.config.KiwiConfig;
 
 public final class DefaultKiwiModule implements KiwiModule {
 
@@ -41,14 +42,14 @@ public final class DefaultKiwiModule implements KiwiModule {
 
 		routes.add("/hello", new HelloHandler());
 		routes.add("/health", new HealthHandler(container.dataSource()));
-		routes.add("/auth/login", new LoginHandler(jwt, container.authService()));
-		routes.add("/auth/token", new TokenHandler(jwt, container.appClientAuthService()));
+		routes.add("/auth/login", new LoginHandler(jwt, container.authService(), context.config().jwt()));
+		routes.add("/auth/token", new TokenHandler(jwt, container.appClientAuthService(), context.config().jwt()));
 		routes.add("/objects/*", new ObjectHandler(container.objectService()));
 		routes.add("/locations/*", new LocationHandler(container.locationService()));
 		routes.add("/admin/app-clients", new CreateAppClientHandler(container.appClientAuthService()));
 
-		if (context.config().enableUserProvisioning() && context.config().isSandbox()) {
-			routes.add("/admin/users", new CreateUserHandler(container.userProvisioningService(), context.config()));
+		if (context.config().server().enableUserProvisioning() && context.config().server().isSandbox()) {
+			routes.add("/admin/users", new CreateUserHandler(container.userProvisioningService(), context.config().server()));
 		}
 
 		routes.add("/*", new NotFoundHandler());

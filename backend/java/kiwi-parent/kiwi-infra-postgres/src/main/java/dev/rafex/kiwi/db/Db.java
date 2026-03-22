@@ -17,6 +17,8 @@ package dev.rafex.kiwi.db;
 
 import dev.rafex.ether.database.core.DatabaseClient;
 import dev.rafex.ether.jdbc.client.JdbcDatabaseClient;
+import dev.rafex.kiwi.config.DatabaseConfig;
+import dev.rafex.kiwi.config.KiwiConfig;
 import dev.rafex.kiwi.logging.Log;
 
 import java.net.URI;
@@ -28,119 +30,107 @@ import com.zaxxer.hikari.HikariDataSource;
 
 public final class Db {
 
-	private static final HikariDataSource DS = create();
-	private static final DatabaseClient CLIENT = new JdbcDatabaseClient(DS);
+    private static volatile HikariDataSource DS;
+    private static volatile DatabaseClient CLIENT;
+    private static volatile DatabaseConfig CONFIG;
 
-	private Db() {
-	}
+    private Db() {
+    }
 
-	private static HikariDataSource create() {
-		final var cfg = new HikariConfig();
+    /**
+     * Initialize the database connection pool with the provided configuration.
+     * This method must be called before any call to {@link #dataSource()} or {@link #databaseClient()}.
+     * If not called, the configuration will be loaded from {@link KiwiConfig#load()} on first access.
+     */
+    public static synchronized void init(final DatabaseConfig config) {
+        if (DS != null) {
+            Log.warn(Db.class, "Database already initialized, ignoring re-initialization");
+            return;
+        }
+        CONFIG = config;
+        DS = createDataSource(config);
+        CLIENT = new JdbcDatabaseClient(DS);
+        Log.info(Db.class, "Database initialized with config: " + config.maskedUrl());
+    }
 
-		final var dbUrl = System.getenv("DB_URL");
-		final var dbUser = System.getenv("DB_USER");
-		final var dbPassword = System.getenv("DB_PASSWORD");
+    /**
+     * Returns the shared DataSource, initializing it if necessary.
+     */
+    public static DataSource dataSource() {
+        ensureInitialized();
+        return DS;
+    }
 
-		if (dbUrl == null || dbUrl.isBlank()) {
-			throw new IllegalStateException("DB_URL environment variable is not set or is empty");
-		}
+    /**
+     * Returns the shared DatabaseClient, initializing it if necessary.
+     */
+    public static DatabaseClient databaseClient() {
+        ensureInitialized();
+        return CLIENT;
+    }
 
-		if (dbUser != null && dbUser.isBlank()) {
-			Log.warn(Db.class, "DB_USER is set but empty, ignoring");
-		}
-		if (dbPassword != null && dbPassword.isBlank()) {
-			Log.warn(Db.class, "DB_PASSWORD is set but empty, ignoring");
-		}
+    private static synchronized void ensureInitialized() {
+        if (DS == null) {
+            // Load configuration from KiwiConfig (which uses environment variables)
+            final var config = KiwiConfig.load().database();
+            init(config);
+        }
+    }
 
-		cfg.setJdbcUrl(dbUrl);
+    private static HikariDataSource createDataSource(final DatabaseConfig config) {
+        final var hikari = new HikariConfig();
+        hikari.setJdbcUrl(config.url());
+        
+        if (config.user() != null && !config.user().isBlank()) {
+            hikari.setUsername(config.user());
+        }
+        if (config.password() != null && !config.password().isBlank()) {
+            hikari.setPassword(config.password());
+        }
+        
+        hikari.setMaximumPoolSize(config.maxPoolSize());
+        hikari.setMinimumIdle(config.minIdle());
+        hikari.setConnectionTimeout(config.connectionTimeoutMs());
+        hikari.setIdleTimeout(config.idleTimeoutMs());
+        hikari.setMaxLifetime(config.maxLifetimeMs());
+        hikari.setValidationTimeout(config.validationTimeoutMs());
+        
+        hikari.setPoolName("kiwi-pool");
+        // PostgreSQL JDBC prepared statement cache
+        hikari.addDataSourceProperty("preparedStatementCacheQueries", "256");
+        hikari.addDataSourceProperty("preparedStatementCacheSizeMiB", "5");
+        
+        Log.info(Db.class, "Database connected: " + config.maskedUrl());
+        return new HikariDataSource(hikari);
+    }
 
-		if (dbUser != null && !dbUser.isBlank()) {
-			cfg.setUsername(dbUser);
-		}
-		if (dbPassword != null && !dbPassword.isBlank()) {
-			cfg.setPassword(dbPassword);
-		}
-
-		// Pool settings configurable via env, with sensible defaults
-		cfg.setMaximumPoolSize(parseIntEnv("DB_MAX_POOL_SIZE", 6));
-		cfg.setMinimumIdle(parseIntEnv("DB_MIN_IDLE", 2));
-		cfg.setConnectionTimeout(parseLongEnv("DB_CONNECTION_TIMEOUT_MS", 30000L));
-		cfg.setIdleTimeout(parseLongEnv("DB_IDLE_TIMEOUT_MS", 600000L));
-		cfg.setMaxLifetime(parseLongEnv("DB_MAX_LIFETIME_MS", 1800000L));
-
-		cfg.setPoolName("kiwi-pool");
-
-		// PostgreSQL JDBC prepared statement cache
-		cfg.addDataSourceProperty("preparedStatementCacheQueries", "256");
-		cfg.addDataSourceProperty("preparedStatementCacheSizeMiB", "5");
-		// Validación rápida
-		cfg.setValidationTimeout(parseLongEnv("DB_VALIDATION_TIMEOUT_MS", 20000L));
-
-		// Log a masked/summary form of the DB URL to avoid leaking sensitive data
-		Log.info(Db.class, "Database connected: " + maskJdbcUrl(dbUrl));
-
-		return new HikariDataSource(cfg);
-	}
-
-	public static DataSource dataSource() {
-		return DS;
-	}
-
-	public static DatabaseClient databaseClient() {
-		return CLIENT;
-	}
-
-	private static int parseIntEnv(final String name, final int def) {
-		final var v = System.getenv(name);
-		if (v == null || v.isBlank()) {
-			return def;
-		}
-		try {
-			return Integer.parseInt(v.trim());
-		} catch (final NumberFormatException e) {
-			Log.warn(Db.class, "Invalid integer for " + name + " ('" + v + "'), using default " + def);
-			return def;
-		}
-	}
-
-	private static long parseLongEnv(final String name, final long def) {
-		final var v = System.getenv(name);
-		if (v == null || v.isBlank()) {
-			return def;
-		}
-		try {
-			return Long.parseLong(v.trim());
-		} catch (final NumberFormatException e) {
-			Log.warn(Db.class, "Invalid long for " + name + " ('" + v + "'), using default " + def);
-			return def;
-		}
-	}
-
-	private static String maskJdbcUrl(final String dbUrl) {
-		if (dbUrl == null || dbUrl.isBlank()) {
-			return "<not-set>";
-		}
-		try {
-			final var stripped = dbUrl.startsWith("jdbc:") ? dbUrl.substring(5) : dbUrl;
-			final var uri = new URI(stripped);
-			final var host = uri.getHost();
-			final var port = uri.getPort();
-			final var path = uri.getPath();
-			final var sb = new StringBuilder();
-			if (host != null) {
-				sb.append(host);
-			}
-			if (port != -1) {
-				sb.append(":").append(port);
-			}
-			if (path != null && !path.isBlank()) {
-				sb.append(path);
-			}
-			final var out = sb.toString();
-			return out.isEmpty() ? "<masked>" : out;
-		} catch (final Exception e) {
-			return "<masked>";
-		}
-	}
-
+    /**
+     * Helper method for masking JDBC URL in logs (kept for backward compatibility).
+     */
+    public static String maskJdbcUrl(final String dbUrl) {
+        if (dbUrl == null || dbUrl.isBlank()) {
+            return "<not-set>";
+        }
+        try {
+            final var stripped = dbUrl.startsWith("jdbc:") ? dbUrl.substring(5) : dbUrl;
+            final var uri = new URI(stripped);
+            final var host = uri.getHost();
+            final var port = uri.getPort();
+            final var path = uri.getPath();
+            final var sb = new StringBuilder();
+            if (host != null) {
+                sb.append(host);
+            }
+            if (port != -1) {
+                sb.append(":").append(port);
+            }
+            if (path != null && !path.isBlank()) {
+                sb.append(path);
+            }
+            final var out = sb.toString();
+            return out.isEmpty() ? "<masked>" : out;
+        } catch (final Exception e) {
+            return "<masked>";
+        }
+    }
 }

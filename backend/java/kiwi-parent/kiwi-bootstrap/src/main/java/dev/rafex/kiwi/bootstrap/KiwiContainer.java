@@ -41,6 +41,7 @@ import dev.rafex.kiwi.services.impl.UserProvisioningServiceImpl;
 import dev.rafex.ether.config.EtherConfig;
 import dev.rafex.ether.config.sources.EnvironmentConfigSource;
 import dev.rafex.ether.database.core.DatabaseClient;
+import dev.rafex.kiwi.config.KiwiConfig;
 
 import java.util.Objects;
 import java.util.Optional;
@@ -203,7 +204,7 @@ public final class KiwiContainer {
 	public KiwiContainer(final Overrides overrides) {
 		this.overrides = Objects.requireNonNull(overrides, "overrides");
 
-		config = new Lazy<>(select(overrides.config(), KiwiConfig::fromEnv));
+		config = new Lazy<>(select(overrides.config(), KiwiConfig::load));
 		dataSource = new Lazy<>(select(overrides.dataSource(), () -> DataSourceFactory.create(config())));
 		databaseClient = new Lazy<>(() -> Db.databaseClient());
 		passwordHasher = new Lazy<>(select(overrides.passwordHasher(), () -> PasswordHasherFactory.create(config())));
@@ -222,9 +223,9 @@ public final class KiwiContainer {
 		authService = new Lazy<>(
 				select(overrides.authService(), () -> new AuthServiceImpl(userRepository(), passwordHasher())));
 		appClientAuthService = new Lazy<>(select(overrides.appClientAuthService(),
-				() -> new AppClientAuthServiceImpl(appClientRepository(), passwordHasher())));
+				() -> new AppClientAuthServiceImpl(appClientRepository(), passwordHasher(), config().auth())));
 		userProvisioningService = new Lazy<>(select(overrides.userProvisioningService(),
-				() -> new UserProvisioningServiceImpl(userRepository(), roleRepository(), passwordHasher())));
+				() -> new UserProvisioningServiceImpl(userRepository(), roleRepository(), passwordHasher(), config().auth())));
 	}
 
 	// ---- Public accessors ----
@@ -310,40 +311,7 @@ public final class KiwiContainer {
 		return override.orElse(def);
 	}
 
-	// ======= Minimal placeholders (replace with your real ones) =======
-	public static final class KiwiConfig {
-		private static final String ENV_HASH_BYTES = "KIWI_PASSWORD_HASH_BYTES";
-		private static final int DEFAULT_HASH_BYTES = 32;
-
-		private final int passwordHashBytes;
-
-		private KiwiConfig(final int passwordHashBytes) {
-			if (passwordHashBytes < 16) {
-				throw new IllegalArgumentException("passwordHashBytes demasiado pequeño");
-			}
-			this.passwordHashBytes = passwordHashBytes;
-		}
-
-		public static KiwiConfig fromEnv() {
-			final var cfg = EtherConfig.of(new EnvironmentConfigSource());
-			final var rawHashBytes = cfg.get(ENV_HASH_BYTES).orElse(null);
-			final int hashBytes;
-			if (rawHashBytes == null || rawHashBytes.isBlank()) {
-				hashBytes = DEFAULT_HASH_BYTES;
-			} else {
-				try {
-					hashBytes = Integer.parseInt(rawHashBytes.trim());
-				} catch (final NumberFormatException e) {
-					throw new IllegalArgumentException("Invalid " + ENV_HASH_BYTES + ": " + rawHashBytes, e);
-				}
-			}
-			return new KiwiConfig(hashBytes);
-		}
-
-		public int passwordHashBytes() {
-			return passwordHashBytes;
-		}
-	}
+	// KiwiConfig now provided by dev.rafex.kiwi.config.KiwiConfig
 
 	public static final class DataSourceFactory {
 		public static DataSource create(final KiwiConfig cfg) {
@@ -353,7 +321,7 @@ public final class KiwiContainer {
 
 	public static final class PasswordHasherFactory {
 		public static PasswordHasherPBKDF2 create(final KiwiConfig cfg) {
-			return new PasswordHasherPBKDF2(cfg.passwordHashBytes());
+			return new PasswordHasherPBKDF2(cfg.auth().derivedKeyBytes());
 		}
 	}
 }

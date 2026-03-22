@@ -23,6 +23,7 @@ import dev.rafex.kiwi.services.UserProvisioningService;
 
 import dev.rafex.ether.database.core.exceptions.DatabaseAccessException;
 import dev.rafex.ether.database.postgres.errors.PostgresErrorClassifier;
+import dev.rafex.kiwi.config.AuthConfig;
 import java.security.SecureRandom;
 import java.util.Arrays;
 import java.util.List;
@@ -37,22 +38,20 @@ public class UserProvisioningServiceImpl implements UserProvisioningService {
 
 	private final SecureRandom rng = new SecureRandom();
 
-	// defaults por env
-	private final int saltBytes;
-	private final int iterations;
+	// configuración de autenticación
+	private final AuthConfig authConfig;
 
 	public UserProvisioningServiceImpl(final UserRepository userRepo, final RoleRepository roleRepo,
-			final PasswordHasherPBKDF2 hasher) {
+			final PasswordHasherPBKDF2 hasher, final AuthConfig authConfig) {
 		this.userRepo = Objects.requireNonNull(userRepo);
 		this.roleRepo = Objects.requireNonNull(roleRepo);
 		this.hasher = Objects.requireNonNull(hasher);
+		this.authConfig = Objects.requireNonNull(authConfig);
 
-		saltBytes = Integer.parseInt(System.getenv().getOrDefault("AUTH_SALT_BYTES", "16"));
-		iterations = Integer.parseInt(System.getenv().getOrDefault("AUTH_PBKDF2_ITERATIONS", "120000"));
-		if (saltBytes < 16) {
+		if (authConfig.saltBytes() < 16) {
 			throw new IllegalArgumentException("AUTH_SALT_BYTES debe ser >= 16");
 		}
-		if (iterations < 10_000) {
+		if (authConfig.iterations() < 10_000) {
 			throw new IllegalArgumentException("AUTH_PBKDF2_ITERATIONS demasiado bajo");
 		}
 	}
@@ -70,10 +69,10 @@ public class UserProvisioningServiceImpl implements UserProvisioningService {
 		}
 
 		final var userId = UUID.randomUUID();
-		final var salt = new byte[saltBytes];
+		final var salt = new byte[authConfig.saltBytes()];
 		rng.nextBytes(salt);
 
-		final var hash = hasher.hash(password, salt, iterations);
+		final var hash = hasher.hash(password, salt, authConfig.iterations());
 
 		try {
 			userRepo.createUser(userId, username, hash.hash(), hash.salt(), hash.iterations());

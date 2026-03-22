@@ -19,6 +19,7 @@ import dev.rafex.kiwi.logging.Log;
 import dev.rafex.kiwi.repository.AppClientRepository;
 import dev.rafex.kiwi.security.PasswordHasherPBKDF2;
 import dev.rafex.kiwi.services.AppClientAuthService;
+import dev.rafex.kiwi.config.AuthConfig;
 
 import dev.rafex.ether.database.core.exceptions.DatabaseAccessException;
 import dev.rafex.ether.database.postgres.errors.PostgresErrorClassifier;
@@ -40,6 +41,10 @@ public final class AppClientAuthServiceImpl implements AppClientAuthService {
 		this(repository, hasher, new SecureRandom(),
 				Integer.parseInt(System.getenv().getOrDefault("AUTH_SALT_BYTES", "16")),
 				Integer.parseInt(System.getenv().getOrDefault("AUTH_PBKDF2_ITERATIONS", "120000")));
+	}
+	public AppClientAuthServiceImpl(final AppClientRepository repository, final PasswordHasherPBKDF2 hasher,
+			final AuthConfig authConfig) {
+		this(repository, hasher, new SecureRandom(), authConfig.saltBytes(), authConfig.iterations());
 	}
 
 	public AppClientAuthServiceImpl(final AppClientRepository repository, final PasswordHasherPBKDF2 hasher,

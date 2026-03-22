@@ -59,8 +59,8 @@
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
 		<!-- Dependency versions -->
-		<jetty.version>12.1.6</jetty.version>
-		<jackson.version>2.21.0</jackson.version>
+		<jetty.version>12.1.7</jetty.version>
+		<jackson.version>2.21.2</jackson.version>
 		<postgresql.version>42.7.9</postgresql.version>
 		<glowroot.agent.api.version>0.14.0-beta.3</glowroot.agent.api.version>
 		<slf4j.version>2.0.17</slf4j.version>
@@ -73,19 +73,19 @@
 
 
 		<!-- ether module versions -->
-		<ether.config.version>8.0.6</ether.config.version>
-		<ether.database.core.version>8.0.6</ether.database.core.version>
-		<ether.jdbc.version>8.0.5</ether.jdbc.version>
-		<ether.database.postgres.version>8.0.5</ether.database.postgres.version>
-		<ether.json.version>8.0.6</ether.json.version>
-		<ether.jwt.version>8.0.5</ether.jwt.version>
-		<ether.observability.core.version>8.0.5</ether.observability.core.version>
-		<ether.http.core.version>8.0.5</ether.http.core.version>
-		<ether.http.security.version>8.0.5</ether.http.security.version>
-		<ether.http.problem.version>8.0.4</ether.http.problem.version>
-		<ether.http.jetty12.version>8.0.3</ether.http.jetty12.version>
-		<ether.glowroot.jetty12.version>8.0.3</ether.glowroot.jetty12.version>
-		<ether.logging.core.version>8.0.0-SNAPSHOT</ether.logging.core.version>
+		<ether.config.version>8.1.0</ether.config.version>
+		<ether.database.core.version>8.1.0</ether.database.core.version>
+		<ether.jdbc.version>8.1.0</ether.jdbc.version>
+		<ether.database.postgres.version>8.1.0</ether.database.postgres.version>
+		<ether.json.version>8.1.0</ether.json.version>
+		<ether.jwt.version>8.1.0</ether.jwt.version>
+		<ether.observability.core.version>8.1.0</ether.observability.core.version>
+		<ether.http.core.version>8.1.0</ether.http.core.version>
+		<ether.http.security.version>8.1.0</ether.http.security.version>
+		<ether.http.problem.version>8.1.0</ether.http.problem.version>
+		<ether.http.jetty12.version>8.1.0</ether.http.jetty12.version>
+		<ether.glowroot.jetty12.version>8.1.0</ether.glowroot.jetty12.version>
+		<ether.logging.core.version>8.1.0</ether.logging.core.version>
 
 		<!-- Plugin versions -->
 		<exec.maven.plugin.version>3.6.3</exec.maven.plugin.version>

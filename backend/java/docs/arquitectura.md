@@ -1,5 +1,7 @@
 # Arquitectura y módulos
 
+Nota: Este documento ha sido actualizado para reflejar la eliminación del archivo `backend/java/docs/model.md` y la actualización de versiones en `pom.xml` (Jetty 12.1.7, Jackson 2.21.2, Ether 8.1.0).
+
 ## Resumen
 
 El backend Java usa arquitectura modular por capas:

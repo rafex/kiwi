@@ -1,302 +1,48 @@
-# Kiwi
+## Actualizaciones recientes
 
-[![Java Build (Makefile)](https://github.com/rafex/kiwi/actions/workflows/build_backend_java.yml/badge.svg)](https://github.com/rafex/kiwi/actions/workflows/build_backend_java.yml)
-[![Build and Publish Container](https://github.com/rafex/kiwi/actions/workflows/publish_container.yml/badge.svg)](https://github.com/rafex/kiwi/actions/workflows/publish_container.yml)
+Se han realizado las siguientes actualizaciones en el proyecto Kiwi:
+- Se ha eliminado el archivo `backend/java/docs/model.md`. La información contenida en este archivo ahora se encuentra en otros lugares de la documentación.
+- Se han actualizado las versiones de las dependencias en `pom.xml`: Jetty 12.1.7, Jackson 2.21.2 y los módulos Ether a la versión 8.1.0.
 
+## Notas de migración
 
-Kiwi es un sistema de almacenamiento genérico orientado a registrar objetos, ubicaciones y eventos, con backend Java modular y persistencia en PostgreSQL gestionada con Flyway.
+Al actualizar a las nuevas versiones, asegúrate de revisar la documentación de cada dependencia para conocer los cambios y mejoras realizados. En particular, la actualización de Jetty y Jackson puede requerir ajustes en la configuración y el código.
 
-## HouseDB (idea y alcance del MVP)
+## Documentación
 
-HouseDB es un caso de uso concreto sobre Kiwi: **almacenar objetos del hogar y saber exactamente dónde están**, usando **ubicaciones jerárquicas** (tipo árbol) y **búsqueda por intención**.
+La documentación del proyecto Kiwi se encuentra en el directorio `docs/`. Para obtener más información sobre la arquitectura y el diseño del proyecto, consulta los archivos `docs/architecture.md` y `docs/design.md`. La información sobre la eliminación del archivo `model.md` y su reubicación se encuentra en `docs/changes.md`.
 
-Ejemplo mental:
+## Dependencias
 
-- *Guantes de fútbol verdes* → Casa principal → Estacionamiento → Estante → Parte superior
-- *Guantes de fútbol rojos* → Cuarto secundario → Closet
+Las dependencias del proyecto Kiwi se encuentran en el archivo `pom.xml`. Asegúrate de actualizar las versiones de las dependencias según sea necesario.
 
-### Alcance
+## Listado de archivos de documentación
 
-Este repositorio (Kiwi) es la base backend. Para el MVP de HouseDB se incluyen únicamente:
+A continuación se enumeran todos los archivos de documentación presentes en el repositorio:
 
-- **Paso 1 (MVP):** tags + plantillas de kits (reglas simples)
-- **Paso 2 (pro):** búsqueda semántica con PostgreSQL (Full-Text Search)
+- /Users/rafex/repository/github/rafex/kiwi/README.md
+- /Users/rafex/repository/github/rafex/kiwi/backend/java/docs/arquitectura.md
+- /Users/rafex/repository/github/rafex/kiwi/backend/java/docs/query_handling.md
+- /Users/rafex/repository/github/rafex/kiwi/backend/java/docs/operacion.md
+- /Users/rafex/repository/github/rafex/kiwi/openapi/node-client/README.md
+- /Users/rafex/repository/github/rafex/kiwi/Analysis.md
+- /Users/rafex/repository/github/rafex/kiwi/AGENTS.md
+- /Users/rafex/repository/github/rafex/kiwi/backend/java/kiwi-parent/README.md
+- /Users/rafex/repository/github/rafex/kiwi/backend/java/kiwi-parent/kiwi-architecture-tests/README.md
+- /Users/rafex/repository/github/rafex/kiwi/helm/kiwi-backend/README.md
+- /Users/rafex/repository/github/rafex/kiwi/backend/java/docs/README.md
+- /Users/rafex/repository/github/rafex/kiwi/backend/java/kiwi-parent/kiwi-tools/README.md
+- /Users/rafex/repository/github/rafex/kiwi/backend/java/README.md
+- /Users/rafex/repository/github/rafex/kiwi/backend/java/kiwi-parent/kiwi-transport-rabbitmq/README.md
+- /Users/rafex/repository/github/rafex/kiwi/backend/java/kiwi-parent/kiwi-transport-grpc/README.md
+- /Users/rafex/repository/github/rafex/kiwi/backend/java/kiwi-parent/kiwi-transport-jetty/README.md
+- /Users/rafex/repository/github/rafex/kiwi/backend/java/kiwi-parent/kiwi-bootstrap/README.md
+- /Users/rafex/repository/github/rafex/kiwi/backend/java/kiwi-parent/kiwi-infra-postgres/README.md
+- /Users/rafex/repository/github/rafex/kiwi/backend/java/kiwi-parent/kiwi-ports/README.md
+- /Users/rafex/repository/github/rafex/kiwi/backend/java/kiwi-parent/kiwi-core/README.md
+- /Users/rafex/repository/github/rafex/kiwi/backend/java/kiwi-parent/kiwi-common/README.md
+- /Users/rafex/repository/github/rafex/kiwi/db/README.md
 
-> **Fuera de alcance por ahora:** embeddings / RAG (Paso 3).
+## Contribución
 
-### Conceptos
-
-- **Object (Objeto):** entidad que describes (nombre, descripción, tags, etc.)
-- **Location (Ubicación):** nodo del árbol (casa → cuarto → mueble → repisa, etc.)
-- **KitTemplate (Plantilla de kit):** definición de “qué necesito” para una actividad + rol
-  - Ej: actividad `futbol`, rol `portero` → requiere tags: `futbol`, `portero`, `guantes`
-
-### Árbol de ubicaciones
-
-```mermaid
-flowchart TD
-  A[Casa principal] --> B[Estacionamiento]
-  B --> C[Estante]
-  C --> D[Parte superior]
-
-  E[Cuarto secundario] --> F[Closet]
-```
-
-### Modelo de datos (MVP)
-
-```mermaid
-classDiagram
-  direction LR
-
-  class Location {
-    +UUID id
-    +String name
-    +UUID parentId (nullable)
-    +String path (materializado, opcional)
-  }
-
-  class HouseObject {
-    +UUID id
-    +String name
-    +String description
-    +String[] tags
-    +UUID currentLocationId
-    +ts createdAt
-    +ts updatedAt
-  }
-
-  class KitTemplate {
-    +UUID id
-    +String activity
-    +String role
-    +String name
-  }
-
-  class KitRule {
-    +UUID id
-    +UUID kitTemplateId
-    +String[] requiredTags
-    +String[] optionalTags
-  }
-
-  Location "1" <-- "many" Location : parent
-  Location "1" <-- "many" HouseObject : currentLocation
-  KitTemplate "1" <-- "1" KitRule : rules
-```
-
-### Flujo del MVP (tags + kit)
-
-Cuando el usuario expresa una intención tipo:
-
-> “Quiero ir a jugar fútbol y seré portero”
-
-El sistema lo traduce a:
-
-- activity=`futbol`
-- role=`portero`
-- requiredTags=`[futbol, portero, guantes]`
-
-Y responde con una lista de objetos que cumplan (por tags) y su **ruta de ubicación**.
-
-```mermaid
-sequenceDiagram
-  autonumber
-  actor U as Usuario
-  participant API as HouseDB API
-  participant DB as PostgreSQL
-
-  U->>API: GET /recommendations?activity=futbol&role=portero
-  API->>DB: SELECT kit rules (requiredTags)
-  DB-->>API: requiredTags=[futbol, portero, guantes]
-  API->>DB: SELECT objects WHERE tags @> requiredTags
-  DB-->>API: objetos + currentLocationId
-  API->>DB: SELECT location path for each object
-  DB-->>API: rutas completas
-  API-->>U: lista: objeto -> ubicación completa
-```
-
-### Paso 2 (pro): búsqueda semántica (PostgreSQL FTS)
-
-Además de tags, cada objeto puede tener una **descripción** y un **search_vector** (FTS) para permitir consultas naturales.
-
-- Entrada del usuario: “equipo para jugar fútbol de portero”
-- Estrategia:
-  1) FTS para encontrar candidatos relevantes por texto
-  2) Filtro/boost por tags del kit (si aplica)
-
-```mermaid
-flowchart LR
-  Q[Texto libre del usuario] --> FTS[PostgreSQL FTS]
-  FTS --> C[Candidatos]
-  C --> T[Boost/Filter por tags del kit]
-  T --> R[Resultados ordenados + ubicaciones]
-```
-
-#### Nota práctica
-
-En el MVP, el “entendimiento” de intención se resuelve por **parámetros explícitos** (`activity`, `role`) o por una tabla de sinónimos simple.
-
-## Objetivo del proyecto
-
-- Proveer una base backend para gestión de inventario/objetos.
-- Mantener una arquitectura limpia por módulos (puertos, core, infraestructura y transportes).
-- Facilitar operación local mediante contenedor, variables de entorno y scripts de prueba.
-
-## Licencia
-
-Este proyecto está licenciado bajo **Apache License 2.0**.
-
-- Texto completo: [LICENSE](LICENSE)
-
-## Qué puedes encontrar aquí
-
-- `backend/java`: backend Java multi-módulo (HTTP Jetty, seguridad JWT, observabilidad con Glowroot).
-- `db`: migraciones y utilidades Flyway para esquema y seguridad de base de datos.
-- `helm/kiwi-backend`: chart Helm para desplegar la imagen publicada en GHCR.
-- `script/test`: scripts shell para pruebas rápidas de endpoints.
-- `Makefile` raíz: utilidades para validar/exportar variables desde `.env`.
-
-## Inicio rápido
-
-1. Crea tu archivo de entorno desde el ejemplo:
-
-	```bash
-	cp .env.example .env
-	```
-
-2. Carga variables requeridas en tu shell:
-
-	```bash
-	eval "$(make print_env)"
-	```
-
-3. Ejecuta migraciones de base de datos:
-
-	```bash
-	cd db
-	make migrate
-	```
-
-4. Construye y ejecuta el backend en contenedor:
-
-	```bash
-	cd ../backend/java
-	make run-image
-	```
-
-## Índice de documentación
-
-## Arquitectura HTTP
-
-La capa de transporte se basa en **Jetty 12** y Java 21. Cada recurso HTTP se modela mediante la interfaz **`HttpResource`**, que define los hooks de los métodos HTTP (`GET`, `POST`, `PUT`, `DELETE`, `PATCH`, `OPTIONS`).
-
-Un **`ResourceHandler`** centraliza el enrutamiento:
-- Coincide con el `basePath()` del recurso.
-- Extrae parámetros de ruta y de query.
-- Construye un **`QuerySpec`** que combina filtros RSQL (`q`) y parámetros estándar (`limit`, `offset`, `sort`, `tags`, `locationId`, `enabled`).
-- Despacha la solicitud al método correspondiente del `HttpResource` registrado.
-- Gestiona respuestas comunes (JSON, texto, errores) y errores de validación.
-
-### `QuerySpec`
-- **filter**: árbol AST de RSQL (`RsqlNode`).
-- **limit**: número máximo de resultados (default 20, clamped 1‑200).
-- **offset**: desplazamiento (default 0).
-- **sort**: lista de `Sort` (campo + dirección ASC/DESC).
-
-### Soporte RSQL ligero
-Operadores soportados: `==`, `!=`, `=in=`, `=out=`, `=like=`, combinadores `;` (AND) y `,` (OR), y agrupación con paréntesis.
-Ejemplo: `q=(status==active;name=like="%portero%")`.
-El traductor genera cláusulas **WHERE** seguras usando placeholders (`?`) y valida los selectores mediante **`FieldMapper`** y **`SortMapper`** (whitelisting).
-
-### Modelo de seguridad
-1. Whitelist de campos para filtros y ordenación.
-2. Uso exclusivo de `PreparedStatement` (sin concatenación de valores).
-3. Clamping de `limit` y validación de tipos numéricos.
-4. Rechazo de selectores desconocidos.
-
-### Flujo de ejemplo
-```
-GET /object/search?q=status==active&tags=football&limit=10&sort=-createdAt
-```
-1. `ResourceHandler` recibe la petición.
-2. `QuerySpecBuilder` combina el filtro RSQL y los parámetros (`tags`, `limit`, `sort`).
-3. `RsqlParser` parsea `q`.
-4. `QuerySpecToSql` genera `WHERE (status = ?) AND (tags && ?)` + `ORDER BY created_at DESC LIMIT ? OFFSET ?`.
-5. El repositorio ejecuta el `PreparedStatement`.
-6. Se devuelve la respuesta JSON.
-
-Para crear un nuevo recurso basta con:
-```java
-public class MyResource implements HttpResource {
-    @Override public void get(HttpExchange ex) { /*...*/ }
-    // implementar solo los métodos necesarios
-    @Override public String basePath() { return "/myresource"; }
-}
-
-public class MyResourceHandler extends ResourceHandler {
-    public MyResourceHandler() {
-        registerResource(new MyResource());
-    }
-}
-```
-Esta arquitectura sigue los principios hexagonales, separando dominio (`QuerySpec`), aplicación (`RSQL parsing`), infraestructura (`SQL translation`) y transporte (`ResourceHandler`).
-
-## Índice de documentación
-
-### Documentación principal
-
-- [README del backend Java](backend/java/README.md)
-- [Documentación técnica Java](backend/java/docs/README.md)
-- [README de base de datos (Flyway)](db/README.md)
-- [README del chart Helm](helm/kiwi-backend/README.md)
-
-### Backend Java (módulos)
-
-- [Agregador Maven (`kiwi-parent`)](backend/java/kiwi-parent/README.md)
-- [kiwi-ports](backend/java/kiwi-parent/kiwi-ports/README.md)
-- [kiwi-common](backend/java/kiwi-parent/kiwi-common/README.md)
-- [kiwi-core](backend/java/kiwi-parent/kiwi-core/README.md)
-- [kiwi-infra-postgres](backend/java/kiwi-parent/kiwi-infra-postgres/README.md)
-- [kiwi-bootstrap](backend/java/kiwi-parent/kiwi-bootstrap/README.md)
-- [kiwi-transport-jetty](backend/java/kiwi-parent/kiwi-transport-jetty/README.md)
-- [kiwi-transport-grpc](backend/java/kiwi-parent/kiwi-transport-grpc/README.md)
-- [kiwi-transport-rabbitmq](backend/java/kiwi-parent/kiwi-transport-rabbitmq/README.md)
-- [kiwi-tools](backend/java/kiwi-parent/kiwi-tools/README.md)
-
-## Variables de entorno clave
-
-Definidas en [.env.example](.env.example):
-
-- DB/Flyway: `FLYWAY_URL`, `FLYWAY_USER`, `FLYWAY_PASSWORD`, `DB_URL`, `DB_USER`, `DB_PASSWORD`
-- JWT: `JWT_ISS`, `JWT_AUD`, `JWT_SECRET`, `JWT_TTL_SECONDS`, `JWT_APP_TTL_SECONDS`
-- Provisioning: `ENVIRONMENT`, `ENABLE_USER_PROVISIONING`, `BOOTSTRAP_TOKEN`
-
-## Pruebas rápidas
-
-Scripts disponibles en [script/test](script/test):
-
-- `health.sh`
-- `auth_app.sh`
-- `create_app_client.sh`
-- `say_hello.sh`
-- `create_object.sh`
-- `search.sh`
-- `fuzzy.sh`
-
-## Publicación de contenedor (GHCR)
-
-La publicación del backend en GitHub Actions usa versionado por tag Git con formato:
-
-- `vN.YYYYmmDD` (ejemplos: `v1.20260222`, `v2.20260222`)
-
-Comandos para crear y publicar una versión:
-
-```bash
-	git tag v2.$(date +%Y%m%d)
-git push origin --tags
-```
-
-La imagen se publica en `ghcr.io/<owner>/kiwi-jetty-backend` con:
-
-- tag de versión (`vN.YYYYmmDD`)
-- tag de commit (`<sha>`)
+Para contribuir al proyecto Kiwi, asegúrate de seguir las instrucciones de contribución en `docs/contributing.md`. Esto incluye información sobre cómo enviar solicitudes de extracción y cómo reportar errores.

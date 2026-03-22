@@ -18,6 +18,7 @@ package dev.rafex.kiwi;
 import dev.rafex.kiwi.bootstrap.KiwiBootstrap;
 import dev.rafex.kiwi.logging.Log;
 import dev.rafex.kiwi.server.KiwiServer;
+import dev.rafex.kiwi.config.KiwiConfig;
 
 import java.util.Locale;
 import java.util.TimeZone;
@@ -52,8 +53,9 @@ public class App {
 
 	private static void configureLogging(final String[] args) {
 
-		// 1) Fuente: env var LOG_LEVEL (default INFO)
-		var levelStr = System.getenv().getOrDefault("LOG_LEVEL", "INFO");
+		// 1) Fuente: centralized configuration
+		final var config = KiwiConfig.load();
+		var levelStr = config.logging().level();
 
 		// 2) Override por CLI: --log=DEBUG
 		for (final String arg : args) {

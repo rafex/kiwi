@@ -20,6 +20,16 @@
 			<groupId>dev.rafex.ether.logging</groupId>
 			<artifactId>ether-logging-core</artifactId>
 		</dependency>
+		<dependency>
+			<groupId>dev.rafex.ether.config</groupId>
+			<artifactId>ether-config</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.junit.jupiter</groupId>
+			<artifactId>junit-jupiter</artifactId>
+			<version>${junit.version}</version>
+			<scope>test</scope>
+		</dependency>
 	</dependencies>
 
 	<build>

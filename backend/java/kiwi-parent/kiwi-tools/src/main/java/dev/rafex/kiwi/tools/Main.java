@@ -20,6 +20,7 @@ import dev.rafex.kiwi.repository.impl.RoleRepositoryImpl;
 import dev.rafex.kiwi.repository.impl.UserRepositoryImpl;
 import dev.rafex.kiwi.security.PasswordHasherPBKDF2;
 import dev.rafex.kiwi.services.impl.UserProvisioningServiceImpl;
+import dev.rafex.kiwi.config.KiwiConfig;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -48,8 +49,9 @@ public final class Main {
 		// wiring repos + service
 		final var userRepo = new UserRepositoryImpl(db);
 		final var roleRepo = new RoleRepositoryImpl(db);
-		final var hasher = new PasswordHasherPBKDF2(32); // 32 bytes si tu password_hash es 32 bytes
-		final var provisioning = new UserProvisioningServiceImpl(userRepo, roleRepo, hasher);
+		final var authConfig = KiwiConfig.fromEnv().auth();
+		final var hasher = new PasswordHasherPBKDF2(authConfig.derivedKeyBytes());
+		final var provisioning = new UserProvisioningServiceImpl(userRepo, roleRepo, hasher, authConfig);
 
 		// Crea usuario
 		final var res = provisioning.createUser(username, password, roles);

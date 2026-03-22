@@ -30,3 +30,6 @@ replay_pid*
 .com.apple.timemachine.donotpresent
 
 .claude/
+.ai-worktrees/
+
+

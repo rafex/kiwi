@@ -17,6 +17,7 @@ package dev.rafex.kiwi.logging;
 
 import dev.rafex.ether.logging.core.config.LoggingConfigurator;
 import dev.rafex.ether.logging.core.format.LogMessageFormatter;
+import org.slf4j.MDC;
 import dev.rafex.ether.logging.core.level.LogLevels;
 import dev.rafex.ether.logging.core.logger.EtherLog;
 
@@ -112,5 +113,80 @@ public final class Log {
 
 	private static String format(final String message, final Object... args) {
 		return LogMessageFormatter.format(message, args);
+	}
+
+	/* ===================== MDC (Mapped Diagnostic Context) ===================== */
+
+	/**
+	 * MDC key for request ID.
+	 */
+	public static final String MDC_REQUEST_ID = "requestId";
+
+	/**
+	 * MDC key for user ID.
+	 */
+	public static final String MDC_USER_ID = "userId";
+
+	/**
+	 * Put a key-value pair into the MDC.
+	 */
+	public static void put(final String key, final String value) {
+		MDC.put(key, value);
+	}
+
+	/**
+	 * Get the value for a key from the MDC.
+	 */
+	public static String get(final String key) {
+		return MDC.get(key);
+	}
+
+	/**
+	 * Remove a key from the MDC.
+	 */
+	public static void remove(final String key) {
+		MDC.remove(key);
+	}
+
+	/**
+	 * Clear all entries from the MDC.
+	 */
+	public static void clear() {
+		MDC.clear();
+	}
+
+	/**
+	 * Execute a Runnable with the given MDC context.
+	 * The context is removed after execution.
+	 */
+	public static void withContext(final java.util.Map<String, String> context, final Runnable task) {
+		try {
+			context.forEach(MDC::put);
+			task.run();
+		} finally {
+			context.keySet().forEach(MDC::remove);
+		}
+	}
+
+	/**
+	 * Execute a Runnable with requestId and userId in MDC context.
+	 */
+	public static void withRequestContext(final String requestId, final String userId, final Runnable task) {
+		try {
+			if (requestId != null) {
+				MDC.put(MDC_REQUEST_ID, requestId);
+			}
+			if (userId != null) {
+				MDC.put(MDC_USER_ID, userId);
+			}
+			task.run();
+		} finally {
+			if (requestId != null) {
+				MDC.remove(MDC_REQUEST_ID);
+			}
+			if (userId != null) {
+				MDC.remove(MDC_USER_ID);
+			}
+		}
 	}
 }

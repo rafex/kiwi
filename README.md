@@ -8,6 +8,13 @@ Se han realizado las siguientes actualizaciones en el proyecto Kiwi:
 
 Al actualizar a las nuevas versiones, asegúrate de revisar la documentación de cada dependencia para conocer los cambios y mejoras realizados. En particular, la actualización de Jetty y Jackson puede requerir ajustes en la configuración y el código.
 
+## Configuración
+
+Kiwi ahora usa **Ether‑Config** para la gestión centralizada de configuración. La configuración se carga desde variables de entorno, propiedades del sistema y (opcionalmente) archivos YAML.
+
+- [CONFIGURATION.md](backend/java/docs/CONFIGURATION.md) – Guía completa de configuración
+- [MIGRATION.md](backend/java/docs/MIGRATION.md) – Guía de migración desde el sistema anterior
+
 ## Documentación
 
 La documentación del proyecto Kiwi se encuentra en el directorio `docs/`. Para obtener más información sobre la arquitectura y el diseño del proyecto, consulta los archivos `docs/architecture.md` y `docs/design.md`. La información sobre la eliminación del archivo `model.md` y su reubicación se encuentra en `docs/changes.md`.
@@ -31,6 +38,8 @@ A continuación se enumeran todos los archivos de documentación presentes en el
 - /Users/rafex/repository/github/rafex/kiwi/backend/java/kiwi-parent/kiwi-architecture-tests/README.md
 - /Users/rafex/repository/github/rafex/kiwi/helm/kiwi-backend/README.md
 - /Users/rafex/repository/github/rafex/kiwi/backend/java/docs/README.md
+- /Users/rafex/repository/github/rafex/kiwi/backend/java/docs/CONFIGURATION.md
+- /Users/rafex/repository/github/rafex/kiwi/backend/java/docs/MIGRATION.md
 - /Users/rafex/repository/github/rafex/kiwi/backend/java/kiwi-parent/kiwi-tools/README.md
 - /Users/rafex/repository/github/rafex/kiwi/backend/java/README.md
 - /Users/rafex/repository/github/rafex/kiwi/backend/java/kiwi-parent/kiwi-transport-rabbitmq/README.md

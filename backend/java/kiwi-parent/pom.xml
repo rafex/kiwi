@@ -292,7 +292,7 @@
 					<version>${maven.resources.plugin.version}</version>
 				</plugin>
 
-				<!-- Compiler (Java 21) -->
+				<!-- Compiler (Java 25) -->
 				<plugin>
 					<artifactId>maven-compiler-plugin</artifactId>
 					<version>${maven.compiler.plugin.version}</version>

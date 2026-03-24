@@ -17,12 +17,13 @@ package dev.rafex.kiwi.logging;
 
 import dev.rafex.ether.logging.core.config.LoggingConfigurator;
 import dev.rafex.ether.logging.core.format.LogMessageFormatter;
-import org.slf4j.MDC;
 import dev.rafex.ether.logging.core.level.LogLevels;
 import dev.rafex.ether.logging.core.logger.EtherLog;
 
 import java.util.logging.Level;
 import java.util.logging.Logger;
+
+import org.slf4j.MDC;
 
 public final class Log {
 
@@ -115,7 +116,9 @@ public final class Log {
 		return LogMessageFormatter.format(message, args);
 	}
 
-	/* ===================== MDC (Mapped Diagnostic Context) ===================== */
+	/*
+	 * ===================== MDC (Mapped Diagnostic Context) =====================
+	 */
 
 	/**
 	 * MDC key for request ID.
@@ -156,8 +159,8 @@ public final class Log {
 	}
 
 	/**
-	 * Execute a Runnable with the given MDC context.
-	 * The context is removed after execution.
+	 * Execute a Runnable with the given MDC context. The context is removed after
+	 * execution.
 	 */
 	public static void withContext(final java.util.Map<String, String> context, final Runnable task) {
 		try {

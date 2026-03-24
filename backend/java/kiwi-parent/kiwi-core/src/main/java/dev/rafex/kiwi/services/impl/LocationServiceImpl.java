@@ -15,11 +15,11 @@
  */
 package dev.rafex.kiwi.services.impl;
 
+import dev.rafex.ether.database.core.exceptions.DatabaseAccessException;
+import dev.rafex.ether.database.postgres.errors.PostgresErrorClassifier;
 import dev.rafex.kiwi.errors.KiwiError;
 import dev.rafex.kiwi.logging.Log;
 import dev.rafex.kiwi.repository.LocationRepository;
-import dev.rafex.ether.database.core.exceptions.DatabaseAccessException;
-import dev.rafex.ether.database.postgres.errors.PostgresErrorClassifier;
 import dev.rafex.kiwi.services.LocationService;
 
 import java.util.UUID;
@@ -39,7 +39,8 @@ public class LocationServiceImpl implements LocationService {
 		} catch (final DatabaseAccessException e) {
 			Log.debug(getClass(), "DB error creating location: {} ", e.getMessage());
 			if (e.getCause() instanceof final java.sql.SQLException sqle
-					&& PostgresErrorClassifier.Category.FOREIGN_KEY_VIOLATION == PostgresErrorClassifier.classify(sqle)) {
+					&& PostgresErrorClassifier.Category.FOREIGN_KEY_VIOLATION == PostgresErrorClassifier
+							.classify(sqle)) {
 				throw new KiwiError("E-001", "newLocationId does not exist", e);
 			}
 			throw new KiwiError("E-002", "DB error creating location", e);

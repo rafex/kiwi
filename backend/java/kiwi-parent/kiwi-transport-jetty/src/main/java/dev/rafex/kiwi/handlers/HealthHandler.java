@@ -74,8 +74,8 @@ public class HealthHandler extends NonBlockingResourceHandler {
 
 		final var checksMap = new LinkedHashMap<String, Object>();
 		for (final var result : report.results()) {
-			checksMap.put(result.name(), Map.of("status", result.status().name(), "detail",
-					result.detail() != null ? result.detail() : ""));
+			checksMap.put(result.name(),
+					Map.of("status", result.status().name(), "detail", result.detail() != null ? result.detail() : ""));
 		}
 
 		final var body = new LinkedHashMap<String, Object>();

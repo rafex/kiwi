@@ -73,7 +73,8 @@ public class ObjectRepositoryImpl implements ObjectRepository {
 
 	@Override
 	public void updateMetadata(final UUID objectId, final String metadataJson) {
-		final var metaParam = metadataJson == null ? SqlParameter.nullOf(Types.OTHER)
+		final var metaParam = metadataJson == null
+				? SqlParameter.nullOf(Types.OTHER)
 				: PostgresParameters.jsonb(metadataJson);
 		db.execute(new SqlQuery("SELECT api_update_metadata(?::uuid, ?::jsonb)",
 				List.of(SqlParameter.of(objectId), metaParam)));

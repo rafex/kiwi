@@ -18,10 +18,6 @@ package dev.rafex.kiwi.server;
 import dev.rafex.ether.glowroot.jetty12.GlowrootJettyHandler;
 import dev.rafex.ether.http.security.cors.CorsPolicy;
 import dev.rafex.ether.http.security.headers.SecurityHeadersPolicy;
-import org.eclipse.jetty.server.Handler;
-import org.eclipse.jetty.server.Request;
-import org.eclipse.jetty.server.Response;
-import org.eclipse.jetty.util.Callback;
 import dev.rafex.kiwi.handlers.CreateAppClientHandler;
 import dev.rafex.kiwi.handlers.CreateUserHandler;
 import dev.rafex.kiwi.handlers.HealthHandler;
@@ -31,7 +27,11 @@ import dev.rafex.kiwi.handlers.LoginHandler;
 import dev.rafex.kiwi.handlers.NotFoundHandler;
 import dev.rafex.kiwi.handlers.ObjectHandler;
 import dev.rafex.kiwi.handlers.TokenHandler;
-import dev.rafex.kiwi.config.KiwiConfig;
+
+import org.eclipse.jetty.server.Handler;
+import org.eclipse.jetty.server.Request;
+import org.eclipse.jetty.server.Response;
+import org.eclipse.jetty.util.Callback;
 
 public final class DefaultKiwiModule implements KiwiModule {
 
@@ -49,7 +49,8 @@ public final class DefaultKiwiModule implements KiwiModule {
 		routes.add("/admin/app-clients", new CreateAppClientHandler(container.appClientAuthService()));
 
 		if (context.config().server().enableUserProvisioning() && context.config().server().isSandbox()) {
-			routes.add("/admin/users", new CreateUserHandler(container.userProvisioningService(), context.config().server()));
+			routes.add("/admin/users",
+					new CreateUserHandler(container.userProvisioningService(), context.config().server()));
 		}
 
 		routes.add("/*", new NotFoundHandler());

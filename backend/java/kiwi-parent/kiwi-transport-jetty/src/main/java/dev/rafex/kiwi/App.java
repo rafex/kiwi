@@ -16,9 +16,9 @@
 package dev.rafex.kiwi;
 
 import dev.rafex.kiwi.bootstrap.KiwiBootstrap;
+import dev.rafex.kiwi.config.KiwiConfig;
 import dev.rafex.kiwi.logging.Log;
 import dev.rafex.kiwi.server.KiwiServer;
-import dev.rafex.kiwi.config.KiwiConfig;
 
 import java.util.Locale;
 import java.util.TimeZone;

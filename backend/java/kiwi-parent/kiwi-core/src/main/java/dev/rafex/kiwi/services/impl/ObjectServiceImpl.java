@@ -15,6 +15,8 @@
  */
 package dev.rafex.kiwi.services.impl;
 
+import dev.rafex.ether.database.core.exceptions.DatabaseAccessException;
+import dev.rafex.ether.database.postgres.errors.PostgresErrorClassifier;
 import dev.rafex.kiwi.errors.KiwiError;
 import dev.rafex.kiwi.logging.Log;
 import dev.rafex.kiwi.models.FuzzyItem;
@@ -22,15 +24,12 @@ import dev.rafex.kiwi.models.ObjectDetail;
 import dev.rafex.kiwi.models.SearchItem;
 import dev.rafex.kiwi.query.QuerySpec;
 import dev.rafex.kiwi.repository.ObjectRepository;
-import dev.rafex.ether.database.core.exceptions.DatabaseAccessException;
-import dev.rafex.ether.database.postgres.errors.PostgresErrorClassifier;
 import dev.rafex.kiwi.services.ObjectService;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
-
 
 public class ObjectServiceImpl implements ObjectService {
 
@@ -58,7 +57,8 @@ public class ObjectServiceImpl implements ObjectService {
 		} catch (final DatabaseAccessException e) {
 			Log.error(getClass(), "DB error moving object", e);
 			if (e.getCause() instanceof final java.sql.SQLException sqle
-					&& PostgresErrorClassifier.Category.FOREIGN_KEY_VIOLATION == PostgresErrorClassifier.classify(sqle)) {
+					&& PostgresErrorClassifier.Category.FOREIGN_KEY_VIOLATION == PostgresErrorClassifier
+							.classify(sqle)) {
 				throw new KiwiError("E-001", "newLocationId does not exist", e);
 			}
 			throw new KiwiError("E-002", "DB error moving object", e);

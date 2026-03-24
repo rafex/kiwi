@@ -48,7 +48,7 @@ jobs:
             git diff --name-only "${GITHUB_SHA}" | grep -E '^backend/java/kiwi' > /dev/null && echo "changed=true" >> "$GITHUB_OUTPUT" || echo "changed=false" >> "$GITHUB_OUTPUT"
           else
             git diff --name-only "$PARENT" "${GITHUB_SHA}" | grep -E '^backend/java/kiwi' > /dev/null && echo "changed=true" >> "$GITHUB_OUTPUT" || echo "changed=false" >> "$GITHUB_OUTPUT"
-          fi
+           fi
 
   build:
     needs: check_paths
@@ -66,9 +66,20 @@ jobs:
           java-version: '25'
           architecture: x64
           cache: maven
+
       - name: Run the Maven verify phase
         working-directory: backend/java/kiwi-parent
         run: make build
+
+      - name: Update Context Documentation
+        run: |
+           chmod +x scripts/update-context.sh
+           ./scripts/update-context.sh
+           git config --global user.name "github-actions"
+           git config --global user.email "github-actions@github.com"
+           git add context/
+           git diff --cached --quiet || git commit -m "docs: auto-update context"
+           git push
 
       - name: Set up GraalVM
         if: ${{ (github.event_name == 'workflow_dispatch' && github.event.inputs.release_tag != '') || startsWith(github.ref, 'refs/tags/') || github.event.inputs.build_native == 'true' }}

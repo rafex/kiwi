@@ -32,73 +32,72 @@ import java.util.logging.Logger;
 
 public final class KiwiServer {
 
-    private static final Logger LOG = Logger.getLogger(KiwiServer.class.getName());
+	private static final Logger LOG = Logger.getLogger(KiwiServer.class.getName());
 
-    private KiwiServer() {
-    }
+	private KiwiServer() {
+	}
 
-    public static void start(final KiwiContainer container) throws Exception {
-        start(container, container.config(), List.of(new DefaultKiwiModule()));
-    }
+	public static void start(final KiwiContainer container) throws Exception {
+		start(container, container.config(), List.of(new DefaultKiwiModule()));
+	}
 
-    public static void start(final KiwiContainer container, final KiwiConfig config, final List<KiwiModule> modules)
-            throws Exception {
-        final var runner = createRunner(container, config, modules);
-        LOG.info("Starting Kiwi backend on port " + config.server().port());
-        runner.start();
-        runner.await();
-    }
+	public static void start(final KiwiContainer container, final KiwiConfig config, final List<KiwiModule> modules)
+			throws Exception {
+		final var runner = createRunner(container, config, modules);
+		LOG.info("Starting Kiwi backend on port " + config.server().port());
+		runner.start();
+		runner.await();
+	}
 
-    private static dev.rafex.ether.http.jetty12.JettyServerRunner createRunner(final KiwiContainer container,
-            final KiwiConfig config, final List<KiwiModule> modules) {
-        Objects.requireNonNull(container, "container");
-        Objects.requireNonNull(config, "config");
+	private static dev.rafex.ether.http.jetty12.JettyServerRunner createRunner(final KiwiContainer container,
+			final KiwiConfig config, final List<KiwiModule> modules) {
+		Objects.requireNonNull(container, "container");
+		Objects.requireNonNull(config, "config");
 
-        final var jsonCodec = JacksonJsonCodec.defaultCodec();
-        final var jwt = new KiwiJwtService(config.jwt().issuer(), config.jwt().audience(), config.jwt().secret());
-        final var context = new ModuleContext(container, config, jwt);
+		final var jsonCodec = JacksonJsonCodec.defaultCodec();
+		final var jwt = new KiwiJwtService(config.jwt().issuer(), config.jwt().audience(), config.jwt().secret());
+		final var context = new ModuleContext(container, config, jwt);
 
-        final var routeRegistry = new RouteRegistry();
-        final var authPolicyRegistry = new AuthPolicyRegistry();
-        final var middlewareRegistry = new MiddlewareRegistry();
+		final var routeRegistry = new RouteRegistry();
+		final var authPolicyRegistry = new AuthPolicyRegistry();
+		final var middlewareRegistry = new MiddlewareRegistry();
 
-        for (final var module : modules == null ? List.<KiwiModule>of() : modules) {
-            module.registerRoutes(routeRegistry, context);
-            module.registerAuthPolicies(authPolicyRegistry, context);
-            module.registerMiddlewares(middlewareRegistry, context);
-        }
+		for (final var module : modules == null ? List.<KiwiModule>of() : modules) {
+			module.registerRoutes(routeRegistry, context);
+			module.registerAuthPolicies(authPolicyRegistry, context);
+			module.registerMiddlewares(middlewareRegistry, context);
+		}
 
-        final var etherRoutes = new JettyRouteRegistry();
-        for (final var route : routeRegistry.routes()) {
-            etherRoutes.add(route.pathSpec(), route.handler());
-        }
+		final var etherRoutes = new JettyRouteRegistry();
+		for (final var route : routeRegistry.routes()) {
+			etherRoutes.add(route.pathSpec(), route.handler());
+		}
 
-        final var etherMiddlewares = new ArrayList<dev.rafex.ether.http.jetty12.JettyMiddleware>();
-        for (final var middleware : middlewareRegistry.middlewares()) {
-            etherMiddlewares.add(middleware::wrap);
-        }
-        if (!authPolicyRegistry.policies().isEmpty()) {
-            etherMiddlewares.add(next -> {
-                final var auth = new JettyAuthHandler(next, (token, epochSeconds) -> {
-                    final var verification = jwt.verify(token, epochSeconds);
-                    if (!verification.ok()) {
-                        return TokenVerificationResult.failed(verification.code());
-                    }
-                    return TokenVerificationResult.ok(verification.ctx());
-                }, jsonCodec);
-                for (final var policy : authPolicyRegistry.policies()) {
-                    if (policy.type() == AuthPolicy.Type.PUBLIC_PATH) {
-                        auth.publicPath(policy.method(), policy.pathSpec());
-                    } else {
-                        auth.protectedPrefix(policy.pathSpec());
-                    }
-                }
-                return auth;
-            });
-        }
+		final var etherMiddlewares = new ArrayList<dev.rafex.ether.http.jetty12.JettyMiddleware>();
+		for (final var middleware : middlewareRegistry.middlewares()) {
+			etherMiddlewares.add(middleware::wrap);
+		}
+		if (!authPolicyRegistry.policies().isEmpty()) {
+			etherMiddlewares.add(next -> {
+				final var auth = new JettyAuthHandler(next, (token, epochSeconds) -> {
+					final var verification = jwt.verify(token, epochSeconds);
+					if (!verification.ok()) {
+						return TokenVerificationResult.failed(verification.code());
+					}
+					return TokenVerificationResult.ok(verification.ctx());
+				}, jsonCodec);
+				for (final var policy : authPolicyRegistry.policies()) {
+					if (policy.type() == AuthPolicy.Type.PUBLIC_PATH) {
+						auth.publicPath(policy.method(), policy.pathSpec());
+					} else {
+						auth.protectedPrefix(policy.pathSpec());
+					}
+				}
+				return auth;
+			});
+		}
 
-        final var etherConfig = JettyServerConfig.fromEnv();
-        return JettyServerFactory.create(etherConfig, etherRoutes, jsonCodec,
-                null, List.of(), etherMiddlewares);
-    }
+		final var etherConfig = JettyServerConfig.fromEnv();
+		return JettyServerFactory.create(etherConfig, etherRoutes, jsonCodec, null, List.of(), etherMiddlewares);
+	}
 }

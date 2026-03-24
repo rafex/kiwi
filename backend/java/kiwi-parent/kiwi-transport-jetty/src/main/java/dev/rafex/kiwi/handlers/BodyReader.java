@@ -15,15 +15,16 @@
  */
 package dev.rafex.kiwi.handlers;
 
-import org.eclipse.jetty.server.Request;
-
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+
+import org.eclipse.jetty.server.Request;
 
 /**
  * Utilidad para leer el cuerpo de una request HTTP con un límite de tamaño.
  *
- * <p>Protege contra ataques de tipo "large payload DoS" leyendo como máximo
+ * <p>
+ * Protege contra ataques de tipo "large payload DoS" leyendo como máximo
  * {@code maxBytes} bytes del stream de entrada. Si el cuerpo supera el límite,
  * devuelve {@code null} para que el handler responda con HTTP 413.
  */
@@ -41,10 +42,13 @@ final class BodyReader {
 	/**
 	 * Lee el cuerpo de la request como String UTF-8, con límite de tamaño.
 	 *
-	 * @param request  request de Jetty
-	 * @param maxBytes número máximo de bytes permitidos
+	 * @param request
+	 *            request de Jetty
+	 * @param maxBytes
+	 *            número máximo de bytes permitidos
 	 * @return el cuerpo como String, o {@code null} si supera {@code maxBytes}
-	 * @throws IOException si ocurre un error de I/O leyendo el stream
+	 * @throws IOException
+	 *             si ocurre un error de I/O leyendo el stream
 	 */
 	static String read(final Request request, final int maxBytes) throws IOException {
 		try (final var in = Request.asInputStream(request)) {

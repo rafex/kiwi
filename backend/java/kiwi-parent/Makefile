@@ -48,6 +48,7 @@ glowroot-jetty-build: build
 build:
 	$(MVN) spotless:apply
 	$(MVN) clean package
+	../../../scripts/update-context.sh
 
 build-without-tests:
 	$(MVN) -DskipTests clean package
@@ -55,6 +56,7 @@ build-without-tests:
 quality:
 	$(MVN) spotless:apply
 	$(MVN) -Pquality clean verify
+	../../../scripts/update-context.sh
 
 agent: build-without-tests
 	rm -rf "$(GRAAL_CONFIG_DIR)"

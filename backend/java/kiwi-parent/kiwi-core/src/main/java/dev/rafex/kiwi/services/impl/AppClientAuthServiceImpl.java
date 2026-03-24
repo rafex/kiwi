@@ -15,14 +15,14 @@
  */
 package dev.rafex.kiwi.services.impl;
 
+import dev.rafex.ether.database.core.exceptions.DatabaseAccessException;
+import dev.rafex.ether.database.postgres.errors.PostgresErrorClassifier;
+import dev.rafex.kiwi.config.AuthConfig;
 import dev.rafex.kiwi.logging.Log;
 import dev.rafex.kiwi.repository.AppClientRepository;
 import dev.rafex.kiwi.security.PasswordHasherPBKDF2;
 import dev.rafex.kiwi.services.AppClientAuthService;
-import dev.rafex.kiwi.config.AuthConfig;
 
-import dev.rafex.ether.database.core.exceptions.DatabaseAccessException;
-import dev.rafex.ether.database.postgres.errors.PostgresErrorClassifier;
 import java.security.SecureRandom;
 import java.util.Arrays;
 import java.util.List;

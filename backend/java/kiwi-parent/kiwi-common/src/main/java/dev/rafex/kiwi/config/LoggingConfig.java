@@ -23,42 +23,40 @@ import java.util.logging.Level;
 /**
  * Logging configuration.
  *
- * @param level logging level (default INFO)
+ * @param level
+ *            logging level (default INFO)
  */
-public record LoggingConfig(
-    String level
-) {
-    public LoggingConfig {
-        Objects.requireNonNull(level, "level cannot be null");
-        if (level.isBlank()) {
-            throw new IllegalArgumentException("level cannot be blank");
-        }
-    }
-    
-    /**
-     * Load logging configuration from EtherConfig.
-     */
-    public static LoggingConfig from(final EtherConfig config) {
-        final var level = config.get("LOG_LEVEL")
-            .orElse("INFO");
-        return new LoggingConfig(level);
-    }
-    
-    /**
-     * Convert level string to java.util.logging.Level.
-     */
-    public Level toJuliLevel() {
-        return switch (level.toUpperCase()) {
-            case "SEVERE" -> Level.SEVERE;
-            case "WARNING", "WARN" -> Level.WARNING;
-            case "INFO" -> Level.INFO;
-            case "CONFIG" -> Level.CONFIG;
-            case "FINE" -> Level.FINE;
-            case "FINER" -> Level.FINER;
-            case "FINEST", "DEBUG" -> Level.FINEST;
-            case "ALL" -> Level.ALL;
-            case "OFF" -> Level.OFF;
-            default -> Level.INFO;
-        };
-    }
+public record LoggingConfig(String level) {
+	public LoggingConfig {
+		Objects.requireNonNull(level, "level cannot be null");
+		if (level.isBlank()) {
+			throw new IllegalArgumentException("level cannot be blank");
+		}
+	}
+
+	/**
+	 * Load logging configuration from EtherConfig.
+	 */
+	public static LoggingConfig from(final EtherConfig config) {
+		final var level = config.get("LOG_LEVEL").orElse("INFO");
+		return new LoggingConfig(level);
+	}
+
+	/**
+	 * Convert level string to java.util.logging.Level.
+	 */
+	public Level toJuliLevel() {
+		return switch (level.toUpperCase()) {
+			case "SEVERE" -> Level.SEVERE;
+			case "WARNING", "WARN" -> Level.WARNING;
+			case "INFO" -> Level.INFO;
+			case "CONFIG" -> Level.CONFIG;
+			case "FINE" -> Level.FINE;
+			case "FINER" -> Level.FINER;
+			case "FINEST", "DEBUG" -> Level.FINEST;
+			case "ALL" -> Level.ALL;
+			case "OFF" -> Level.OFF;
+			default -> Level.INFO;
+		};
+	}
 }

@@ -46,9 +46,10 @@ public final class AppClientRepositoryImpl implements AppClientRepository {
 				VALUES (?, ?, ?, ?, ?, ?, ?, 'active', NOW(), NOW())
 				""";
 		final var rolesArray = normalizeRoles(roles).toArray(new String[0]);
-		db.execute(new SqlQuery(sql, List.of(SqlParameter.of(appClientId), SqlParameter.text(clientId),
-				SqlParameter.text(name), SqlParameter.of(secretHash), SqlParameter.of(salt),
-				SqlParameter.of(iterations), SqlParameter.arrayOf("text", rolesArray))));
+		db.execute(new SqlQuery(sql,
+				List.of(SqlParameter.of(appClientId), SqlParameter.text(clientId), SqlParameter.text(name),
+						SqlParameter.of(secretHash), SqlParameter.of(salt), SqlParameter.of(iterations),
+						SqlParameter.arrayOf("text", rolesArray))));
 	}
 
 	@Override

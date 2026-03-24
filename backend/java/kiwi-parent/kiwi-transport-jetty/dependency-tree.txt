@@ -1,0 +1,57 @@
+dev.rafex.kiwi:kiwi-transport-jetty:jar:0.1.0-SNAPSHOT
++- dev.rafex.kiwi:kiwi-bootstrap:jar:0.1.0-SNAPSHOT:compile
+|  +- dev.rafex.kiwi:kiwi-common:jar:0.1.0-SNAPSHOT:compile
+|  |  \- dev.rafex.ether.logging:ether-logging-core:jar:9.0.0-SNAPSHOT:compile
+|  +- dev.rafex.kiwi:kiwi-core:jar:0.1.0-SNAPSHOT:compile
+|  |  +- dev.rafex.kiwi:kiwi-ports:jar:0.1.0-SNAPSHOT:compile
+|  |  \- dev.rafex.ether.database:ether-database-postgres:jar:9.0.0-SNAPSHOT:compile
+|  +- dev.rafex.kiwi:kiwi-infra-postgres:jar:0.1.0-SNAPSHOT:compile
+|  |  +- org.postgresql:postgresql:jar:42.7.9:compile
+|  |  |  \- org.checkerframework:checker-qual:jar:3.52.0:runtime
+|  |  +- com.zaxxer:HikariCP:jar:5.1.0:compile
+|  |  \- dev.rafex.ether.jdbc:ether-jdbc:jar:9.0.0-SNAPSHOT:compile
+|  \- dev.rafex.ether.database:ether-database-core:jar:9.0.0-SNAPSHOT:compile
++- dev.rafex.kiwi:kiwi-tools:jar:0.1.0-SNAPSHOT:compile
++- dev.rafex.ether.http:ether-http-jetty12:jar:9.0.0-SNAPSHOT:compile
+|  +- dev.rafex.ether.http:ether-http-core:jar:9.0.0-SNAPSHOT:compile
+|  \- dev.rafex.ether.observability:ether-observability-core:jar:9.0.0-SNAPSHOT:compile
++- dev.rafex.ether.json:ether-json:jar:9.0.0-SNAPSHOT:compile
+|  +- com.fasterxml.jackson.core:jackson-core:jar:2.21.2:compile
+|  +- com.fasterxml.jackson.core:jackson-annotations:jar:2.21:compile
+|  \- com.networknt:json-schema-validator:jar:1.5.9:compile
+|     \- com.ethlo.time:itu:jar:1.14.0:compile
++- dev.rafex.ether.jwt:ether-jwt:jar:9.0.0-SNAPSHOT:compile
++- dev.rafex.ether.glowroot:ether-glowroot-jetty12:jar:9.0.0-SNAPSHOT:compile
++- org.glowroot:glowroot-agent-api:jar:0.14.0-beta.3:provided
++- dev.rafex.ether.http:ether-http-problem:jar:9.0.0-SNAPSHOT:compile
++- dev.rafex.ether.http:ether-http-security:jar:9.0.0-SNAPSHOT:compile
++- dev.rafex.ether.config:ether-config:jar:9.0.0-SNAPSHOT:compile
+|  +- com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:jar:2.21.2:compile
+|  |  \- org.yaml:snakeyaml:jar:2.5:compile
+|  \- com.fasterxml.jackson.dataformat:jackson-dataformat-toml:jar:2.21.2:compile
++- org.slf4j:slf4j-jdk14:jar:2.0.17:runtime
+|  \- org.slf4j:slf4j-api:jar:2.0.17:compile
++- org.eclipse.jetty:jetty-server:jar:12.1.7:compile
+|  +- org.eclipse.jetty:jetty-http:jar:12.1.7:compile
+|  |  \- org.eclipse.jetty:jetty-util:jar:12.1.7:compile
+|  \- org.eclipse.jetty:jetty-io:jar:12.1.7:compile
++- jakarta.servlet:jakarta.servlet-api:jar:6.0.0:provided
++- com.fasterxml.jackson.core:jackson-databind:jar:2.21.2:compile
++- com.fasterxml.jackson.datatype:jackson-datatype-jsr310:jar:2.21.2:compile
++- org.junit.jupiter:junit-jupiter-api:jar:6.0.3:test
+|  +- org.opentest4j:opentest4j:jar:1.3.0:test
+|  +- org.junit.platform:junit-platform-commons:jar:6.0.3:test
+|  +- org.apiguardian:apiguardian-api:jar:1.1.2:test
+|  \- org.jspecify:jspecify:jar:1.0.0:test
++- org.junit.jupiter:junit-jupiter-engine:jar:6.0.3:test
+|  \- org.junit.platform:junit-platform-engine:jar:6.0.3:test
++- org.mockito:mockito-core:jar:5.14.2:test
+|  +- net.bytebuddy:byte-buddy:jar:1.15.4:test
+|  +- net.bytebuddy:byte-buddy-agent:jar:1.15.4:test
+|  \- org.objenesis:objenesis:jar:3.3:test
++- org.assertj:assertj-core:jar:3.26.3:test
+\- com.tngtech.archunit:archunit-junit5:jar:1.4.1:test
+   +- com.tngtech.archunit:archunit-junit5-api:jar:1.4.1:test
+   |  \- com.tngtech.archunit:archunit:jar:1.4.1:test
+   \- com.tngtech.archunit:archunit-junit5-engine:jar:1.4.1:test
+      \- com.tngtech.archunit:archunit-junit5-engine-api:jar:1.4.1:test

@@ -15,6 +15,8 @@
  */
 package dev.rafex.kiwi.bootstrap;
 
+import dev.rafex.ether.database.core.DatabaseClient;
+import dev.rafex.kiwi.config.KiwiConfig;
 import dev.rafex.kiwi.db.Db;
 import dev.rafex.kiwi.repository.AppClientRepository;
 import dev.rafex.kiwi.repository.LocationRepository;
@@ -37,11 +39,6 @@ import dev.rafex.kiwi.services.impl.AuthServiceImpl;
 import dev.rafex.kiwi.services.impl.LocationServiceImpl;
 import dev.rafex.kiwi.services.impl.ObjectServiceImpl;
 import dev.rafex.kiwi.services.impl.UserProvisioningServiceImpl;
-
-import dev.rafex.ether.config.EtherConfig;
-import dev.rafex.ether.config.sources.EnvironmentConfigSource;
-import dev.rafex.ether.database.core.DatabaseClient;
-import dev.rafex.kiwi.config.KiwiConfig;
 
 import java.util.Objects;
 import java.util.Optional;
@@ -224,8 +221,9 @@ public final class KiwiContainer {
 				select(overrides.authService(), () -> new AuthServiceImpl(userRepository(), passwordHasher())));
 		appClientAuthService = new Lazy<>(select(overrides.appClientAuthService(),
 				() -> new AppClientAuthServiceImpl(appClientRepository(), passwordHasher(), config().auth())));
-		userProvisioningService = new Lazy<>(select(overrides.userProvisioningService(),
-				() -> new UserProvisioningServiceImpl(userRepository(), roleRepository(), passwordHasher(), config().auth())));
+		userProvisioningService = new Lazy<>(
+				select(overrides.userProvisioningService(), () -> new UserProvisioningServiceImpl(userRepository(),
+						roleRepository(), passwordHasher(), config().auth())));
 	}
 
 	// ---- Public accessors ----

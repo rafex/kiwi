@@ -34,7 +34,8 @@ public class LocationRepositoryImpl implements LocationRepository {
 
 	@Override
 	public void createLocation(final UUID locationId, final String name, final UUID parentLocationId) {
-		final var parentParam = parentLocationId == null ? SqlParameter.nullOf(Types.OTHER)
+		final var parentParam = parentLocationId == null
+				? SqlParameter.nullOf(Types.OTHER)
 				: SqlParameter.of(parentLocationId);
 		db.execute(new SqlQuery("SELECT api_create_location(?::uuid, ?, ?::uuid)",
 				List.of(SqlParameter.of(locationId), SqlParameter.text(name), parentParam)));

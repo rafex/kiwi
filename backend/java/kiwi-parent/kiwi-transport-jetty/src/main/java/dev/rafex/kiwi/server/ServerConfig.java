@@ -30,24 +30,21 @@ public record ServerConfig(int port, int maxThreads, int minThreads, int idleTim
 	public static ServerConfig fromEnv() {
 		final var cfg = EtherConfig.of(new EnvironmentConfigSource());
 		final var cpus = Runtime.getRuntime().availableProcessors();
-		return new ServerConfig(
-				cfg.get("PORT").map(Integer::parseInt).orElse(8080),
+		return new ServerConfig(cfg.get("PORT").map(Integer::parseInt).orElse(8080),
 				cfg.get("HTTP_MAX_THREADS").map(Integer::parseInt).orElse(Math.max(cpus * 2, 16)),
 				cfg.get("HTTP_MIN_THREADS").map(Integer::parseInt).orElse(4),
 				cfg.get("HTTP_IDLE_TIMEOUT_MS").map(Integer::parseInt).orElse(30_000),
-				cfg.get("HTTP_POOL_NAME").orElse("kiwi-http"),
-				cfg.get("JWT_ISS").orElse("dev.rafex.kiwi"),
-				cfg.get("JWT_AUD").orElse("kiwi-backend"),
-				resolveJwtSecret(cfg.get("JWT_SECRET").orElse(null)),
+				cfg.get("HTTP_POOL_NAME").orElse("kiwi-http"), cfg.get("JWT_ISS").orElse("dev.rafex.kiwi"),
+				cfg.get("JWT_AUD").orElse("kiwi-backend"), resolveJwtSecret(cfg.get("JWT_SECRET").orElse(null)),
 				cfg.get("ENVIRONMENT").orElse("unknown"),
 				cfg.get("ENABLE_USER_PROVISIONING").map(Boolean::parseBoolean).orElse(false));
 	}
 
 	/**
-	 * Si JWT_SECRET no está configurado o usa el valor por defecto conocido,
-	 * genera un secreto aleatorio de 256 bits y emite una advertencia.
-	 * El secreto generado no persiste entre reinicios — todos los tokens
-	 * emitidos pierden validez. En producción debe configurarse JWT_SECRET.
+	 * Si JWT_SECRET no está configurado o usa el valor por defecto conocido, genera
+	 * un secreto aleatorio de 256 bits y emite una advertencia. El secreto generado
+	 * no persiste entre reinicios — todos los tokens emitidos pierden validez. En
+	 * producción debe configurarse JWT_SECRET.
 	 */
 	private static String resolveJwtSecret(final String envValue) {
 		if (envValue == null || envValue.isBlank() || KNOWN_DEFAULT_SECRET.equals(envValue)) {

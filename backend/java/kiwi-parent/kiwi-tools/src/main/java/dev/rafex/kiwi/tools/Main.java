@@ -15,12 +15,12 @@
  */
 package dev.rafex.kiwi.tools;
 
+import dev.rafex.kiwi.config.KiwiConfig;
 import dev.rafex.kiwi.db.Db;
 import dev.rafex.kiwi.repository.impl.RoleRepositoryImpl;
 import dev.rafex.kiwi.repository.impl.UserRepositoryImpl;
 import dev.rafex.kiwi.security.PasswordHasherPBKDF2;
 import dev.rafex.kiwi.services.impl.UserProvisioningServiceImpl;
-import dev.rafex.kiwi.config.KiwiConfig;
 
 import java.util.ArrayList;
 import java.util.Arrays;

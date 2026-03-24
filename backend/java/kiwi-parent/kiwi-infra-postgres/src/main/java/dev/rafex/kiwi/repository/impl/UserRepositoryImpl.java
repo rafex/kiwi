@@ -21,7 +21,6 @@ import dev.rafex.ether.database.core.sql.SqlParameter;
 import dev.rafex.ether.database.core.sql.SqlQuery;
 import dev.rafex.kiwi.repository.UserRepository;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -61,10 +60,8 @@ public class UserRepositoryImpl implements UserRepository {
 
 	@Override
 	public List<String> findRoleNamesByUserId(final UUID userId) {
-		return db.queryList(
-				new SqlQuery("SELECT role_name FROM api_find_role_names_by_user_id(?::uuid)",
-						List.of(SqlParameter.of(userId))),
-				rs -> rs.getString(1));
+		return db.queryList(new SqlQuery("SELECT role_name FROM api_find_role_names_by_user_id(?::uuid)",
+				List.of(SqlParameter.of(userId))), rs -> rs.getString(1));
 	}
 
 	@Override

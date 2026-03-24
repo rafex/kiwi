@@ -23,7 +23,6 @@ import dev.rafex.kiwi.query.RsqlNode;
 import dev.rafex.kiwi.query.RsqlOperator;
 import dev.rafex.kiwi.query.Sort;
 
-import java.sql.Types;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;

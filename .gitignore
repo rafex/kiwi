@@ -31,5 +31,11 @@ replay_pid*
 
 .claude/
 .ai-worktrees/
+.opencode/
 
 
+
+# opencode — generado por oc.sh (no versionar)
+.opencode/sessions.db
+.opencode/worktrees/
+.opencode/node_modules/

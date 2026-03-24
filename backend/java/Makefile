@@ -38,6 +38,7 @@ image:
 		echo "Found JAR: $(JAR_JETTY)"; \
 		echo "Building container image: $(IMAGE)"; \
 		$(CONTAINER_TOOL) build -t "$(IMAGE)" -f Dockerfile .; \
+		../../scripts/update-context.sh; \
 	else \
 		echo "No JAR found at $(JAR_JETTY). Please run 'make build' first." >&2; exit 1; \
 	fi

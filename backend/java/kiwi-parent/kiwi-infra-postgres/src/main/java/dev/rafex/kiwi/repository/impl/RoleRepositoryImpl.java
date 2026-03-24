@@ -44,8 +44,8 @@ public class RoleRepositoryImpl implements RoleRepository {
 				WHERE name = ?
 				""";
 		return db.queryOne(new SqlQuery(sql, List.of(SqlParameter.text(name))),
-				rs -> new RoleRow(ResultSets.getUuid(rs, "role_id"), rs.getString("name"),
-						rs.getString("description"), rs.getString("status"), ResultSets.getInstant(rs, "created_at"),
+				rs -> new RoleRow(ResultSets.getUuid(rs, "role_id"), rs.getString("name"), rs.getString("description"),
+						rs.getString("status"), ResultSets.getInstant(rs, "created_at"),
 						ResultSets.getInstant(rs, "updated_at")));
 	}
 
@@ -67,10 +67,10 @@ public class RoleRepositoryImpl implements RoleRepository {
 			if (e.getCause() instanceof final SQLException sqle
 					&& PostgresErrorClassifier.Category.UNIQUE_VIOLATION == PostgresErrorClassifier.classify(sqle)) {
 				// Race condition: another thread created the same role concurrently
-				return db.queryOne(
-						new SqlQuery("SELECT role_id FROM roles WHERE name = ?", List.of(SqlParameter.text(name))),
-						rs -> ResultSets.getUuid(rs, "role_id")).orElseThrow(
-								() -> new DatabaseAccessException("Role not found after insert conflict", e));
+				return db
+						.queryOne(new SqlQuery("SELECT role_id FROM roles WHERE name = ?",
+								List.of(SqlParameter.text(name))), rs -> ResultSets.getUuid(rs, "role_id"))
+						.orElseThrow(() -> new DatabaseAccessException("Role not found after insert conflict", e));
 			}
 			throw e;
 		}

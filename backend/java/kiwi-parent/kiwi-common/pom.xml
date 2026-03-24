@@ -25,6 +25,10 @@
 			<artifactId>ether-config</artifactId>
 		</dependency>
 		<dependency>
+			<groupId>dev.rafex.ether.crypto</groupId>
+			<artifactId>ether-crypto</artifactId>
+		</dependency>
+		<dependency>
 			<groupId>org.slf4j</groupId>
 			<artifactId>slf4j-api</artifactId>
 			<version>${slf4j.version}</version>

@@ -20,7 +20,7 @@ import dev.rafex.ether.http.security.cors.CorsPolicy;
 import dev.rafex.ether.http.security.headers.SecurityHeadersPolicy;
 import dev.rafex.kiwi.handlers.CreateAppClientHandler;
 import dev.rafex.kiwi.handlers.CreateUserHandler;
-import dev.rafex.kiwi.handlers.HealthHandler;
+import dev.rafex.kiwi.handlers.EnhancedHealthHandler;
 import dev.rafex.kiwi.handlers.HelloHandler;
 import dev.rafex.kiwi.handlers.LocationHandler;
 import dev.rafex.kiwi.handlers.LoginHandler;
@@ -41,7 +41,7 @@ public final class DefaultKiwiModule implements KiwiModule {
 		final var jwt = context.jwtService();
 
 		routes.add("/hello", new HelloHandler());
-		routes.add("/health", new HealthHandler(container.dataSource()));
+		routes.add("/health", new EnhancedHealthHandler(container.dataSource()));
 		routes.add("/auth/login", new LoginHandler(jwt, container.authService(), context.config().jwt()));
 		routes.add("/auth/token", new TokenHandler(jwt, container.appClientAuthService(), context.config().jwt()));
 		routes.add("/objects/*", new ObjectHandler(container.objectService()));

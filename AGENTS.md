@@ -10,7 +10,7 @@ Generated at: 2026-03-24T06:15:00.000000 UTC
 
 # 1. Objective
 
-Evolve the current Jetty 12 + Java 21 backend architecture to support:
+Evolve the current Jetty 12 + Java 25 backend architecture to support:
 
 -   Reusable Resource-based HTTP handlers
 -   Centralized method dispatch (GET, POST, PUT, DELETE, PATCH, OPTIONS)

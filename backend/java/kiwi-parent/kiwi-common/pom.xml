@@ -53,11 +53,11 @@
 				<artifactId>maven-resources-plugin</artifactId>
 			</plugin>
 
-			<!-- Compiler (Java 21) -->
+			<!-- Compiler (Java 25) -->
 			<plugin>
 				<artifactId>maven-compiler-plugin</artifactId>
 				<configuration>
-					<release>21</release>
+					<release>${java.version}</release>
 				</configuration>
 			</plugin>
 

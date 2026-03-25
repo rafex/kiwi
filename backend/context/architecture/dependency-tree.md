@@ -1,0 +1,16 @@
+# Árbol de Dependencias
+
+```
+dev.rafex.kiwi:kiwi-parent:pom:1.0-SNAPSHOT
+\- com.tngtech.archunit:archunit-junit5:jar:1.4.1:test
+   +- com.tngtech.archunit:archunit-junit5-api:jar:1.4.1:test
+   |  \- com.tngtech.archunit:archunit:jar:1.4.1:test
+   |     \- org.slf4j:slf4j-api:jar:2.0.17:test
+   \- com.tngtech.archunit:archunit-junit5-engine:jar:1.4.1:test
+      \- com.tngtech.archunit:archunit-junit5-engine-api:jar:1.4.1:test
+         \- org.junit.platform:junit-platform-engine:jar:6.0.3:test
+            +- org.opentest4j:opentest4j:jar:1.3.0:test
+            +- org.junit.platform:junit-platform-commons:jar:6.0.3:test
+            +- org.apiguardian:apiguardian-api:jar:1.1.2:test
+            \- org.jspecify:jspecify:jar:1.0.0:test
+```

@@ -22,6 +22,7 @@ import dev.rafex.ether.http.jetty12.JettyServerFactory;
 import dev.rafex.ether.http.jetty12.TokenVerificationResult;
 import dev.rafex.ether.json.JacksonJsonCodec;
 import dev.rafex.kiwi.bootstrap.KiwiContainer;
+import dev.rafex.kiwi.config.KiwiConfig;
 import dev.rafex.kiwi.security.KiwiJwtService;
 
 import java.util.ArrayList;
@@ -37,24 +38,24 @@ public final class KiwiServer {
 	}
 
 	public static void start(final KiwiContainer container) throws Exception {
-		start(container, ServerConfig.fromEnv(), List.of(new DefaultKiwiModule()));
+		start(container, container.config(), List.of(new DefaultKiwiModule()));
 	}
 
-	public static void start(final KiwiContainer container, final ServerConfig config, final List<KiwiModule> modules)
+	public static void start(final KiwiContainer container, final KiwiConfig config, final List<KiwiModule> modules)
 			throws Exception {
 		final var runner = createRunner(container, config, modules);
-		LOG.info("Starting Kiwi backend on port " + config.port());
+		LOG.info("Starting Kiwi backend on port " + config.server().port());
 		runner.start();
 		runner.await();
 	}
 
 	private static dev.rafex.ether.http.jetty12.JettyServerRunner createRunner(final KiwiContainer container,
-			final ServerConfig config, final List<KiwiModule> modules) {
+			final KiwiConfig config, final List<KiwiModule> modules) {
 		Objects.requireNonNull(container, "container");
 		Objects.requireNonNull(config, "config");
 
 		final var jsonCodec = JacksonJsonCodec.defaultCodec();
-		final var jwt = new KiwiJwtService(config.jwtIssuer(), config.jwtAudience(), config.jwtSecret());
+		final var jwt = new KiwiJwtService(config.jwt().issuer(), config.jwt().audience(), config.jwt().secret());
 		final var context = new ModuleContext(container, config, jwt);
 
 		final var routeRegistry = new RouteRegistry();
@@ -96,8 +97,7 @@ public final class KiwiServer {
 			});
 		}
 
-		final var etherConfig = new JettyServerConfig(config.port(), config.maxThreads(), config.minThreads(),
-				config.idleTimeoutMs(), config.threadPoolName(), config.environment());
+		final var etherConfig = JettyServerConfig.fromEnv();
 		return JettyServerFactory.create(etherConfig, etherRoutes, jsonCodec, null, List.of(), etherMiddlewares);
 	}
 }

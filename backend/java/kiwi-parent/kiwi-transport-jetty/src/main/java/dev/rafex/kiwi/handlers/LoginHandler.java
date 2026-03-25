@@ -22,6 +22,7 @@ import dev.rafex.ether.http.jetty12.JettyHttpExchange;
 import dev.rafex.ether.http.jetty12.NonBlockingResourceHandler;
 import dev.rafex.ether.json.JsonCodec;
 import dev.rafex.ether.json.JsonUtils;
+import dev.rafex.kiwi.config.JwtConfig;
 import dev.rafex.kiwi.security.InMemoryRateLimiter;
 import dev.rafex.kiwi.security.KiwiJwtService;
 import dev.rafex.kiwi.services.AuthService;
@@ -51,6 +52,9 @@ public final class LoginHandler extends NonBlockingResourceHandler {
 
 	public LoginHandler(final KiwiJwtService jwt, final AuthService authService) {
 		this(jwt, authService, Long.parseLong(System.getenv().getOrDefault("JWT_TTL_SECONDS", "3600")));
+	}
+	public LoginHandler(final KiwiJwtService jwt, final AuthService authService, final JwtConfig jwtConfig) {
+		this(jwt, authService, jwtConfig.ttlSeconds());
 	}
 
 	public LoginHandler(final KiwiJwtService jwt, final AuthService authService, final long ttlSeconds) {

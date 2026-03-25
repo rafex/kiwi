@@ -15,107 +15,70 @@
  */
 package dev.rafex.kiwi.repository.impl;
 
-import dev.rafex.kiwi.logging.Log;
+import dev.rafex.ether.database.core.DatabaseClient;
+import dev.rafex.ether.database.core.exceptions.DatabaseAccessException;
+import dev.rafex.ether.database.core.mapping.ResultSets;
+import dev.rafex.ether.database.core.sql.SqlParameter;
+import dev.rafex.ether.database.core.sql.SqlQuery;
+import dev.rafex.ether.database.postgres.errors.PostgresErrorClassifier;
 import dev.rafex.kiwi.repository.RoleRepository;
 
 import java.sql.SQLException;
-import java.time.Instant;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
-import javax.sql.DataSource;
-
 public class RoleRepositoryImpl implements RoleRepository {
 
-	private final DataSource ds;
+	private final DatabaseClient db;
 
-	public RoleRepositoryImpl(final DataSource ds) {
-		this.ds = ds;
+	public RoleRepositoryImpl(final DatabaseClient db) {
+		this.db = db;
 	}
 
 	@Override
-	public Optional<RoleRow> findByName(final String name) throws SQLException {
+	public Optional<RoleRow> findByName(final String name) {
 		final var sql = """
 				SELECT role_id, name, description, status, created_at, updated_at
 				FROM roles
 				WHERE name = ?
 				""";
-
-		try (var c = ds.getConnection(); var ps = c.prepareStatement(sql)) {
-
-			ps.setString(1, name);
-
-			try (var rs = ps.executeQuery()) {
-				if (!rs.next()) {
-					return Optional.empty();
-				}
-
-				return Optional.of(new RoleRow(rs.getObject("role_id", UUID.class), rs.getString("name"),
-						rs.getString("description"), rs.getString("status"), rs.getObject("created_at", Instant.class),
-						rs.getObject("updated_at", Instant.class)));
-			}
-		}
+		return db.queryOne(new SqlQuery(sql, List.of(SqlParameter.text(name))),
+				rs -> new RoleRow(ResultSets.getUuid(rs, "role_id"), rs.getString("name"), rs.getString("description"),
+						rs.getString("status"), ResultSets.getInstant(rs, "created_at"),
+						ResultSets.getInstant(rs, "updated_at")));
 	}
 
 	@Override
-	public UUID ensureRole(final String name, final String description) throws SQLException {
-		// 1) intenta encontrarlo
-		final var sel = "SELECT role_id FROM roles WHERE name = ?";
-		try (var c = ds.getConnection(); var ps = c.prepareStatement(sel)) {
-			ps.setString(1, name);
-			try (var rs = ps.executeQuery()) {
-				if (rs.next()) {
-					return rs.getObject(1, UUID.class);
-				}
-			}
-		} catch (final SQLException e) {
-			Log.error(getClass(), "Error al buscar rol por nombre", e);
+	public UUID ensureRole(final String name, final String description) {
+		final var existing = db.queryOne(
+				new SqlQuery("SELECT role_id FROM roles WHERE name = ?", List.of(SqlParameter.text(name))),
+				rs -> ResultSets.getUuid(rs, "role_id"));
+		if (existing.isPresent()) {
+			return existing.get();
 		}
 
-		// 2) si no existe, créalo
 		final var roleId = UUID.randomUUID();
-		final var ins = """
-				INSERT INTO roles (role_id, name, description, status)
-				VALUES (?, ?, ?, 'active')
-				""";
-		try (var c = ds.getConnection(); var ps = c.prepareStatement(ins)) {
-			ps.setObject(1, roleId);
-			ps.setString(2, name);
-			ps.setString(3, description);
-			ps.executeUpdate();
-		} catch (final SQLException e) {
-			Log.error(getClass(), e, "Error al crear rol {}:{}", name, description);
-			// Puede ser un error de concurrencia (otro proceso creó el mismo rol al mismo
-			// tiempo)
-			// Intenta encontrarlo de nuevo
-			try (var c = ds.getConnection(); var ps = c.prepareStatement(sel)) {
-				ps.setString(1, name);
-				try (var rs = ps.executeQuery()) {
-					if (rs.next()) {
-						return rs.getObject(1, UUID.class);
-					}
-				}
-			} catch (final SQLException ex) {
-				Log.error(getClass(), ex, "Error al buscar rol por nombre después de fallo de inserción {}:{}", name,
-						description);
+		try {
+			db.execute(new SqlQuery("INSERT INTO roles (role_id, name, description, status) VALUES (?, ?, ?, 'active')",
+					List.of(SqlParameter.of(roleId), SqlParameter.text(name), SqlParameter.text(description))));
+			return roleId;
+		} catch (final DatabaseAccessException e) {
+			if (e.getCause() instanceof final SQLException sqle
+					&& PostgresErrorClassifier.Category.UNIQUE_VIOLATION == PostgresErrorClassifier.classify(sqle)) {
+				// Race condition: another thread created the same role concurrently
+				return db
+						.queryOne(new SqlQuery("SELECT role_id FROM roles WHERE name = ?",
+								List.of(SqlParameter.text(name))), rs -> ResultSets.getUuid(rs, "role_id"))
+						.orElseThrow(() -> new DatabaseAccessException("Role not found after insert conflict", e));
 			}
+			throw e;
 		}
-
-		return roleId;
 	}
 
 	@Override
-	public void assignRoleToUser(final UUID userId, final UUID roleId) throws SQLException {
-		final var sql = """
-				SELECT api_assign_role_to_user(?::uuid, ?::uuid)
-				""";
-
-		try (var c = ds.getConnection(); var ps = c.prepareStatement(sql)) {
-
-			ps.setObject(1, userId);
-			ps.setObject(2, roleId);
-			ps.execute();
-		}
+	public void assignRoleToUser(final UUID userId, final UUID roleId) {
+		db.execute(new SqlQuery("SELECT api_assign_role_to_user(?::uuid, ?::uuid)",
+				List.of(SqlParameter.of(userId), SqlParameter.of(roleId))));
 	}
-
 }

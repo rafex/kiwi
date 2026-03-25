@@ -16,6 +16,29 @@
 	<name>kiwi-common</name>
 	
 	<dependencies>
+		<dependency>
+			<groupId>dev.rafex.ether.logging</groupId>
+			<artifactId>ether-logging-core</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>dev.rafex.ether.config</groupId>
+			<artifactId>ether-config</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>dev.rafex.ether.crypto</groupId>
+			<artifactId>ether-crypto</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.slf4j</groupId>
+			<artifactId>slf4j-api</artifactId>
+			<version>${slf4j.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>org.junit.jupiter</groupId>
+			<artifactId>junit-jupiter</artifactId>
+			<version>${junit.version}</version>
+			<scope>test</scope>
+		</dependency>
 	</dependencies>
 
 	<build>

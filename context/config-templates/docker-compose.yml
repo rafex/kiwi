@@ -1,0 +1,49 @@
+# Configuración de Docker Compose
+
+Este archivo contiene la configuración de Docker Compose para desarrollo local.
+
+## Configuración de Docker Compose
+
+version: '3.8'
+
+services:
+  kiwi-backend:
+    image: kiwi-jetty:latest
+    build:
+      context: backend/java
+      dockerfile: Dockerfile
+    ports:
+      - "8080:8080"
+      - "4000:4000"
+    environment:
+      DB_URL: "jdbc:postgresql://postgres:5432/kiwi"
+      DB_USER: "kiwi_user"
+      DB_PASSWORD: "kiwi_password"
+      JWT_SECRET: "your_256_bit_hex_secret_here"
+      JWT_ISS: "dev.rafex.kiwi"
+      JWT_AUD: "kiwi-backend"
+      JWT_TTL_SECONDS: "3600"
+      LOG_LEVEL: "DEBUG"
+      PORT: "8080"
+      ENVIRONMENT: "dev"
+      ENABLE_USER_PROVISIONING: "true"
+      BOOTSTRAP_TOKEN: "super-secret-bootstrap-token"
+      AUTH_SALT_BYTES: "16"
+      AUTH_PBKDF2_ITERATIONS: "120000"
+      KIWI_PASSWORD_HASH_BYTES: "32"
+    depends_on:
+      - postgres
+
+  postgres:
+    image: postgres:15
+    environment:
+      POSTGRES_USER: kiwi_user
+      POSTGRES_PASSWORD: kiwi_password
+      POSTGRES_DB: kiwi
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+volumes:
+  postgres_data:

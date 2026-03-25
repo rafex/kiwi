@@ -15,13 +15,15 @@
  */
 package dev.rafex.kiwi.services.impl;
 
+import dev.rafex.ether.database.core.exceptions.DatabaseAccessException;
+import dev.rafex.ether.database.postgres.errors.PostgresErrorClassifier;
+import dev.rafex.kiwi.config.AuthConfig;
 import dev.rafex.kiwi.logging.Log;
 import dev.rafex.kiwi.repository.AppClientRepository;
 import dev.rafex.kiwi.security.PasswordHasherPBKDF2;
 import dev.rafex.kiwi.services.AppClientAuthService;
 
 import java.security.SecureRandom;
-import java.sql.SQLException;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
@@ -39,6 +41,10 @@ public final class AppClientAuthServiceImpl implements AppClientAuthService {
 		this(repository, hasher, new SecureRandom(),
 				Integer.parseInt(System.getenv().getOrDefault("AUTH_SALT_BYTES", "16")),
 				Integer.parseInt(System.getenv().getOrDefault("AUTH_PBKDF2_ITERATIONS", "120000")));
+	}
+	public AppClientAuthServiceImpl(final AppClientRepository repository, final PasswordHasherPBKDF2 hasher,
+			final AuthConfig authConfig) {
+		this(repository, hasher, new SecureRandom(), authConfig.saltBytes(), authConfig.iterations());
 	}
 
 	public AppClientAuthServiceImpl(final AppClientRepository repository, final PasswordHasherPBKDF2 hasher,
@@ -80,7 +86,7 @@ public final class AppClientAuthServiceImpl implements AppClientAuthService {
 
 			repository.touchLastUsed(app.appClientId());
 			return AuthResult.ok(app.appClientId(), app.clientId(), app.roles());
-		} catch (final SQLException e) {
+		} catch (final DatabaseAccessException e) {
 			Log.error(getClass(), e, "Error authenticating client {}", clientId);
 			return AuthResult.bad("error");
 		} finally {
@@ -112,8 +118,9 @@ public final class AppClientAuthServiceImpl implements AppClientAuthService {
 			repository.createClient(appClientId, normalizedClientId, normalizedName, hash.hash(), salt, iterations,
 					normalizedRoles);
 			return CreateClientResult.ok(appClientId, normalizedClientId, normalizedName, normalizedRoles);
-		} catch (final SQLException e) {
-			if ("23505".equals(e.getSQLState())) {
+		} catch (final DatabaseAccessException e) {
+			if (e.getCause() instanceof final java.sql.SQLException sqle
+					&& PostgresErrorClassifier.Category.UNIQUE_VIOLATION == PostgresErrorClassifier.classify(sqle)) {
 				return CreateClientResult.bad("client_id_taken");
 			}
 			Log.error(getClass(), e, "Error creating app client {}", normalizedClientId);

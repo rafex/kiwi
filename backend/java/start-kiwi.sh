@@ -18,6 +18,9 @@ fi
 
 echo "[start-kiwi] Starting kiwi-backend (DB_URL=${DB_URL:+<provided>})"
 
+# Check if context documentation is available
+echo "[start-kiwi] Context documentation available at /app/context/"
+
 exec java \
   -XX:+UseContainerSupport \
   -XX:MaxRAMPercentage=70.0 \

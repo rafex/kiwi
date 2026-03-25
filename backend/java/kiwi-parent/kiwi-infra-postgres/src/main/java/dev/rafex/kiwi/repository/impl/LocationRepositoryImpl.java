@@ -15,51 +15,35 @@
  */
 package dev.rafex.kiwi.repository.impl;
 
+import dev.rafex.ether.database.core.DatabaseClient;
+import dev.rafex.ether.database.core.sql.SqlParameter;
+import dev.rafex.ether.database.core.sql.SqlQuery;
 import dev.rafex.kiwi.repository.LocationRepository;
 
-import java.sql.SQLException;
 import java.sql.Types;
+import java.util.List;
 import java.util.UUID;
-
-import javax.sql.DataSource;
 
 public class LocationRepositoryImpl implements LocationRepository {
 
-	private final DataSource ds;
+	private final DatabaseClient db;
 
-	public LocationRepositoryImpl(final DataSource ds) {
-		this.ds = ds;
+	public LocationRepositoryImpl(final DatabaseClient db) {
+		this.db = db;
 	}
 
 	@Override
-	public void createLocation(final UUID locationId, final String name, final UUID parentLocationId)
-			throws SQLException {
-		try (var c = ds.getConnection();
-				var ps = c.prepareStatement("SELECT api_create_location(?::uuid, ?, ?::uuid)")) {
-
-			ps.setObject(1, locationId);
-			ps.setString(2, name);
-
-			if (parentLocationId == null) {
-				ps.setNull(3, Types.OTHER);
-			} else {
-				ps.setObject(3, parentLocationId);
-			}
-
-			ps.execute();
-		}
+	public void createLocation(final UUID locationId, final String name, final UUID parentLocationId) {
+		final var parentParam = parentLocationId == null
+				? SqlParameter.nullOf(Types.OTHER)
+				: SqlParameter.of(parentLocationId);
+		db.execute(new SqlQuery("SELECT api_create_location(?::uuid, ?, ?::uuid)",
+				List.of(SqlParameter.of(locationId), SqlParameter.text(name), parentParam)));
 	}
 
-	// TODO falta implementar
 	@Override
-	public boolean locationExists(final UUID locationId) throws SQLException {
-		try (var c = ds.getConnection();
-				var ps = c.prepareStatement("SELECT 1 FROM locations WHERE location_id = ?::uuid")) {
-			ps.setObject(1, locationId);
-			try (var rs = ps.executeQuery()) {
-				return rs.next();
-			}
-		}
+	public boolean locationExists(final UUID locationId) {
+		return db.queryOne(new SqlQuery("SELECT 1 FROM locations WHERE location_id = ?::uuid",
+				List.of(SqlParameter.of(locationId))), rs -> rs.getInt(1)).isPresent();
 	}
-
 }

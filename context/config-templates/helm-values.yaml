@@ -1,0 +1,46 @@
+# Configuración de Helm
+
+Este archivo contiene los valores de configuración para Helm.
+
+## Valores de Configuración
+
+# Configuración general
+replicaCount: 1
+
+# Configuración de la imagen
+image:
+  repository: ghcr.io/rafex/kiwi-jetty-backend
+  tag: latest
+  pullPolicy: IfNotPresent
+
+# Configuración del servicio
+service:
+  type: ClusterIP
+  port: 8080
+
+# Configuración de los recursos
+resources:
+  limits:
+    cpu: 1000m
+    memory: 1024Mi
+  requests:
+    cpu: 500m
+    memory: 512Mi
+
+# Configuración de las variables de entorno
+env:
+  DB_URL: "jdbc:postgresql://postgres:5432/kiwi"
+  DB_USER: "kiwi_user"
+  DB_PASSWORD: "kiwi_password"
+  JWT_SECRET: "your_256_bit_hex_secret_here"
+  JWT_ISS: "kiwi-production"
+  JWT_AUD: "kiwi-frontend"
+  JWT_TTL_SECONDS: "3600"
+  LOG_LEVEL: "INFO"
+  PORT: "8080"
+  ENVIRONMENT: "production"
+  ENABLE_USER_PROVISIONING: "false"
+  BOOTSTRAP_TOKEN: "production-bootstrap-token"
+  AUTH_SALT_BYTES: "16"
+  AUTH_PBKDF2_ITERATIONS: "120000"
+  KIWI_PASSWORD_HASH_BYTES: "32"

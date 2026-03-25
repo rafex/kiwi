@@ -15,6 +15,9 @@
  */
 package dev.rafex.kiwi.server;
 
+import dev.rafex.ether.config.EtherConfig;
+import dev.rafex.ether.config.sources.EnvironmentConfigSource;
+
 import java.security.SecureRandom;
 import java.util.HexFormat;
 import java.util.Set;
@@ -25,22 +28,23 @@ public record ServerConfig(int port, int maxThreads, int minThreads, int idleTim
 	private static final String KNOWN_DEFAULT_SECRET = "CHANGE_ME_NOW_32+chars_secret";
 
 	public static ServerConfig fromEnv() {
-		final var env = System.getenv();
+		final var cfg = EtherConfig.of(new EnvironmentConfigSource());
 		final var cpus = Runtime.getRuntime().availableProcessors();
-		return new ServerConfig(parseInt(env.get("PORT"), 8080),
-				parseInt(env.get("HTTP_MAX_THREADS"), Math.max(cpus * 2, 16)), parseInt(env.get("HTTP_MIN_THREADS"), 4),
-				parseInt(env.get("HTTP_IDLE_TIMEOUT_MS"), 30_000), env.getOrDefault("HTTP_POOL_NAME", "kiwi-http"),
-				env.getOrDefault("JWT_ISS", "dev.rafex.kiwi"), env.getOrDefault("JWT_AUD", "kiwi-backend"),
-				resolveJwtSecret(env.get("JWT_SECRET")),
-				env.getOrDefault("ENVIRONMENT", "unknown"),
-				"true".equalsIgnoreCase(env.getOrDefault("ENABLE_USER_PROVISIONING", "false")));
+		return new ServerConfig(cfg.get("PORT").map(Integer::parseInt).orElse(8080),
+				cfg.get("HTTP_MAX_THREADS").map(Integer::parseInt).orElse(Math.max(cpus * 2, 16)),
+				cfg.get("HTTP_MIN_THREADS").map(Integer::parseInt).orElse(4),
+				cfg.get("HTTP_IDLE_TIMEOUT_MS").map(Integer::parseInt).orElse(30_000),
+				cfg.get("HTTP_POOL_NAME").orElse("kiwi-http"), cfg.get("JWT_ISS").orElse("dev.rafex.kiwi"),
+				cfg.get("JWT_AUD").orElse("kiwi-backend"), resolveJwtSecret(cfg.get("JWT_SECRET").orElse(null)),
+				cfg.get("ENVIRONMENT").orElse("unknown"),
+				cfg.get("ENABLE_USER_PROVISIONING").map(Boolean::parseBoolean).orElse(false));
 	}
 
 	/**
-	 * Si JWT_SECRET no está configurado o usa el valor por defecto conocido,
-	 * genera un secreto aleatorio de 256 bits y emite una advertencia.
-	 * El secreto generado no persiste entre reinicios — todos los tokens
-	 * emitidos pierden validez. En producción debe configurarse JWT_SECRET.
+	 * Si JWT_SECRET no está configurado o usa el valor por defecto conocido, genera
+	 * un secreto aleatorio de 256 bits y emite una advertencia. El secreto generado
+	 * no persiste entre reinicios — todos los tokens emitidos pierden validez. En
+	 * producción debe configurarse JWT_SECRET.
 	 */
 	private static String resolveJwtSecret(final String envValue) {
 		if (envValue == null || envValue.isBlank() || KNOWN_DEFAULT_SECRET.equals(envValue)) {
@@ -57,17 +61,6 @@ public record ServerConfig(int port, int maxThreads, int minThreads, int idleTim
 
 	public boolean isSandbox() {
 		return Set.of("work02", "sandbox", "dev").contains(environment.toLowerCase());
-	}
-
-	private static int parseInt(final String raw, final int def) {
-		if (raw == null || raw.isBlank()) {
-			return def;
-		}
-		try {
-			return Integer.parseInt(raw.trim());
-		} catch (final NumberFormatException e) {
-			return def;
-		}
 	}
 
 }

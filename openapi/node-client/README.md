@@ -1,11 +1,6 @@
 # kiwi-node-client
 
-Proyecto Node.js para consumir la API Kiwi en dos modos:
-
-- CLI (`src/index.js`)
-- Web UI visual tipo Postman/Swagger (`src/server.js` + `public/`)
-
-La especificación fuente está en `../kiwi-openapi.yaml`.
+Cliente visual tipo Postman para la API Kiwi, generado automáticamente desde el OAS (`../kiwi-openapi.yaml`).
 
 ## Requisitos
 
@@ -14,11 +9,11 @@ La especificación fuente está en `../kiwi-openapi.yaml`.
 ## Instalación
 
 ```bash
-cd /Users/rafex/repository/github/rafex/kiwi/openapi/node-client
+cd openapi/node-client
 npm install
 ```
 
-## Modo visual (recomendado)
+## Uso
 
 ```bash
 npm run web
@@ -26,50 +21,18 @@ npm run web
 
 Abre: `http://localhost:3030`
 
-Características de la UI:
+## Funcionalidades
 
-- lista y filtro de endpoints desde OAS
-- visualización de método, path y resumen
-- edición de path params, query params y headers
-- autenticación `Bearer` o `Basic`
-- edición de body JSON
-- response con status, tiempo, headers y body formateado
+- Lista de endpoints leída directamente del OAS — cualquier endpoint nuevo aparece automáticamente
+- Filtro por método, path o resumen
+- Path params y query params con campos generados desde el spec
+- Autenticación Bearer o Basic (persiste en `localStorage`)
+- Body JSON editable con skeleton autogenerado desde el schema
+- Response con status HTTP, tiempo en ms, headers y body formateado
+- Paneles redimensionables
 
-Puedes cambiar el puerto con:
-
-```bash
-export KIWI_CLIENT_PORT=3030
-npm run web
-```
-
-## Modo CLI
+## Puerto
 
 ```bash
-npm run health
-npm run hello -- --name Rafex
-npm run login -- --username USER --password PASS [--basic]
-npm run start -- get-object --id UUID
-npm run start -- search --q macbook --tags laptop,apple --limit 20 --offset 0
-npm run start -- search --rsql 'name=like="%macbook%";status==active' --tags laptop,apple --limit 20 --offset 0
-npm run start -- fuzzy --name mac --limit 20 --offset 0
-npm run start -- create-location --name "Closet"
-npm run start -- create-object --name "MacBook Pro" --location-id UUID --tags laptop,apple --metadata '{"ram_gb":32}'
-npm run start -- move-object --id UUID --new-location-id UUID
-npm run start -- update-tags --id UUID --tags a,b,c
-npm run start -- update-text --id UUID --name "Nuevo nombre" --description "Nueva desc"
-```
-
-Notas de `search`:
-
-- `--q` interpreta texto libre y lo convierte a RSQL seguro: `name=like="%<texto>%"`
-- `--rsql` envía la expresión RSQL tal cual (tiene prioridad sobre `--q`)
-- Si usas `;` o paréntesis en RSQL, envuelve el valor entre comillas simples en shell
-
-Variables útiles:
-
-```bash
-export KIWI_BASE_URL="https://kiwi.v1.rafex.cloud"
-export KIWI_TOKEN="<jwt>"
-export KIWI_USERNAME="rafex"
-export KIWI_PASSWORD="secret"
+KIWI_CLIENT_PORT=3030 npm run web
 ```

@@ -18,7 +18,8 @@ package dev.rafex.kiwi.dtos;
 /**
  * Request body para {@code PATCH /objects/{id}/metadata}.
  *
- * <p>El campo {@code metadata} puede ser cualquier objeto JSON válido (nulo
+ * <p>
+ * El campo {@code metadata} puede ser cualquier objeto JSON válido (nulo
  * incluido para limpiar la metadata del objeto).
  */
 public record UpdateMetadataRequest(Object metadata) {

@@ -15,115 +15,71 @@
  */
 package dev.rafex.kiwi.repository.impl;
 
+import dev.rafex.ether.database.core.DatabaseClient;
+import dev.rafex.ether.database.core.mapping.ResultSets;
+import dev.rafex.ether.database.core.sql.SqlParameter;
+import dev.rafex.ether.database.core.sql.SqlQuery;
 import dev.rafex.kiwi.repository.UserRepository;
 
-import java.sql.SQLException;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
-import javax.sql.DataSource;
-
 public class UserRepositoryImpl implements UserRepository {
 
-	private final DataSource ds;
+	private final DatabaseClient db;
 
-	public UserRepositoryImpl(final DataSource ds) {
-		this.ds = ds;
+	public UserRepositoryImpl(final DatabaseClient db) {
+		this.db = db;
 	}
 
 	@Override
 	public void createUser(final UUID userId, final String username, final byte[] passwordHash, final byte[] salt,
-			final int iterations) throws SQLException {
-
+			final int iterations) {
 		final var sql = """
-				INSERT INTO users (user_id,username, password_hash, salt, iterations, status, created_at, updated_at)
-				VALUES (?,?, ?, ?, ?, 'active', NOW(), NOW())
+				INSERT INTO users (user_id, username, password_hash, salt, iterations, status, created_at, updated_at)
+				VALUES (?, ?, ?, ?, ?, 'active', NOW(), NOW())
 				""";
-
-		try (var c = ds.getConnection(); var ps = c.prepareStatement(sql)) {
-
-			ps.setObject(1, userId);
-			ps.setString(2, username);
-			ps.setBytes(3, passwordHash);
-			ps.setBytes(4, salt);
-			ps.setInt(5, iterations);
-
-			ps.executeUpdate();
-		}
-
+		db.execute(new SqlQuery(sql, List.of(SqlParameter.of(userId), SqlParameter.text(username),
+				SqlParameter.of(passwordHash), SqlParameter.of(salt), SqlParameter.of(iterations))));
 	}
 
-	/** Para login: trae hash/salt/iterations y status */
 	@Override
-	public Optional<UserRow> findByUsername(final String username) throws SQLException {
+	public Optional<UserRow> findByUsername(final String username) {
 		final var sql = """
 				SELECT user_id, username, password_hash, salt, iterations, status, created_at, updated_at
 				FROM users
 				WHERE username = ?
 				""";
-
-		try (var c = ds.getConnection(); var ps = c.prepareStatement(sql)) {
-
-			ps.setString(1, username);
-
-			try (var rs = ps.executeQuery()) {
-				if (!rs.next()) {
-					return Optional.empty();
-				}
-
-				return Optional.of(new UserRow(rs.getObject("user_id", UUID.class), rs.getString("username"),
+		return db.queryOne(new SqlQuery(sql, List.of(SqlParameter.text(username))),
+				rs -> new UserRow(ResultSets.getUuid(rs, "user_id"), rs.getString("username"),
 						rs.getBytes("password_hash"), rs.getBytes("salt"), rs.getInt("iterations"),
-						rs.getString("status"), ResultSets.asInstant(rs, "created_at"),
-						ResultSets.asInstant(rs, "updated_at")));
-			}
-		}
+						rs.getString("status"), ResultSets.getInstant(rs, "created_at"),
+						ResultSets.getInstant(rs, "updated_at")));
 	}
 
-	/** Roles del usuario (para meterlos en JWT o checar permisos) */
 	@Override
-	public List<String> findRoleNamesByUserId(final UUID userId) throws SQLException {
-		final var sql = """
-				                SELECT role_name
-				                FROM api_find_role_names_by_user_id(?::uuid)
-				""";
-
-		try (var c = ds.getConnection(); var ps = c.prepareStatement(sql)) {
-
-			ps.setObject(1, userId);
-
-			try (var rs = ps.executeQuery()) {
-				final var out = new ArrayList<String>();
-				while (rs.next()) {
-					out.add(rs.getString(1));
-				}
-				return out;
-			}
-		}
+	public List<String> findRoleNamesByUserId(final UUID userId) {
+		return db.queryList(new SqlQuery("SELECT role_name FROM api_find_role_names_by_user_id(?::uuid)",
+				List.of(SqlParameter.of(userId))), rs -> rs.getString(1));
 	}
 
-	/** Útil si quieres obtener todo (usuario + roles) en una sola llamada */
 	@Override
-	public Optional<UserWithRoles> findByUsernameWithRoles(final String username) throws SQLException {
+	public Optional<UserWithRoles> findByUsernameWithRoles(final String username) {
 		final var userOpt = findByUsername(username);
 		if (userOpt.isEmpty()) {
 			return Optional.empty();
 		}
-
 		final var user = userOpt.get();
 		final var roles = findRoleNamesByUserId(user.userId());
 		return Optional.of(new UserWithRoles(user, roles));
 	}
 
 	@Override
-	public int countUsers() throws SQLException {
-		try (var c = ds.getConnection();
-				var ps = c.prepareStatement("SELECT count(*) FROM users");
-				var rs = ps.executeQuery()) {
+	public int countUsers() {
+		return db.query(SqlQuery.of("SELECT count(*) FROM users"), rs -> {
 			rs.next();
 			return rs.getInt(1);
-		}
+		});
 	}
-
 }

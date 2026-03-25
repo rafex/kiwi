@@ -21,19 +21,38 @@ import dev.rafex.ether.http.jetty12.JettyHttpExchange;
 import dev.rafex.ether.http.jetty12.NonBlockingResourceHandler;
 import dev.rafex.ether.json.JsonCodec;
 import dev.rafex.ether.json.JsonUtils;
+import dev.rafex.ether.observability.core.probe.ProbeAggregator;
+import dev.rafex.ether.observability.core.probe.ProbeCheck;
+import dev.rafex.ether.observability.core.probe.ProbeKind;
+import dev.rafex.ether.observability.core.probe.ProbeResult;
+import dev.rafex.ether.observability.core.probe.ProbeStatus;
 
 import java.time.Instant;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+
+import javax.sql.DataSource;
 
 public class HealthHandler extends NonBlockingResourceHandler {
 
 	private static final JsonCodec JSON_CODEC = JsonUtils.codec();
 	private static final JettyApiResponses RESPONSES = new JettyApiResponses(JSON_CODEC);
 
+	private final List<ProbeCheck> probes;
+
 	public HealthHandler() {
+		this(null);
+	}
+
+	public HealthHandler(final DataSource dataSource) {
 		super(JSON_CODEC);
+		if (dataSource != null) {
+			probes = List.of(dbProbe(dataSource));
+		} else {
+			probes = List.of();
+		}
 	}
 
 	@Override
@@ -49,8 +68,25 @@ public class HealthHandler extends NonBlockingResourceHandler {
 	@Override
 	public boolean get(final dev.rafex.ether.http.core.HttpExchange x) {
 		final var jx = asJetty(x);
-		final var body = Map.of("status", "UP", "timestamp", Instant.now().toString());
-		RESPONSES.ok(jx.response(), jx.callback(), body);
+
+		final var report = ProbeAggregator.aggregate(ProbeKind.HEALTH, probes);
+		final var overallStatus = report.status();
+
+		final var checksMap = new LinkedHashMap<String, Object>();
+		for (final var result : report.results()) {
+			checksMap.put(result.name(),
+					Map.of("status", result.status().name(), "detail", result.detail() != null ? result.detail() : ""));
+		}
+
+		final var body = new LinkedHashMap<String, Object>();
+		body.put("status", overallStatus.name());
+		body.put("timestamp", Instant.now().toString());
+		if (!checksMap.isEmpty()) {
+			body.put("checks", checksMap);
+		}
+
+		final int httpStatus = overallStatus == ProbeStatus.DOWN ? 503 : 200;
+		RESPONSES.json(jx.response(), jx.callback(), httpStatus, body);
 		return true;
 	}
 
@@ -59,8 +95,19 @@ public class HealthHandler extends NonBlockingResourceHandler {
 		return Set.of("GET");
 	}
 
+	private static ProbeCheck dbProbe(final DataSource ds) {
+		return () -> {
+			try (var conn = ds.getConnection()) {
+				final var ok = conn.isValid(1);
+				return new ProbeResult("database", ProbeKind.HEALTH, ok ? ProbeStatus.UP : ProbeStatus.DOWN,
+						ok ? "connected" : "validation failed");
+			} catch (final Exception e) {
+				return new ProbeResult("database", ProbeKind.HEALTH, ProbeStatus.DOWN, e.getMessage());
+			}
+		};
+	}
+
 	private static JettyHttpExchange asJetty(final dev.rafex.ether.http.core.HttpExchange x) {
 		return (JettyHttpExchange) x;
 	}
-
 }

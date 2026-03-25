@@ -15,6 +15,8 @@
  */
 package dev.rafex.kiwi.bootstrap;
 
+import dev.rafex.ether.database.core.DatabaseClient;
+import dev.rafex.kiwi.config.KiwiConfig;
 import dev.rafex.kiwi.db.Db;
 import dev.rafex.kiwi.repository.AppClientRepository;
 import dev.rafex.kiwi.repository.LocationRepository;
@@ -179,6 +181,7 @@ public final class KiwiContainer {
 
 	private final Lazy<KiwiConfig> config;
 	private final Lazy<DataSource> dataSource;
+	private final Lazy<DatabaseClient> databaseClient;
 	private final Lazy<ObjectRepository> objectRepository;
 	private final Lazy<ObjectService> objectService;
 	private final Lazy<LocationRepository> locationRepository;
@@ -198,27 +201,29 @@ public final class KiwiContainer {
 	public KiwiContainer(final Overrides overrides) {
 		this.overrides = Objects.requireNonNull(overrides, "overrides");
 
-		config = new Lazy<>(select(overrides.config(), KiwiConfig::fromEnv));
+		config = new Lazy<>(select(overrides.config(), KiwiConfig::load));
 		dataSource = new Lazy<>(select(overrides.dataSource(), () -> DataSourceFactory.create(config())));
+		databaseClient = new Lazy<>(() -> Db.databaseClient());
 		passwordHasher = new Lazy<>(select(overrides.passwordHasher(), () -> PasswordHasherFactory.create(config())));
 
 		objectRepository = new Lazy<>(
-				select(overrides.objectRepository(), () -> new ObjectRepositoryImpl(dataSource())));
+				select(overrides.objectRepository(), () -> new ObjectRepositoryImpl(databaseClient())));
 		objectService = new Lazy<>(select(overrides.objectService(), () -> new ObjectServiceImpl(objectRepository())));
 		locationRepository = new Lazy<>(
-				select(overrides.locationRepository(), () -> new LocationRepositoryImpl(dataSource())));
+				select(overrides.locationRepository(), () -> new LocationRepositoryImpl(databaseClient())));
 		locationService = new Lazy<>(
 				select(overrides.locationService(), () -> new LocationServiceImpl(locationRepository())));
-		userRepository = new Lazy<>(select(overrides.userRepository(), () -> new UserRepositoryImpl(dataSource())));
-		roleRepository = new Lazy<>(select(overrides.roleRepository(), () -> new RoleRepositoryImpl(dataSource())));
+		userRepository = new Lazy<>(select(overrides.userRepository(), () -> new UserRepositoryImpl(databaseClient())));
+		roleRepository = new Lazy<>(select(overrides.roleRepository(), () -> new RoleRepositoryImpl(databaseClient())));
 		appClientRepository = new Lazy<>(
-				select(overrides.appClientRepository(), () -> new AppClientRepositoryImpl(dataSource())));
+				select(overrides.appClientRepository(), () -> new AppClientRepositoryImpl(databaseClient())));
 		authService = new Lazy<>(
 				select(overrides.authService(), () -> new AuthServiceImpl(userRepository(), passwordHasher())));
 		appClientAuthService = new Lazy<>(select(overrides.appClientAuthService(),
-				() -> new AppClientAuthServiceImpl(appClientRepository(), passwordHasher())));
-		userProvisioningService = new Lazy<>(select(overrides.userProvisioningService(),
-				() -> new UserProvisioningServiceImpl(userRepository(), roleRepository(), passwordHasher())));
+				() -> new AppClientAuthServiceImpl(appClientRepository(), passwordHasher(), config().auth())));
+		userProvisioningService = new Lazy<>(
+				select(overrides.userProvisioningService(), () -> new UserProvisioningServiceImpl(userRepository(),
+						roleRepository(), passwordHasher(), config().auth())));
 	}
 
 	// ---- Public accessors ----
@@ -229,6 +234,10 @@ public final class KiwiContainer {
 
 	public DataSource dataSource() {
 		return dataSource.get();
+	}
+
+	public DatabaseClient databaseClient() {
+		return databaseClient.get();
 	}
 
 	public PasswordHasherPBKDF2 passwordHasher() {
@@ -282,6 +291,7 @@ public final class KiwiContainer {
 	public void warmup() {
 		config();
 		dataSource();
+		databaseClient();
 		passwordHasher();
 		objectRepository();
 		locationRepository();
@@ -299,40 +309,7 @@ public final class KiwiContainer {
 		return override.orElse(def);
 	}
 
-	// ======= Minimal placeholders (replace with your real ones) =======
-	public static final class KiwiConfig {
-		private static final String ENV_HASH_BYTES = "KIWI_PASSWORD_HASH_BYTES";
-		private static final int DEFAULT_HASH_BYTES = 32;
-
-		private final int passwordHashBytes;
-
-		private KiwiConfig(final int passwordHashBytes) {
-			if (passwordHashBytes < 16) {
-				throw new IllegalArgumentException("passwordHashBytes demasiado pequeño");
-			}
-			this.passwordHashBytes = passwordHashBytes;
-		}
-
-		public static KiwiConfig fromEnv() {
-			// Validate env vars here (fail fast)
-			final var rawHashBytes = System.getenv(ENV_HASH_BYTES);
-			final int hashBytes;
-			if (rawHashBytes == null || rawHashBytes.isBlank()) {
-				hashBytes = DEFAULT_HASH_BYTES;
-			} else {
-				try {
-					hashBytes = Integer.parseInt(rawHashBytes.trim());
-				} catch (final NumberFormatException e) {
-					throw new IllegalArgumentException("Invalid " + ENV_HASH_BYTES + ": " + rawHashBytes, e);
-				}
-			}
-			return new KiwiConfig(hashBytes);
-		}
-
-		public int passwordHashBytes() {
-			return passwordHashBytes;
-		}
-	}
+	// KiwiConfig now provided by dev.rafex.kiwi.config.KiwiConfig
 
 	public static final class DataSourceFactory {
 		public static DataSource create(final KiwiConfig cfg) {
@@ -342,7 +319,7 @@ public final class KiwiContainer {
 
 	public static final class PasswordHasherFactory {
 		public static PasswordHasherPBKDF2 create(final KiwiConfig cfg) {
-			return new PasswordHasherPBKDF2(cfg.passwordHashBytes());
+			return new PasswordHasherPBKDF2(cfg.auth().derivedKeyBytes());
 		}
 	}
 }

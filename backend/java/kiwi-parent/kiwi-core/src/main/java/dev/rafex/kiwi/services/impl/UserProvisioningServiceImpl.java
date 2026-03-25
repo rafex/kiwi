@@ -15,6 +15,9 @@
  */
 package dev.rafex.kiwi.services.impl;
 
+import dev.rafex.ether.database.core.exceptions.DatabaseAccessException;
+import dev.rafex.ether.database.postgres.errors.PostgresErrorClassifier;
+import dev.rafex.kiwi.config.AuthConfig;
 import dev.rafex.kiwi.errors.KiwiError;
 import dev.rafex.kiwi.repository.RoleRepository;
 import dev.rafex.kiwi.repository.UserRepository;
@@ -22,7 +25,6 @@ import dev.rafex.kiwi.security.PasswordHasherPBKDF2;
 import dev.rafex.kiwi.services.UserProvisioningService;
 
 import java.security.SecureRandom;
-import java.sql.SQLException;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
@@ -36,22 +38,20 @@ public class UserProvisioningServiceImpl implements UserProvisioningService {
 
 	private final SecureRandom rng = new SecureRandom();
 
-	// defaults por env
-	private final int saltBytes;
-	private final int iterations;
+	// configuración de autenticación
+	private final AuthConfig authConfig;
 
 	public UserProvisioningServiceImpl(final UserRepository userRepo, final RoleRepository roleRepo,
-			final PasswordHasherPBKDF2 hasher) {
+			final PasswordHasherPBKDF2 hasher, final AuthConfig authConfig) {
 		this.userRepo = Objects.requireNonNull(userRepo);
 		this.roleRepo = Objects.requireNonNull(roleRepo);
 		this.hasher = Objects.requireNonNull(hasher);
+		this.authConfig = Objects.requireNonNull(authConfig);
 
-		saltBytes = Integer.parseInt(System.getenv().getOrDefault("AUTH_SALT_BYTES", "16"));
-		iterations = Integer.parseInt(System.getenv().getOrDefault("AUTH_PBKDF2_ITERATIONS", "120000"));
-		if (saltBytes < 16) {
+		if (authConfig.saltBytes() < 16) {
 			throw new IllegalArgumentException("AUTH_SALT_BYTES debe ser >= 16");
 		}
-		if (iterations < 10_000) {
+		if (authConfig.iterations() < 10_000) {
 			throw new IllegalArgumentException("AUTH_PBKDF2_ITERATIONS demasiado bajo");
 		}
 	}
@@ -69,10 +69,10 @@ public class UserProvisioningServiceImpl implements UserProvisioningService {
 		}
 
 		final var userId = UUID.randomUUID();
-		final var salt = new byte[saltBytes];
+		final var salt = new byte[authConfig.saltBytes()];
 		rng.nextBytes(salt);
 
-		final var hash = hasher.hash(password, salt, iterations);
+		final var hash = hasher.hash(password, salt, authConfig.iterations());
 
 		try {
 			userRepo.createUser(userId, username, hash.hash(), hash.salt(), hash.iterations());
@@ -90,17 +90,13 @@ public class UserProvisioningServiceImpl implements UserProvisioningService {
 
 			return CreateUserResult.ok(userId);
 
-		} catch (final SQLException e) {
-
-			// Si quieres, aquí detectas violación UNIQUE(username)
-			// sin depender del vendor, lo dejamos genérico:
-			final var msg = e.getMessage() != null ? e.getMessage().toLowerCase() : "";
-			if (msg.contains("duplicate") || msg.contains("unique") || msg.contains("users_username_key")) {
+		} catch (final DatabaseAccessException e) {
+			if (e.getCause() instanceof final java.sql.SQLException sqle
+					&& PostgresErrorClassifier.Category.UNIQUE_VIOLATION == PostgresErrorClassifier.classify(sqle)) {
 				return CreateUserResult.bad("username_taken");
 			}
 			return CreateUserResult.bad("db_error");
 		} finally {
-			// higiene: borra password
 			Arrays.fill(password, '\0');
 		}
 	}
@@ -110,7 +106,7 @@ public class UserProvisioningServiceImpl implements UserProvisioningService {
 		try {
 			final var countUsers = userRepo.countUsers();
 			return countUsers > 0;
-		} catch (final SQLException e) {
+		} catch (final DatabaseAccessException e) {
 			throw new KiwiError("E-201", "Error checking if any user exists", e);
 		}
 	}

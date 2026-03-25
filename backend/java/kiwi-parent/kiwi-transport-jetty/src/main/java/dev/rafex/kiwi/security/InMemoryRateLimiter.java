@@ -21,12 +21,14 @@ import java.util.concurrent.ConcurrentHashMap;
 /**
  * Rate limiter de ventana fija en memoria para endpoints de autenticación.
  *
- * <p>Cuenta intentos por clave (tipicamente IP del cliente). Si el número de
+ * <p>
+ * Cuenta intentos por clave (tipicamente IP del cliente). Si el número de
  * intentos supera {@code maxAttempts} dentro de {@code windowSeconds} segundos,
  * {@link #tryAcquire(String)} devuelve {@code false}. El contador se resetea
  * cuando la ventana expira o cuando la autenticación es exitosa.
  *
- * <p>Thread-safe: usa {@link ConcurrentHashMap#compute} para actualizar
+ * <p>
+ * Thread-safe: usa {@link ConcurrentHashMap#compute} para actualizar
  * atómicamente cada bucket.
  */
 public final class InMemoryRateLimiter {
@@ -39,8 +41,10 @@ public final class InMemoryRateLimiter {
 	private final ConcurrentHashMap<String, Bucket> buckets = new ConcurrentHashMap<>();
 
 	/**
-	 * @param maxAttempts   número máximo de intentos permitidos por ventana
-	 * @param windowSeconds duración de la ventana en segundos
+	 * @param maxAttempts
+	 *            número máximo de intentos permitidos por ventana
+	 * @param windowSeconds
+	 *            duración de la ventana en segundos
 	 */
 	public InMemoryRateLimiter(final int maxAttempts, final long windowSeconds) {
 		if (maxAttempts < 1) {
@@ -54,8 +58,8 @@ public final class InMemoryRateLimiter {
 	}
 
 	/**
-	 * Registra un intento y devuelve {@code true} si aún está dentro del límite.
-	 * Si la ventana expiró, reinicia el contador antes de evaluar.
+	 * Registra un intento y devuelve {@code true} si aún está dentro del límite. Si
+	 * la ventana expiró, reinicia el contador antes de evaluar.
 	 */
 	public boolean tryAcquire(final String key) {
 		final long now = Instant.now().getEpochSecond();
@@ -69,16 +73,16 @@ public final class InMemoryRateLimiter {
 	}
 
 	/**
-	 * Elimina el contador para {@code key}. Llamar tras autenticación exitosa
-	 * para no penalizar a usuarios legítimos que tuvieron intentos previos fallidos.
+	 * Elimina el contador para {@code key}. Llamar tras autenticación exitosa para
+	 * no penalizar a usuarios legítimos que tuvieron intentos previos fallidos.
 	 */
 	public void reset(final String key) {
 		buckets.remove(key);
 	}
 
 	/**
-	 * Segundos que quedan hasta que expire la ventana actual para {@code key}.
-	 * Útil para poblar el header {@code Retry-After}.
+	 * Segundos que quedan hasta que expire la ventana actual para {@code key}. Útil
+	 * para poblar el header {@code Retry-After}.
 	 */
 	public long retryAfterSeconds(final String key) {
 		final long now = Instant.now().getEpochSecond();

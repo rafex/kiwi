@@ -54,13 +54,13 @@
 	</modules>
 
 	<properties>
-		<java.version>21</java.version>
+		<java.version>25</java.version>
 		<maven.compiler.release>${java.version}</maven.compiler.release>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
 		<!-- Dependency versions -->
-		<jetty.version>12.1.6</jetty.version>
-		<jackson.version>2.21.0</jackson.version>
+		<jetty.version>12.1.7</jetty.version>
+		<jackson.version>2.21.2</jackson.version>
 		<postgresql.version>42.7.9</postgresql.version>
 		<glowroot.agent.api.version>0.14.0-beta.3</glowroot.agent.api.version>
 		<slf4j.version>2.0.17</slf4j.version>
@@ -72,10 +72,23 @@
 		<archunit.version>1.4.1</archunit.version>
 
 
-		<ether.http.jetty12.version>4.0.0-v20260304</ether.http.jetty12.version>
-		<ether.json.version>4.0.0-v20260304</ether.json.version>
-		<ether.jwt.version>4.0.0-v20260304</ether.jwt.version>
-		<ether.glowroot.jetty12.version>1.0.0-SNAPSHOT</ether.glowroot.jetty12.version>
+		<!-- ether module versions -->
+		<ether.config.version>9.0.0</ether.config.version>
+		<ether.database.core.version>9.0.0</ether.database.core.version>
+		<ether.jdbc.version>9.0.0</ether.jdbc.version>
+		<ether.database.postgres.version>9.0.0</ether.database.postgres.version>
+		<ether.json.version>9.0.0</ether.json.version>
+		<ether.jwt.version>9.0.0</ether.jwt.version>
+		<ether.observability.core.version>9.0.0</ether.observability.core.version>
+		<ether.http.core.version>9.0.0</ether.http.core.version>
+		<ether.http.security.version>9.0.0</ether.http.security.version>
+		<ether.http.problem.version>9.0.0</ether.http.problem.version>
+		<ether.http.jetty12.version>9.0.0</ether.http.jetty12.version>
+		<ether.glowroot.jetty12.version>9.0.0</ether.glowroot.jetty12.version>
+		<ether.logging.core.version>9.0.0</ether.logging.core.version>
+		<ether.crypto.version>9.0.0</ether.crypto.version>
+		<ether.http.client.version>9.0.0</ether.http.client.version>
+		<ether.http.openapi.version>9.0.0</ether.http.openapi.version>
 
 		<!-- Plugin versions -->
 		<exec.maven.plugin.version>3.6.3</exec.maven.plugin.version>
@@ -97,10 +110,26 @@
 
 	<dependencyManagement>
 		<dependencies>
+			<!-- ether dependencies -->
 			<dependency>
-				<groupId>dev.rafex.ether.http</groupId>
-				<artifactId>ether-http-jetty12</artifactId>
-				<version>${ether.http.jetty12.version}</version>
+				<groupId>dev.rafex.ether.config</groupId>
+				<artifactId>ether-config</artifactId>
+				<version>${ether.config.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>dev.rafex.ether.database</groupId>
+				<artifactId>ether-database-core</artifactId>
+				<version>${ether.database.core.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>dev.rafex.ether.jdbc</groupId>
+				<artifactId>ether-jdbc</artifactId>
+				<version>${ether.jdbc.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>dev.rafex.ether.database</groupId>
+				<artifactId>ether-database-postgres</artifactId>
+				<version>${ether.database.postgres.version}</version>
 			</dependency>
 			<dependency>
 				<groupId>dev.rafex.ether.json</groupId>
@@ -113,9 +142,54 @@
 				<version>${ether.jwt.version}</version>
 			</dependency>
 			<dependency>
+				<groupId>dev.rafex.ether.observability</groupId>
+				<artifactId>ether-observability-core</artifactId>
+				<version>${ether.observability.core.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>dev.rafex.ether.crypto</groupId>
+				<artifactId>ether-crypto</artifactId>
+				<version>${ether.crypto.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>dev.rafex.ether.http</groupId>
+				<artifactId>ether-http-core</artifactId>
+				<version>${ether.http.core.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>dev.rafex.ether.http</groupId>
+				<artifactId>ether-http-security</artifactId>
+				<version>${ether.http.security.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>dev.rafex.ether.http</groupId>
+				<artifactId>ether-http-problem</artifactId>
+				<version>${ether.http.problem.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>dev.rafex.ether.http</groupId>
+				<artifactId>ether-http-client</artifactId>
+				<version>${ether.http.client.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>dev.rafex.ether.http</groupId>
+				<artifactId>ether-http-openapi</artifactId>
+				<version>${ether.http.openapi.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>dev.rafex.ether.http</groupId>
+				<artifactId>ether-http-jetty12</artifactId>
+				<version>${ether.http.jetty12.version}</version>
+			</dependency>
+			<dependency>
 				<groupId>dev.rafex.ether.glowroot</groupId>
 				<artifactId>ether-glowroot-jetty12</artifactId>
 				<version>${ether.glowroot.jetty12.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>dev.rafex.ether.logging</groupId>
+				<artifactId>ether-logging-core</artifactId>
+				<version>${ether.logging.core.version}</version>
 			</dependency>
 			<dependency>
 				<groupId>org.eclipse.jetty</groupId>
@@ -236,7 +310,7 @@
 					<version>${maven.resources.plugin.version}</version>
 				</plugin>
 
-				<!-- Compiler (Java 21) -->
+				<!-- Compiler (Java 25) -->
 				<plugin>
 					<artifactId>maven-compiler-plugin</artifactId>
 					<version>${maven.compiler.plugin.version}</version>

@@ -15,82 +15,68 @@
  */
 package dev.rafex.kiwi.repository.impl;
 
+import dev.rafex.ether.database.core.DatabaseClient;
+import dev.rafex.ether.database.core.mapping.ResultSets;
+import dev.rafex.ether.database.core.sql.SqlParameter;
+import dev.rafex.ether.database.core.sql.SqlQuery;
 import dev.rafex.kiwi.repository.AppClientRepository;
 
 import java.sql.SQLException;
+import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 
-import javax.sql.DataSource;
-
 public final class AppClientRepositoryImpl implements AppClientRepository {
 
-	private final DataSource ds;
+	private final DatabaseClient db;
 
-	public AppClientRepositoryImpl(final DataSource ds) {
-		this.ds = ds;
+	public AppClientRepositoryImpl(final DatabaseClient db) {
+		this.db = db;
 	}
 
 	@Override
 	public void createClient(final UUID appClientId, final String clientId, final String name, final byte[] secretHash,
-			final byte[] salt, final int iterations, final List<String> roles) throws SQLException {
+			final byte[] salt, final int iterations, final List<String> roles) {
 		final var sql = """
 				INSERT INTO app_clients (
 					app_client_id, client_id, name, secret_hash, salt, iterations, roles, status, created_at, updated_at
 				)
 				VALUES (?, ?, ?, ?, ?, ?, ?, 'active', NOW(), NOW())
 				""";
-
-		try (var c = ds.getConnection(); var ps = c.prepareStatement(sql)) {
-			ps.setObject(1, appClientId);
-			ps.setString(2, clientId);
-			ps.setString(3, name);
-			ps.setBytes(4, secretHash);
-			ps.setBytes(5, salt);
-			ps.setInt(6, iterations);
-			ps.setArray(7, c.createArrayOf("text", normalizeRoles(roles).toArray(new String[0])));
-			ps.executeUpdate();
-		}
+		final var rolesArray = normalizeRoles(roles).toArray(new String[0]);
+		db.execute(new SqlQuery(sql,
+				List.of(SqlParameter.of(appClientId), SqlParameter.text(clientId), SqlParameter.text(name),
+						SqlParameter.of(secretHash), SqlParameter.of(salt), SqlParameter.of(iterations),
+						SqlParameter.arrayOf("text", rolesArray))));
 	}
 
 	@Override
-	public Optional<AppClientRow> findByClientId(final String clientId) throws SQLException {
+	public Optional<AppClientRow> findByClientId(final String clientId) {
 		final var sql = """
 				SELECT app_client_id, client_id, name, secret_hash, salt, iterations,
 				       roles, status, last_used_at, created_at, updated_at
 				FROM app_clients
 				WHERE client_id = ?
 				""";
-
-		try (var c = ds.getConnection(); var ps = c.prepareStatement(sql)) {
-			ps.setString(1, clientId);
-			try (var rs = ps.executeQuery()) {
-				if (!rs.next()) {
-					return Optional.empty();
-				}
-				return Optional.of(new AppClientRow(rs.getObject("app_client_id", UUID.class),
-						rs.getString("client_id"), rs.getString("name"), rs.getBytes("secret_hash"),
-						rs.getBytes("salt"), rs.getInt("iterations"), toStringList(rs.getArray("roles")),
-						rs.getString("status"), ResultSets.asInstant(rs, "last_used_at"),
-						ResultSets.asInstant(rs, "created_at"), ResultSets.asInstant(rs, "updated_at")));
-			}
-		}
+		return db.queryOne(new SqlQuery(sql, List.of(SqlParameter.text(clientId))),
+				rs -> new AppClientRow(ResultSets.getUuid(rs, "app_client_id"), rs.getString("client_id"),
+						rs.getString("name"), rs.getBytes("secret_hash"), rs.getBytes("salt"), rs.getInt("iterations"),
+						toStringList(rs.getArray("roles")), rs.getString("status"),
+						ResultSets.getInstant(rs, "last_used_at"), ResultSets.getInstant(rs, "created_at"),
+						ResultSets.getInstant(rs, "updated_at")));
 	}
 
 	@Override
-	public void touchLastUsed(final UUID appClientId) throws SQLException {
+	public void touchLastUsed(final UUID appClientId) {
 		final var sql = """
 				UPDATE app_clients
 				SET last_used_at = NOW(),
 				    updated_at = NOW()
 				WHERE app_client_id = ?
 				""";
-
-		try (var c = ds.getConnection(); var ps = c.prepareStatement(sql)) {
-			ps.setObject(1, appClientId);
-			ps.executeUpdate();
-		}
+		db.execute(new SqlQuery(sql, List.of(SqlParameter.of(appClientId))));
 	}
 
 	private static List<String> normalizeRoles(final List<String> roles) {
@@ -109,8 +95,8 @@ public final class AppClientRepositoryImpl implements AppClientRepository {
 			return List.of();
 		}
 		if (raw instanceof final Object[] values) {
-			return java.util.Arrays.stream(values).filter(java.util.Objects::nonNull).map(String::valueOf)
-					.filter(s -> !s.isBlank()).map(String::trim).toList();
+			return Arrays.stream(values).filter(Objects::nonNull).map(String::valueOf).filter(s -> !s.isBlank())
+					.map(String::trim).toList();
 		}
 		return List.of();
 	}

@@ -53,10 +53,17 @@
 			<scope>provided</scope>
 		</dependency>
 		<dependency>
-			<groupId>dev.rafex.ether.glowroot</groupId>
-			<artifactId>ether-glowroot-jetty12</artifactId>
+			<groupId>dev.rafex.ether.http</groupId>
+			<artifactId>ether-http-problem</artifactId>
 		</dependency>
-
+		<dependency>
+			<groupId>dev.rafex.ether.http</groupId>
+			<artifactId>ether-http-security</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>dev.rafex.ether.config</groupId>
+			<artifactId>ether-config</artifactId>
+		</dependency>
 		<dependency>
 			<groupId>org.slf4j</groupId>
 			<artifactId>slf4j-jdk14</artifactId>

@@ -24,6 +24,8 @@ RUN chown -R kiwi:kiwi /app/glowroot
 # Copy the fat JAR produced by the build
 # Ensure you run 'make build' before building this image so target/ exists
 COPY kiwi-parent/kiwi-transport-jetty/target/kiwi-transport-jetty-0.1.0-SNAPSHOT-jar-with-dependencies.jar /app/app.jar
+# Copy context documentation for reference
+COPY context/ /app/context/
 RUN chown kiwi:kiwi /app/app.jar
 # Copy launcher script
 COPY start-kiwi.sh /usr/local/bin/start-kiwi.sh

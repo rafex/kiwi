@@ -1,0 +1,65 @@
+# Configuración de Kubernetes
+
+Este archivo contiene la configuración de despliegue para Kubernetes.
+
+## Configuración de Despliegue
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: kiwi-backend
+  labels:
+    app: kiwi-backend
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: kiwi-backend
+  template:
+    metadata:
+      labels:
+        app: kiwi-backend
+    spec:
+      containers:
+      - name: kiwi-backend
+        image: ghcr.io/rafex/kiwi-jetty-backend:latest
+        ports:
+        - containerPort: 8080
+        env:
+        - name: DB_URL
+          value: "jdbc:postgresql://postgres:5432/kiwi"
+        - name: DB_USER
+          value: "kiwi_user"
+        - name: DB_PASSWORD
+          value: "kiwi_password"
+        - name: JWT_SECRET
+          value: "your_256_bit_hex_secret_here"
+        - name: JWT_ISS
+          value: "kiwi-production"
+        - name: JWT_AUD
+          value: "kiwi-frontend"
+        - name: JWT_TTL_SECONDS
+          value: "3600"
+        - name: LOG_LEVEL
+          value: "INFO"
+        - name: PORT
+          value: "8080"
+        - name: ENVIRONMENT
+          value: "production"
+        - name: ENABLE_USER_PROVISIONING
+          value: "false"
+        - name: BOOTSTRAP_TOKEN
+          value: "production-bootstrap-token"
+        - name: AUTH_SALT_BYTES
+          value: "16"
+        - name: AUTH_PBKDF2_ITERATIONS
+          value: "120000"
+        - name: KIWI_PASSWORD_HASH_BYTES
+          value: "32"
+        resources:
+          limits:
+            cpu: 1000m
+            memory: 1024Mi
+          requests:
+            cpu: 500m
+            memory: 512Mi

@@ -23,8 +23,8 @@ import dev.rafex.ether.http.jetty12.JettyHttpExchange;
 import dev.rafex.ether.http.jetty12.NonBlockingResourceHandler;
 import dev.rafex.ether.json.JsonCodec;
 import dev.rafex.ether.json.JsonUtils;
+import dev.rafex.kiwi.config.ServerConfig;
 import dev.rafex.kiwi.security.KiwiJwtService;
-import dev.rafex.kiwi.server.ServerConfig;
 import dev.rafex.kiwi.services.UserProvisioningService;
 
 import java.io.IOException;
@@ -50,14 +50,17 @@ public final class CreateUserHandler extends NonBlockingResourceHandler {
 
 	private final UserProvisioningService provisioning;
 	private final ServerConfig config;
-	/** Bytes UTF-8 del bootstrap token; permite comparación constante y puede zerificarse. */
+	/**
+	 * Bytes UTF-8 del bootstrap token; permite comparación constante y puede
+	 * zerificarse.
+	 */
 	private final byte[] bootstrapTokenBytes;
 
 	public CreateUserHandler(final UserProvisioningService provisioning, final ServerConfig config) {
 		super(JSON_CODEC);
 		this.provisioning = Objects.requireNonNull(provisioning);
 		this.config = Objects.requireNonNull(config);
-		final var token = System.getenv().getOrDefault("BOOTSTRAP_TOKEN", "");
+		final var token = config.bootstrapToken();
 		this.bootstrapTokenBytes = token.isEmpty() ? new byte[0] : token.getBytes(StandardCharsets.UTF_8);
 	}
 

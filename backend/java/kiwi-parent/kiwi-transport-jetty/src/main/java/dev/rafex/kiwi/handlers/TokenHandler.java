@@ -22,6 +22,7 @@ import dev.rafex.ether.http.jetty12.JettyHttpExchange;
 import dev.rafex.ether.http.jetty12.NonBlockingResourceHandler;
 import dev.rafex.ether.json.JsonCodec;
 import dev.rafex.ether.json.JsonUtils;
+import dev.rafex.kiwi.config.JwtConfig;
 import dev.rafex.kiwi.security.InMemoryRateLimiter;
 import dev.rafex.kiwi.security.KiwiJwtService;
 import dev.rafex.kiwi.services.AppClientAuthService;
@@ -54,6 +55,9 @@ public final class TokenHandler extends NonBlockingResourceHandler {
 
 	public TokenHandler(final KiwiJwtService jwt, final AppClientAuthService authService) {
 		this(jwt, authService, Long.parseLong(System.getenv().getOrDefault("JWT_APP_TTL_SECONDS", "1800")));
+	}
+	public TokenHandler(final KiwiJwtService jwt, final AppClientAuthService authService, final JwtConfig jwtConfig) {
+		this(jwt, authService, jwtConfig.appTtlSeconds());
 	}
 
 	public TokenHandler(final KiwiJwtService jwt, final AppClientAuthService authService, final long ttlSeconds) {
@@ -133,7 +137,9 @@ public final class TokenHandler extends NonBlockingResourceHandler {
 			}
 
 			final var secretNode = json.get("client_secret");
-			final var secretChars = secretNode != null && secretNode.isTextual() ? secretNode.asText().toCharArray() : null;
+			final var secretChars = secretNode != null && secretNode.isTextual()
+					? secretNode.asText().toCharArray()
+					: null;
 			return authenticateAndMint(jx, text(json, "client_id"), secretChars, text(json, "grant_type"), key);
 		}
 

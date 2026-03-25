@@ -57,24 +57,58 @@ define print_exports_from_env
 	done
 endef
 
-.PHONY: help print_env install-githooks print-next-tag release-tag
+.PHONY: help print_env load-env install-githooks print-next-tag release-tag
 help:
 	echo "Targets:"
 	echo "  print_env   Print export commands from .env (use with eval)"
+	echo "  load-env    Load .env file into current shell session"
 	echo "  install-githooks   Configure git hooks path to .githooks"
 	echo "  print-next-tag   Calculate the next release tag"
 	echo "  release-tag   Create and push the next release tag"
 	echo ""
 	echo "Usage:"
 	echo "  eval \"\$$(make print_env)\""
+	echo "  eval \"\$$(make load-env)\""
 	echo ""
 
 print_env:
-	$(call require_file,$(GITIGNORE))
-	$(call require_gitignore_contains_exact_line,$(ENV_GITIGNORE_ENTRY))
-	$(call require_file,$(ENV_FILE))
-	$(call require_env_vars_in_file)
-	$(call print_exports_from_env)
+	@if [[ ! -f "$(GITIGNORE)" ]]; then \
+		echo "ERROR: Required file '$(GITIGNORE)' not found."; \
+		exit 2; \
+	fi
+	@if ! grep -qxF "$(ENV_GITIGNORE_ENTRY)" "$(GITIGNORE)"; then \
+		echo "ERROR: '$(ENV_GITIGNORE_ENTRY)' is not present in $(GITIGNORE)."; \
+		echo "Fix: add a line with exactly: $(ENV_GITIGNORE_ENTRY)"; \
+		exit 3; \
+	fi
+	@if [[ ! -f "$(ENV_FILE)" ]]; then \
+		echo "ERROR: Required file '$(ENV_FILE)' not found."; \
+		exit 2; \
+	fi
+	@missing=0; \
+	for v in $(REQUIRED_ENV_VARS); do \
+		if ! grep -Eq "^[[:space:]]*$$v[[:space:]]*=" "$(ENV_FILE)"; then \
+			echo "ERROR: '$$v' is missing in $(ENV_FILE)"; \
+			missing=1; \
+		fi; \
+	done; \
+	if [[ "$$missing" -ne 0 ]]; then exit 4; fi
+	@for v in $(REQUIRED_ENV_VARS); do \
+		line="$$(grep -E "^[[:space:]]*$${v}[[:space:]]*=" "$(ENV_FILE)" | tail -n 1 || true)"; \
+		if [[ -z "$$line" ]]; then \
+			echo "ERROR: '$$v' not found in $(ENV_FILE)"; exit 4; \
+		fi; \
+		val="$${line#*=}"; \
+		val_escaped="$$(printf "%s" "$$val" | sed "s/'/'\\\\''/g")"; \
+		echo "export $$v='$$val_escaped'"; \
+	done
+
+load-env:
+	@if [[ ! -f "$(ENV_FILE)" ]]; then \
+		echo "ERROR: Required file '$(ENV_FILE)' not found."; \
+		exit 2; \
+	fi
+	@echo "set -a && source $(ENV_FILE) && set +a"
 
 install-githooks:
 	git config core.hooksPath .githooks

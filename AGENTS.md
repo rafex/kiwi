@@ -253,4 +253,59 @@ After this evolution, the backend supports:
 ./mvnw test -Dtest="DatabaseConfigTest"
 ```
 
+## Build / Makefiles
+
+### Punto de entrada único
+
+El **Makefile** ubicado en la raíz del repositorio es el punto de entrada único para todas las tareas de automatización del proyecto Kiwi.  
+Este Makefile delega a los Makefiles de los sub‑directorios:
+
+* `backend/java/kiwi-parent/Makefile` – operaciones de compilación, pruebas y generación de imágenes nativas del backend Java.
+* `backend/java/Makefile` – construcción y ejecución de contenedores Docker del backend.
+* `db/Makefile` – gestión de la base de datos mediante Flyway (migraciones, validaciones, reparación y limpieza).
+
+### Categorías y targets principales
+
+| Categoría | Target | Descripción |
+|-----------|--------|-------------|
+| **Gestión de entorno** | `print_env` | Imprime comandos `export` para cargar variables de `.env`. |
+| | `load-env` | Genera un script que `source` el archivo `.env`. |
+| | `install-githooks` | Configura la ruta de los *git hooks* al directorio `.githooks`. |
+| **Release** | `print-next-tag` | Calcula la siguiente etiqueta de versión. |
+| | `release-tag` | Crea y *push* la etiqueta calculada. |
+| **Backend Java** | `backend-help` | Muestra los targets del Makefile del backend. |
+| | `backend-build` | Compila el proyecto con Maven (skip tests). |
+| | `backend-quality` | Ejecuta análisis de calidad. |
+| | `backend-agent` | Ejecuta la aplicación con *native‑image‑agent*. |
+| | `backend-native` | Compila una imagen nativa con GraalVM. |
+| | `backend-run-native` | Ejecuta la aplicación nativa. |
+| **Contenedores** | `backend-image` | Construye la imagen Docker del backend. |
+| | `backend-run-image` | Ejecuta la imagen Docker con variables de entorno. |
+| | `backend-run-publish-image` | Ejecuta la imagen publicada en GHCR. |
+| **Base de datos** | `db-help` | Muestra los targets del Makefile de base de datos. |
+| | `db-migrate` | Aplica migraciones Flyway. |
+| | `db-info` | Muestra el estado de migraciones. |
+| | `db-validate` | Valida la integridad de migraciones. |
+| | `db-repair` | Repara metadatos de Flyway. |
+| | `db-clean` | **Peligro:** elimina todas las tablas y datos. |
+
+### Uso típico
+
+```bash
+# Cargar variables de entorno
+eval "$(make print_env)"
+
+# Compilar y empaquetar el backend
+make backend-build
+make backend-image
+
+# Ejecutar migraciones de base de datos
+make db-migrate
+
+# Publicar una nueva versión
+make release-tag
+```
+
+Esta sección permite a los desarrolladores y colaboradores comprender rápidamente cómo interactuar con el sistema de *build* del proyecto, sin necesidad de explorar los Makefiles internos.
+
 End of AGENTS.md

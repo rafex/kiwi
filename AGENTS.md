@@ -236,4 +236,21 @@ After this evolution, the backend supports:
 
 ------------------------------------------------------------------------
 
+## Testing Infrastructure
+
+- **Testcontainers 1.19.7** for containerized testing
+- PostgreSQL **16-alpine** container for database tests
+- **BasePostgresTest** base class for database tests
+- Test execution against real database instances
+- Automatic container management lifecycle
+
+## Test Execution
+```bash
+# Run all tests
+./mvnw test
+
+# Run specific test class
+./mvnw test -Dtest="DatabaseConfigTest"
+```
+
 End of AGENTS.md

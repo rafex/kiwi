@@ -52,6 +52,67 @@ A continuación se enumeran todos los archivos de documentación presentes en el
 - /Users/rafex/repository/github/rafex/kiwi/backend/java/kiwi-parent/kiwi-common/README.md
 - /Users/rafex/repository/github/rafex/kiwi/db/README.md
 
+## Makefile de proyecto
+
+El proyecto Kiwi utiliza un **Makefile único en la raíz** que delega en Makefiles específicos de cada sub‑módulo. Esta arquitectura permite ejecutar tareas comunes desde la raíz sin conocer la ubicación interna de los sub‑makefiles.
+
+### Estructura
+
+- `backend/java/Makefile` – tareas relacionadas con contenedores Docker.
+- `backend/java/kiwi-parent/Makefile` – compilación, pruebas y generación de imágenes nativas del backend Java.
+- `db/Makefile` – gestión de migraciones y mantenimiento de la base de datos.
+
+### Targets disponibles desde la raíz
+
+#### Gestión de entorno
+- `print_env` – Imprime comandos `export` para cargar variables de `.env`.
+- `load-env` – Genera un script `set -a && source .env && set +a`.
+- `install-githooks` – Configura la ruta de los hooks de Git.
+
+#### Release
+- `print-next-tag` – Calcula la siguiente etiqueta de versión.
+- `release-tag` – Crea y push de la nueva etiqueta.
+
+#### Backend Java
+- `backend-help` – Muestra los targets del backend.
+- `backend-build` – Compila con Maven (sin tests).
+- `backend-quality` – Ejecuta checks de calidad.
+- `backend-agent` – Ejecuta con `native-image-agent`.
+- `backend-native` – Genera una imagen nativa.
+- `backend-run-native` – Ejecuta el binario nativo.
+
+#### Contenedores
+- `backend-image` – Construye la imagen Docker del backend.
+- `backend-run-image` – Ejecuta la imagen con variables de entorno.
+- `backend-run-publish-image` – Ejecuta la imagen publicada en GHCR.
+
+#### Base de datos
+- `db-help` – Muestra los targets de DB.
+- `db-migrate` – Ejecuta migraciones Flyway.
+- `db-info` – Estado de migraciones.
+- `db-validate` – Valida migraciones.
+- `db-repair` – Repara metadatos de Flyway.
+- `db-clean` – Elimina la base de datos (¡CUIDADO!).
+
+### Ejemplos de uso comunes
+
+```bash
+# Cargar variables de entorno en la sesión actual
+eval "$(make load-env)"
+
+# Compilar el backend Java
+make backend-build
+
+# Ejecutar la aplicación en Docker
+make backend-run-image
+
+# Aplicar migraciones de base de datos
+make db-migrate
+
+# Crear y publicar una nueva etiqueta de release
+make release-tag
+```
+
 ## Contribución
 
 Para contribuir al proyecto Kiwi, asegúrate de seguir las instrucciones de contribución en `docs/contributing.md`. Esto incluye información sobre cómo enviar solicitudes de extracción y cómo reportar errores.

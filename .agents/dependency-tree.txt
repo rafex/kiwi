@@ -1,0 +1,657 @@
+[INFO] Scanning for projects...
+[INFO] ------------------------------------------------------------------------
+[INFO] Reactor Build Order:
+[INFO] 
+[INFO] kiwi-parent                                                        [pom]
+[INFO] kiwi-common                                                        [jar]
+[INFO] kiwi-ports                                                         [jar]
+[INFO] kiwi-core                                                          [jar]
+[INFO] kiwi-infra-postgres                                                [jar]
+[INFO] kiwi-bootstrap                                                     [jar]
+[INFO] kiwi-tools                                                         [jar]
+[INFO] kiwi-transport-jetty                                               [jar]
+[INFO] kiwi-architecture-tests                                            [jar]
+[INFO] kiwi-transport-grpc                                                [jar]
+[INFO] kiwi-transport-rabbitmq                                            [jar]
+[INFO] 
+[INFO] ---------------------< dev.rafex.kiwi:kiwi-parent >---------------------
+[INFO] Building kiwi-parent 1.0-SNAPSHOT                                 [1/11]
+[INFO]   from pom.xml
+[INFO] --------------------------------[ pom ]---------------------------------
+[INFO] 
+[INFO] --- dependency:3.7.0:tree (default-cli) @ kiwi-parent ---
+[INFO] dev.rafex.kiwi:kiwi-parent:pom:1.0-SNAPSHOT
+[INFO] \- com.tngtech.archunit:archunit-junit5:jar:1.4.1:test
+[INFO]    +- com.tngtech.archunit:archunit-junit5-api:jar:1.4.1:test
+[INFO]    |  \- com.tngtech.archunit:archunit:jar:1.4.1:test
+[INFO]    |     \- org.slf4j:slf4j-api:jar:2.0.17:test
+[INFO]    \- com.tngtech.archunit:archunit-junit5-engine:jar:1.4.1:test
+[INFO]       +- (com.tngtech.archunit:archunit:jar:1.4.1:test - omitted for duplicate)
+[INFO]       +- (com.tngtech.archunit:archunit-junit5-api:jar:1.4.1:test - omitted for duplicate)
+[INFO]       \- com.tngtech.archunit:archunit-junit5-engine-api:jar:1.4.1:test
+[INFO]          \- org.junit.platform:junit-platform-engine:jar:6.0.3:test (version managed from 1.12.2)
+[INFO]             +- org.opentest4j:opentest4j:jar:1.3.0:test
+[INFO]             +- org.junit.platform:junit-platform-commons:jar:6.0.3:test (version managed from 6.0.3)
+[INFO]             |  +- (org.apiguardian:apiguardian-api:jar:1.1.2:test - omitted for duplicate)
+[INFO]             |  \- (org.jspecify:jspecify:jar:1.0.0:test - omitted for duplicate)
+[INFO]             +- org.apiguardian:apiguardian-api:jar:1.1.2:test
+[INFO]             \- org.jspecify:jspecify:jar:1.0.0:test
+[INFO] 
+[INFO] ---------------------< dev.rafex.kiwi:kiwi-common >---------------------
+[INFO] Building kiwi-common 0.1.0-SNAPSHOT                               [2/11]
+[INFO]   from kiwi-common/pom.xml
+[INFO] --------------------------------[ jar ]---------------------------------
+[INFO] 
+[INFO] --- dependency:3.7.0:tree (default-cli) @ kiwi-common ---
+[INFO] dev.rafex.kiwi:kiwi-common:jar:0.1.0-SNAPSHOT
+[INFO] +- dev.rafex.ether.logging:ether-logging-core:jar:9.0.0:compile
+[INFO] +- dev.rafex.ether.config:ether-config:jar:9.0.0:compile
+[INFO] |  +- com.fasterxml.jackson.core:jackson-databind:jar:2.21.2:compile
+[INFO] |  |  +- com.fasterxml.jackson.core:jackson-annotations:jar:2.21:compile (version managed from 2.21)
+[INFO] |  |  \- com.fasterxml.jackson.core:jackson-core:jar:2.21.2:compile (version managed from 2.21.2)
+[INFO] |  +- com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:jar:2.21.2:compile (version managed from 2.21.2)
+[INFO] |  |  +- (com.fasterxml.jackson.core:jackson-databind:jar:2.21.2:compile - omitted for duplicate)
+[INFO] |  |  +- org.yaml:snakeyaml:jar:2.5:compile
+[INFO] |  |  \- (com.fasterxml.jackson.core:jackson-core:jar:2.21.2:compile - version managed from 2.21.2; omitted for duplicate)
+[INFO] |  +- com.fasterxml.jackson.dataformat:jackson-dataformat-toml:jar:2.21.2:compile (version managed from 2.21.2)
+[INFO] |  |  +- (com.fasterxml.jackson.core:jackson-databind:jar:2.21.2:compile - omitted for duplicate)
+[INFO] |  |  \- (com.fasterxml.jackson.core:jackson-core:jar:2.21.2:compile - version managed from 2.21.2; omitted for duplicate)
+[INFO] |  \- com.fasterxml.jackson.datatype:jackson-datatype-jsr310:jar:2.21.2:compile (version managed from 2.21.2)
+[INFO] |     +- (com.fasterxml.jackson.core:jackson-annotations:jar:2.21:compile - version managed from 2.21; omitted for duplicate)
+[INFO] |     +- (com.fasterxml.jackson.core:jackson-core:jar:2.21.2:compile - version managed from 2.21.2; omitted for duplicate)
+[INFO] |     \- (com.fasterxml.jackson.core:jackson-databind:jar:2.21.2:compile - omitted for duplicate)
+[INFO] +- dev.rafex.ether.crypto:ether-crypto:jar:9.0.0:compile
+[INFO] +- org.slf4j:slf4j-api:jar:2.0.17:compile
+[INFO] +- org.junit.jupiter:junit-jupiter:jar:6.0.3:test
+[INFO] |  +- org.junit.jupiter:junit-jupiter-api:jar:6.0.3:test (version managed from 6.0.3)
+[INFO] |  |  +- org.opentest4j:opentest4j:jar:1.3.0:test
+[INFO] |  |  +- org.junit.platform:junit-platform-commons:jar:6.0.3:test (version managed from 6.0.3)
+[INFO] |  |  |  +- (org.apiguardian:apiguardian-api:jar:1.1.2:test - omitted for duplicate)
+[INFO] |  |  |  \- (org.jspecify:jspecify:jar:1.0.0:test - omitted for duplicate)
+[INFO] |  |  +- org.apiguardian:apiguardian-api:jar:1.1.2:test
+[INFO] |  |  \- org.jspecify:jspecify:jar:1.0.0:test
+[INFO] |  +- org.junit.jupiter:junit-jupiter-params:jar:6.0.3:test (version managed from 6.0.3)
+[INFO] |  |  +- (org.junit.jupiter:junit-jupiter-api:jar:6.0.3:test - version managed from 6.0.3; omitted for duplicate)
+[INFO] |  |  +- (org.apiguardian:apiguardian-api:jar:1.1.2:test - omitted for duplicate)
+[INFO] |  |  \- (org.jspecify:jspecify:jar:1.0.0:test - omitted for duplicate)
+[INFO] |  \- org.junit.jupiter:junit-jupiter-engine:jar:6.0.3:test (version managed from 6.0.3)
+[INFO] |     +- org.junit.platform:junit-platform-engine:jar:6.0.3:test (version managed from 6.0.3)
+[INFO] |     |  +- (org.opentest4j:opentest4j:jar:1.3.0:test - omitted for duplicate)
+[INFO] |     |  +- (org.junit.platform:junit-platform-commons:jar:6.0.3:test - version managed from 6.0.3; omitted for duplicate)
+[INFO] |     |  +- (org.apiguardian:apiguardian-api:jar:1.1.2:test - omitted for duplicate)
+[INFO] |     |  \- (org.jspecify:jspecify:jar:1.0.0:test - omitted for duplicate)
+[INFO] |     +- (org.junit.jupiter:junit-jupiter-api:jar:6.0.3:test - version managed from 6.0.3; omitted for duplicate)
+[INFO] |     +- (org.apiguardian:apiguardian-api:jar:1.1.2:test - omitted for duplicate)
+[INFO] |     \- (org.jspecify:jspecify:jar:1.0.0:test - omitted for duplicate)
+[INFO] \- com.tngtech.archunit:archunit-junit5:jar:1.4.1:test
+[INFO]    +- com.tngtech.archunit:archunit-junit5-api:jar:1.4.1:test
+[INFO]    |  \- com.tngtech.archunit:archunit:jar:1.4.1:test
+[INFO]    |     \- (org.slf4j:slf4j-api:jar:2.0.17:test - omitted for duplicate)
+[INFO]    \- com.tngtech.archunit:archunit-junit5-engine:jar:1.4.1:test
+[INFO]       +- (com.tngtech.archunit:archunit:jar:1.4.1:test - omitted for duplicate)
+[INFO]       +- (com.tngtech.archunit:archunit-junit5-api:jar:1.4.1:test - omitted for duplicate)
+[INFO]       \- com.tngtech.archunit:archunit-junit5-engine-api:jar:1.4.1:test
+[INFO]          \- (org.junit.platform:junit-platform-engine:jar:6.0.3:test - version managed from 1.12.2; omitted for duplicate)
+[INFO] 
+[INFO] ---------------------< dev.rafex.kiwi:kiwi-ports >----------------------
+[INFO] Building kiwi-ports 0.1.0-SNAPSHOT                                [3/11]
+[INFO]   from kiwi-ports/pom.xml
+[INFO] --------------------------------[ jar ]---------------------------------
+[INFO] 
+[INFO] --- dependency:3.7.0:tree (default-cli) @ kiwi-ports ---
+[INFO] dev.rafex.kiwi:kiwi-ports:jar:0.1.0-SNAPSHOT
+[INFO] +- com.fasterxml.jackson.core:jackson-annotations:jar:2.21:compile
+[INFO] \- com.tngtech.archunit:archunit-junit5:jar:1.4.1:test
+[INFO]    +- com.tngtech.archunit:archunit-junit5-api:jar:1.4.1:test
+[INFO]    |  \- com.tngtech.archunit:archunit:jar:1.4.1:test
+[INFO]    |     \- org.slf4j:slf4j-api:jar:2.0.17:test
+[INFO]    \- com.tngtech.archunit:archunit-junit5-engine:jar:1.4.1:test
+[INFO]       +- (com.tngtech.archunit:archunit:jar:1.4.1:test - omitted for duplicate)
+[INFO]       +- (com.tngtech.archunit:archunit-junit5-api:jar:1.4.1:test - omitted for duplicate)
+[INFO]       \- com.tngtech.archunit:archunit-junit5-engine-api:jar:1.4.1:test
+[INFO]          \- org.junit.platform:junit-platform-engine:jar:6.0.3:test (version managed from 1.12.2)
+[INFO]             +- org.opentest4j:opentest4j:jar:1.3.0:test
+[INFO]             +- org.junit.platform:junit-platform-commons:jar:6.0.3:test (version managed from 6.0.3)
+[INFO]             |  +- (org.apiguardian:apiguardian-api:jar:1.1.2:test - omitted for duplicate)
+[INFO]             |  \- (org.jspecify:jspecify:jar:1.0.0:test - omitted for duplicate)
+[INFO]             +- org.apiguardian:apiguardian-api:jar:1.1.2:test
+[INFO]             \- org.jspecify:jspecify:jar:1.0.0:test
+[INFO] 
+[INFO] ----------------------< dev.rafex.kiwi:kiwi-core >----------------------
+[INFO] Building kiwi-core 0.1.0-SNAPSHOT                                 [4/11]
+[INFO]   from kiwi-core/pom.xml
+[INFO] --------------------------------[ jar ]---------------------------------
+[INFO] 
+[INFO] --- dependency:3.7.0:tree (default-cli) @ kiwi-core ---
+[INFO] dev.rafex.kiwi:kiwi-core:jar:0.1.0-SNAPSHOT
+[INFO] +- dev.rafex.kiwi:kiwi-common:jar:0.1.0-SNAPSHOT:compile
+[INFO] |  +- dev.rafex.ether.logging:ether-logging-core:jar:9.0.0:compile (version managed from 9.0.0)
+[INFO] |  +- dev.rafex.ether.config:ether-config:jar:9.0.0:compile (version managed from 9.0.0)
+[INFO] |  |  +- com.fasterxml.jackson.core:jackson-databind:jar:2.21.2:compile
+[INFO] |  |  |  +- (com.fasterxml.jackson.core:jackson-annotations:jar:2.21:compile - version managed from 2.21; omitted for duplicate)
+[INFO] |  |  |  \- com.fasterxml.jackson.core:jackson-core:jar:2.21.2:compile (version managed from 2.21.2)
+[INFO] |  |  +- com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:jar:2.21.2:compile (version managed from 2.21.2)
+[INFO] |  |  |  +- (com.fasterxml.jackson.core:jackson-databind:jar:2.21.2:compile - omitted for duplicate)
+[INFO] |  |  |  +- org.yaml:snakeyaml:jar:2.5:compile
+[INFO] |  |  |  \- (com.fasterxml.jackson.core:jackson-core:jar:2.21.2:compile - version managed from 2.21.2; omitted for duplicate)
+[INFO] |  |  +- com.fasterxml.jackson.dataformat:jackson-dataformat-toml:jar:2.21.2:compile (version managed from 2.21.2)
+[INFO] |  |  |  +- (com.fasterxml.jackson.core:jackson-databind:jar:2.21.2:compile - omitted for duplicate)
+[INFO] |  |  |  \- (com.fasterxml.jackson.core:jackson-core:jar:2.21.2:compile - version managed from 2.21.2; omitted for duplicate)
+[INFO] |  |  \- com.fasterxml.jackson.datatype:jackson-datatype-jsr310:jar:2.21.2:compile (version managed from 2.21.2)
+[INFO] |  |     +- (com.fasterxml.jackson.core:jackson-annotations:jar:2.21:compile - version managed from 2.21; omitted for duplicate)
+[INFO] |  |     +- (com.fasterxml.jackson.core:jackson-core:jar:2.21.2:compile - version managed from 2.21.2; omitted for duplicate)
+[INFO] |  |     \- (com.fasterxml.jackson.core:jackson-databind:jar:2.21.2:compile - omitted for duplicate)
+[INFO] |  +- dev.rafex.ether.crypto:ether-crypto:jar:9.0.0:compile (version managed from 9.0.0)
+[INFO] |  \- org.slf4j:slf4j-api:jar:2.0.17:compile (scope not updated to compile)
+[INFO] +- dev.rafex.kiwi:kiwi-ports:jar:0.1.0-SNAPSHOT:compile
+[INFO] |  \- com.fasterxml.jackson.core:jackson-annotations:jar:2.21:compile (version managed from 2.21)
+[INFO] +- dev.rafex.ether.database:ether-database-core:jar:9.0.0:compile
+[INFO] +- dev.rafex.ether.database:ether-database-postgres:jar:9.0.0:compile
+[INFO] |  \- (dev.rafex.ether.database:ether-database-core:jar:9.0.0:compile - version managed from 9.0.0; omitted for duplicate)
+[INFO] \- com.tngtech.archunit:archunit-junit5:jar:1.4.1:test
+[INFO]    +- com.tngtech.archunit:archunit-junit5-api:jar:1.4.1:test
+[INFO]    |  \- com.tngtech.archunit:archunit:jar:1.4.1:test
+[INFO]    |     \- (org.slf4j:slf4j-api:jar:2.0.17:test - omitted for duplicate)
+[INFO]    \- com.tngtech.archunit:archunit-junit5-engine:jar:1.4.1:test
+[INFO]       +- (com.tngtech.archunit:archunit:jar:1.4.1:test - omitted for duplicate)
+[INFO]       +- (com.tngtech.archunit:archunit-junit5-api:jar:1.4.1:test - omitted for duplicate)
+[INFO]       \- com.tngtech.archunit:archunit-junit5-engine-api:jar:1.4.1:test
+[INFO]          \- org.junit.platform:junit-platform-engine:jar:6.0.3:test (version managed from 1.12.2)
+[INFO]             +- org.opentest4j:opentest4j:jar:1.3.0:test
+[INFO]             +- org.junit.platform:junit-platform-commons:jar:6.0.3:test (version managed from 6.0.3)
+[INFO]             |  +- (org.apiguardian:apiguardian-api:jar:1.1.2:test - omitted for duplicate)
+[INFO]             |  \- (org.jspecify:jspecify:jar:1.0.0:test - omitted for duplicate)
+[INFO]             +- org.apiguardian:apiguardian-api:jar:1.1.2:test
+[INFO]             \- org.jspecify:jspecify:jar:1.0.0:test
+[INFO] 
+[INFO] -----------------< dev.rafex.kiwi:kiwi-infra-postgres >-----------------
+[INFO] Building kiwi-infra-postgres 0.1.0-SNAPSHOT                       [5/11]
+[INFO]   from kiwi-infra-postgres/pom.xml
+[INFO] --------------------------------[ jar ]---------------------------------
+[INFO] 
+[INFO] --- dependency:3.7.0:tree (default-cli) @ kiwi-infra-postgres ---
+[INFO] dev.rafex.kiwi:kiwi-infra-postgres:jar:0.1.0-SNAPSHOT
+[INFO] +- dev.rafex.kiwi:kiwi-common:jar:0.1.0-SNAPSHOT:compile
+[INFO] |  +- dev.rafex.ether.logging:ether-logging-core:jar:9.0.0:compile (version managed from 9.0.0)
+[INFO] |  +- dev.rafex.ether.config:ether-config:jar:9.0.0:compile (version managed from 9.0.0)
+[INFO] |  |  +- com.fasterxml.jackson.core:jackson-databind:jar:2.21.2:compile
+[INFO] |  |  |  +- (com.fasterxml.jackson.core:jackson-annotations:jar:2.21:compile - version managed from 2.21; omitted for duplicate)
+[INFO] |  |  |  \- com.fasterxml.jackson.core:jackson-core:jar:2.21.2:compile (version managed from 2.21.2)
+[INFO] |  |  +- com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:jar:2.21.2:compile (version managed from 2.21.2)
+[INFO] |  |  |  +- (com.fasterxml.jackson.core:jackson-databind:jar:2.21.2:compile - omitted for duplicate)
+[INFO] |  |  |  +- org.yaml:snakeyaml:jar:2.5:compile
+[INFO] |  |  |  \- (com.fasterxml.jackson.core:jackson-core:jar:2.21.2:compile - version managed from 2.21.2; omitted for duplicate)
+[INFO] |  |  +- com.fasterxml.jackson.dataformat:jackson-dataformat-toml:jar:2.21.2:compile (version managed from 2.21.2)
+[INFO] |  |  |  +- (com.fasterxml.jackson.core:jackson-databind:jar:2.21.2:compile - omitted for duplicate)
+[INFO] |  |  |  \- (com.fasterxml.jackson.core:jackson-core:jar:2.21.2:compile - version managed from 2.21.2; omitted for duplicate)
+[INFO] |  |  \- com.fasterxml.jackson.datatype:jackson-datatype-jsr310:jar:2.21.2:compile (version managed from 2.21.2)
+[INFO] |  |     +- (com.fasterxml.jackson.core:jackson-annotations:jar:2.21:compile - version managed from 2.21; omitted for duplicate)
+[INFO] |  |     +- (com.fasterxml.jackson.core:jackson-core:jar:2.21.2:compile - version managed from 2.21.2; omitted for duplicate)
+[INFO] |  |     \- (com.fasterxml.jackson.core:jackson-databind:jar:2.21.2:compile - omitted for duplicate)
+[INFO] |  +- dev.rafex.ether.crypto:ether-crypto:jar:9.0.0:compile (version managed from 9.0.0)
+[INFO] |  \- org.slf4j:slf4j-api:jar:2.0.17:compile (scope not updated to compile)
+[INFO] +- dev.rafex.kiwi:kiwi-ports:jar:0.1.0-SNAPSHOT:compile
+[INFO] |  \- com.fasterxml.jackson.core:jackson-annotations:jar:2.21:compile (version managed from 2.21)
+[INFO] +- org.postgresql:postgresql:jar:42.7.9:compile
+[INFO] |  \- org.checkerframework:checker-qual:jar:3.52.0:runtime
+[INFO] +- org.junit.jupiter:junit-jupiter-api:jar:6.0.3:test
+[INFO] |  +- org.opentest4j:opentest4j:jar:1.3.0:test
+[INFO] |  +- org.junit.platform:junit-platform-commons:jar:6.0.3:test (version managed from 6.0.3)
+[INFO] |  |  +- (org.apiguardian:apiguardian-api:jar:1.1.2:test - omitted for duplicate)
+[INFO] |  |  \- (org.jspecify:jspecify:jar:1.0.0:test - omitted for duplicate)
+[INFO] |  +- org.apiguardian:apiguardian-api:jar:1.1.2:test
+[INFO] |  \- org.jspecify:jspecify:jar:1.0.0:test
+[INFO] +- org.junit.jupiter:junit-jupiter-engine:jar:6.0.3:test
+[INFO] |  +- org.junit.platform:junit-platform-engine:jar:6.0.3:test (version managed from 6.0.3)
+[INFO] |  |  +- (org.opentest4j:opentest4j:jar:1.3.0:test - omitted for duplicate)
+[INFO] |  |  +- (org.junit.platform:junit-platform-commons:jar:6.0.3:test - version managed from 6.0.3; omitted for duplicate)
+[INFO] |  |  +- (org.apiguardian:apiguardian-api:jar:1.1.2:test - omitted for duplicate)
+[INFO] |  |  \- (org.jspecify:jspecify:jar:1.0.0:test - omitted for duplicate)
+[INFO] |  +- (org.junit.jupiter:junit-jupiter-api:jar:6.0.3:test - version managed from 6.0.3; omitted for duplicate)
+[INFO] |  +- (org.apiguardian:apiguardian-api:jar:1.1.2:test - omitted for duplicate)
+[INFO] |  \- (org.jspecify:jspecify:jar:1.0.0:test - omitted for duplicate)
+[INFO] +- org.mockito:mockito-core:jar:5.14.2:test
+[INFO] |  +- net.bytebuddy:byte-buddy:jar:1.15.4:test
+[INFO] |  +- net.bytebuddy:byte-buddy-agent:jar:1.15.4:test
+[INFO] |  \- org.objenesis:objenesis:jar:3.3:test
+[INFO] +- org.assertj:assertj-core:jar:3.26.3:test
+[INFO] |  \- (net.bytebuddy:byte-buddy:jar:1.14.18:test - omitted for conflict with 1.15.4)
+[INFO] +- com.zaxxer:HikariCP:jar:5.1.0:compile
+[INFO] |  \- (org.slf4j:slf4j-api:jar:1.7.36:compile - omitted for conflict with 2.0.17)
+[INFO] +- dev.rafex.ether.jdbc:ether-jdbc:jar:9.0.0:compile
+[INFO] |  \- (dev.rafex.ether.database:ether-database-core:jar:9.0.0:compile - version managed from 9.0.0; omitted for duplicate)
+[INFO] +- dev.rafex.ether.database:ether-database-postgres:jar:9.0.0:compile
+[INFO] |  \- (dev.rafex.ether.database:ether-database-core:jar:9.0.0:compile - version managed from 9.0.0; omitted for duplicate)
+[INFO] +- dev.rafex.ether.database:ether-database-core:jar:9.0.0:compile
+[INFO] \- com.tngtech.archunit:archunit-junit5:jar:1.4.1:test
+[INFO]    +- com.tngtech.archunit:archunit-junit5-api:jar:1.4.1:test
+[INFO]    |  \- com.tngtech.archunit:archunit:jar:1.4.1:test
+[INFO]    |     \- (org.slf4j:slf4j-api:jar:2.0.17:test - omitted for duplicate)
+[INFO]    \- com.tngtech.archunit:archunit-junit5-engine:jar:1.4.1:test
+[INFO]       +- (com.tngtech.archunit:archunit:jar:1.4.1:test - omitted for duplicate)
+[INFO]       +- (com.tngtech.archunit:archunit-junit5-api:jar:1.4.1:test - omitted for duplicate)
+[INFO]       \- com.tngtech.archunit:archunit-junit5-engine-api:jar:1.4.1:test
+[INFO]          \- (org.junit.platform:junit-platform-engine:jar:6.0.3:test - version managed from 1.12.2; omitted for duplicate)
+[INFO] 
+[INFO] -------------------< dev.rafex.kiwi:kiwi-bootstrap >--------------------
+[INFO] Building kiwi-bootstrap 0.1.0-SNAPSHOT                            [6/11]
+[INFO]   from kiwi-bootstrap/pom.xml
+[INFO] --------------------------------[ jar ]---------------------------------
+[INFO] 
+[INFO] --- dependency:3.7.0:tree (default-cli) @ kiwi-bootstrap ---
+[INFO] dev.rafex.kiwi:kiwi-bootstrap:jar:0.1.0-SNAPSHOT
+[INFO] +- dev.rafex.kiwi:kiwi-common:jar:0.1.0-SNAPSHOT:compile
+[INFO] |  +- dev.rafex.ether.logging:ether-logging-core:jar:9.0.0:compile (version managed from 9.0.0)
+[INFO] |  +- (dev.rafex.ether.config:ether-config:jar:9.0.0:compile - version managed from 9.0.0; omitted for duplicate)
+[INFO] |  +- dev.rafex.ether.crypto:ether-crypto:jar:9.0.0:compile (version managed from 9.0.0)
+[INFO] |  \- org.slf4j:slf4j-api:jar:2.0.17:compile (scope not updated to compile)
+[INFO] +- dev.rafex.kiwi:kiwi-core:jar:0.1.0-SNAPSHOT:compile
+[INFO] |  +- (dev.rafex.kiwi:kiwi-common:jar:0.1.0-SNAPSHOT:compile - omitted for duplicate)
+[INFO] |  +- dev.rafex.kiwi:kiwi-ports:jar:0.1.0-SNAPSHOT:compile
+[INFO] |  |  \- com.fasterxml.jackson.core:jackson-annotations:jar:2.21:compile (version managed from 2.21)
+[INFO] |  +- (dev.rafex.ether.database:ether-database-core:jar:9.0.0:compile - version managed from 9.0.0; omitted for duplicate)
+[INFO] |  \- dev.rafex.ether.database:ether-database-postgres:jar:9.0.0:compile (version managed from 9.0.0)
+[INFO] |     \- (dev.rafex.ether.database:ether-database-core:jar:9.0.0:compile - version managed from 9.0.0; omitted for duplicate)
+[INFO] +- dev.rafex.kiwi:kiwi-infra-postgres:jar:0.1.0-SNAPSHOT:compile
+[INFO] |  +- (dev.rafex.kiwi:kiwi-common:jar:0.1.0-SNAPSHOT:compile - omitted for duplicate)
+[INFO] |  +- (dev.rafex.kiwi:kiwi-ports:jar:0.1.0-SNAPSHOT:compile - omitted for duplicate)
+[INFO] |  +- org.postgresql:postgresql:jar:42.7.9:compile (version managed from 42.7.9)
+[INFO] |  |  \- org.checkerframework:checker-qual:jar:3.52.0:runtime
+[INFO] |  +- com.zaxxer:HikariCP:jar:5.1.0:compile (version managed from 5.1.0)
+[INFO] |  |  \- (org.slf4j:slf4j-api:jar:1.7.36:compile - omitted for conflict with 2.0.17)
+[INFO] |  +- dev.rafex.ether.jdbc:ether-jdbc:jar:9.0.0:compile (version managed from 9.0.0)
+[INFO] |  |  \- (dev.rafex.ether.database:ether-database-core:jar:9.0.0:compile - version managed from 9.0.0; omitted for duplicate)
+[INFO] |  +- (dev.rafex.ether.database:ether-database-postgres:jar:9.0.0:compile - version managed from 9.0.0; omitted for duplicate)
+[INFO] |  \- (dev.rafex.ether.database:ether-database-core:jar:9.0.0:compile - version managed from 9.0.0; omitted for duplicate)
+[INFO] +- dev.rafex.ether.config:ether-config:jar:9.0.0:compile
+[INFO] |  +- com.fasterxml.jackson.core:jackson-databind:jar:2.21.2:compile
+[INFO] |  |  +- (com.fasterxml.jackson.core:jackson-annotations:jar:2.21:compile - version managed from 2.21; omitted for duplicate)
+[INFO] |  |  \- com.fasterxml.jackson.core:jackson-core:jar:2.21.2:compile (version managed from 2.21.2)
+[INFO] |  +- com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:jar:2.21.2:compile (version managed from 2.21.2)
+[INFO] |  |  +- (com.fasterxml.jackson.core:jackson-databind:jar:2.21.2:compile - omitted for duplicate)
+[INFO] |  |  +- org.yaml:snakeyaml:jar:2.5:compile
+[INFO] |  |  \- (com.fasterxml.jackson.core:jackson-core:jar:2.21.2:compile - version managed from 2.21.2; omitted for duplicate)
+[INFO] |  +- com.fasterxml.jackson.dataformat:jackson-dataformat-toml:jar:2.21.2:compile (version managed from 2.21.2)
+[INFO] |  |  +- (com.fasterxml.jackson.core:jackson-databind:jar:2.21.2:compile - omitted for duplicate)
+[INFO] |  |  \- (com.fasterxml.jackson.core:jackson-core:jar:2.21.2:compile - version managed from 2.21.2; omitted for duplicate)
+[INFO] |  \- com.fasterxml.jackson.datatype:jackson-datatype-jsr310:jar:2.21.2:compile (version managed from 2.21.2)
+[INFO] |     +- (com.fasterxml.jackson.core:jackson-annotations:jar:2.21:compile - version managed from 2.21; omitted for duplicate)
+[INFO] |     +- (com.fasterxml.jackson.core:jackson-core:jar:2.21.2:compile - version managed from 2.21.2; omitted for duplicate)
+[INFO] |     \- (com.fasterxml.jackson.core:jackson-databind:jar:2.21.2:compile - omitted for duplicate)
+[INFO] +- dev.rafex.ether.database:ether-database-core:jar:9.0.0:compile
+[INFO] \- com.tngtech.archunit:archunit-junit5:jar:1.4.1:test
+[INFO]    +- com.tngtech.archunit:archunit-junit5-api:jar:1.4.1:test
+[INFO]    |  \- com.tngtech.archunit:archunit:jar:1.4.1:test
+[INFO]    |     \- (org.slf4j:slf4j-api:jar:2.0.17:test - omitted for duplicate)
+[INFO]    \- com.tngtech.archunit:archunit-junit5-engine:jar:1.4.1:test
+[INFO]       +- (com.tngtech.archunit:archunit:jar:1.4.1:test - omitted for duplicate)
+[INFO]       +- (com.tngtech.archunit:archunit-junit5-api:jar:1.4.1:test - omitted for duplicate)
+[INFO]       \- com.tngtech.archunit:archunit-junit5-engine-api:jar:1.4.1:test
+[INFO]          \- org.junit.platform:junit-platform-engine:jar:6.0.3:test (version managed from 1.12.2)
+[INFO]             +- org.opentest4j:opentest4j:jar:1.3.0:test
+[INFO]             +- org.junit.platform:junit-platform-commons:jar:6.0.3:test (version managed from 6.0.3)
+[INFO]             |  +- (org.apiguardian:apiguardian-api:jar:1.1.2:test - omitted for duplicate)
+[INFO]             |  \- (org.jspecify:jspecify:jar:1.0.0:test - omitted for duplicate)
+[INFO]             +- org.apiguardian:apiguardian-api:jar:1.1.2:test
+[INFO]             \- org.jspecify:jspecify:jar:1.0.0:test
+[INFO] 
+[INFO] ---------------------< dev.rafex.kiwi:kiwi-tools >----------------------
+[INFO] Building kiwi-tools 0.1.0-SNAPSHOT                                [7/11]
+[INFO]   from kiwi-tools/pom.xml
+[INFO] --------------------------------[ jar ]---------------------------------
+[INFO] 
+[INFO] --- dependency:3.7.0:tree (default-cli) @ kiwi-tools ---
+[INFO] dev.rafex.kiwi:kiwi-tools:jar:0.1.0-SNAPSHOT
+[INFO] +- dev.rafex.kiwi:kiwi-infra-postgres:jar:0.1.0-SNAPSHOT:compile
+[INFO] |  +- dev.rafex.kiwi:kiwi-common:jar:0.1.0-SNAPSHOT:compile
+[INFO] |  |  +- dev.rafex.ether.logging:ether-logging-core:jar:9.0.0:compile (version managed from 9.0.0)
+[INFO] |  |  +- dev.rafex.ether.config:ether-config:jar:9.0.0:compile (version managed from 9.0.0)
+[INFO] |  |  |  +- com.fasterxml.jackson.core:jackson-databind:jar:2.21.2:compile
+[INFO] |  |  |  |  +- (com.fasterxml.jackson.core:jackson-annotations:jar:2.21:compile - version managed from 2.21; omitted for duplicate)
+[INFO] |  |  |  |  \- com.fasterxml.jackson.core:jackson-core:jar:2.21.2:compile (version managed from 2.21.2)
+[INFO] |  |  |  +- com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:jar:2.21.2:compile (version managed from 2.21.2)
+[INFO] |  |  |  |  +- (com.fasterxml.jackson.core:jackson-databind:jar:2.21.2:compile - omitted for duplicate)
+[INFO] |  |  |  |  +- org.yaml:snakeyaml:jar:2.5:compile
+[INFO] |  |  |  |  \- (com.fasterxml.jackson.core:jackson-core:jar:2.21.2:compile - version managed from 2.21.2; omitted for duplicate)
+[INFO] |  |  |  +- com.fasterxml.jackson.dataformat:jackson-dataformat-toml:jar:2.21.2:compile (version managed from 2.21.2)
+[INFO] |  |  |  |  +- (com.fasterxml.jackson.core:jackson-databind:jar:2.21.2:compile - omitted for duplicate)
+[INFO] |  |  |  |  \- (com.fasterxml.jackson.core:jackson-core:jar:2.21.2:compile - version managed from 2.21.2; omitted for duplicate)
+[INFO] |  |  |  \- com.fasterxml.jackson.datatype:jackson-datatype-jsr310:jar:2.21.2:compile (version managed from 2.21.2)
+[INFO] |  |  |     +- (com.fasterxml.jackson.core:jackson-annotations:jar:2.21:compile - version managed from 2.21; omitted for duplicate)
+[INFO] |  |  |     +- (com.fasterxml.jackson.core:jackson-core:jar:2.21.2:compile - version managed from 2.21.2; omitted for duplicate)
+[INFO] |  |  |     \- (com.fasterxml.jackson.core:jackson-databind:jar:2.21.2:compile - omitted for duplicate)
+[INFO] |  |  +- dev.rafex.ether.crypto:ether-crypto:jar:9.0.0:compile (version managed from 9.0.0)
+[INFO] |  |  \- org.slf4j:slf4j-api:jar:2.0.17:compile (scope not updated to compile)
+[INFO] |  +- dev.rafex.kiwi:kiwi-ports:jar:0.1.0-SNAPSHOT:compile
+[INFO] |  |  \- com.fasterxml.jackson.core:jackson-annotations:jar:2.21:compile (version managed from 2.21)
+[INFO] |  +- org.postgresql:postgresql:jar:42.7.9:compile (version managed from 42.7.9)
+[INFO] |  |  \- org.checkerframework:checker-qual:jar:3.52.0:runtime
+[INFO] |  +- com.zaxxer:HikariCP:jar:5.1.0:compile (version managed from 5.1.0)
+[INFO] |  |  \- (org.slf4j:slf4j-api:jar:1.7.36:compile - omitted for conflict with 2.0.17)
+[INFO] |  +- dev.rafex.ether.jdbc:ether-jdbc:jar:9.0.0:compile (version managed from 9.0.0)
+[INFO] |  |  \- (dev.rafex.ether.database:ether-database-core:jar:9.0.0:compile - version managed from 9.0.0; omitted for duplicate)
+[INFO] |  +- dev.rafex.ether.database:ether-database-postgres:jar:9.0.0:compile (version managed from 9.0.0)
+[INFO] |  |  \- (dev.rafex.ether.database:ether-database-core:jar:9.0.0:compile - version managed from 9.0.0; omitted for duplicate)
+[INFO] |  \- dev.rafex.ether.database:ether-database-core:jar:9.0.0:compile (version managed from 9.0.0)
+[INFO] +- dev.rafex.kiwi:kiwi-core:jar:0.1.0-SNAPSHOT:compile
+[INFO] |  +- (dev.rafex.kiwi:kiwi-common:jar:0.1.0-SNAPSHOT:compile - omitted for duplicate)
+[INFO] |  +- (dev.rafex.kiwi:kiwi-ports:jar:0.1.0-SNAPSHOT:compile - omitted for duplicate)
+[INFO] |  +- (dev.rafex.ether.database:ether-database-core:jar:9.0.0:compile - version managed from 9.0.0; omitted for duplicate)
+[INFO] |  \- (dev.rafex.ether.database:ether-database-postgres:jar:9.0.0:compile - version managed from 9.0.0; omitted for duplicate)
+[INFO] \- com.tngtech.archunit:archunit-junit5:jar:1.4.1:test
+[INFO]    +- com.tngtech.archunit:archunit-junit5-api:jar:1.4.1:test
+[INFO]    |  \- com.tngtech.archunit:archunit:jar:1.4.1:test
+[INFO]    |     \- (org.slf4j:slf4j-api:jar:2.0.17:test - omitted for duplicate)
+[INFO]    \- com.tngtech.archunit:archunit-junit5-engine:jar:1.4.1:test
+[INFO]       +- (com.tngtech.archunit:archunit:jar:1.4.1:test - omitted for duplicate)
+[INFO]       +- (com.tngtech.archunit:archunit-junit5-api:jar:1.4.1:test - omitted for duplicate)
+[INFO]       \- com.tngtech.archunit:archunit-junit5-engine-api:jar:1.4.1:test
+[INFO]          \- org.junit.platform:junit-platform-engine:jar:6.0.3:test (version managed from 1.12.2)
+[INFO]             +- org.opentest4j:opentest4j:jar:1.3.0:test
+[INFO]             +- org.junit.platform:junit-platform-commons:jar:6.0.3:test (version managed from 6.0.3)
+[INFO]             |  +- (org.apiguardian:apiguardian-api:jar:1.1.2:test - omitted for duplicate)
+[INFO]             |  \- (org.jspecify:jspecify:jar:1.0.0:test - omitted for duplicate)
+[INFO]             +- org.apiguardian:apiguardian-api:jar:1.1.2:test
+[INFO]             \- org.jspecify:jspecify:jar:1.0.0:test
+[INFO] 
+[INFO] ----------------< dev.rafex.kiwi:kiwi-transport-jetty >-----------------
+[INFO] Building kiwi-transport-jetty 0.1.0-SNAPSHOT                      [8/11]
+[INFO]   from kiwi-transport-jetty/pom.xml
+[INFO] --------------------------------[ jar ]---------------------------------
+[INFO] 
+[INFO] --- dependency:3.7.0:tree (default-cli) @ kiwi-transport-jetty ---
+[INFO] dev.rafex.kiwi:kiwi-transport-jetty:jar:0.1.0-SNAPSHOT
+[INFO] +- dev.rafex.kiwi:kiwi-bootstrap:jar:0.1.0-SNAPSHOT:compile
+[INFO] |  +- dev.rafex.kiwi:kiwi-common:jar:0.1.0-SNAPSHOT:compile
+[INFO] |  |  +- dev.rafex.ether.logging:ether-logging-core:jar:9.0.0:compile (version managed from 9.0.0)
+[INFO] |  |  +- (dev.rafex.ether.config:ether-config:jar:9.0.0:compile - version managed from 9.0.0; omitted for duplicate)
+[INFO] |  |  +- dev.rafex.ether.crypto:ether-crypto:jar:9.0.0:compile (version managed from 9.0.0)
+[INFO] |  |  \- (org.slf4j:slf4j-api:jar:2.0.17:compile - omitted for duplicate)
+[INFO] |  +- dev.rafex.kiwi:kiwi-core:jar:0.1.0-SNAPSHOT:compile
+[INFO] |  |  +- (dev.rafex.kiwi:kiwi-common:jar:0.1.0-SNAPSHOT:compile - omitted for duplicate)
+[INFO] |  |  +- dev.rafex.kiwi:kiwi-ports:jar:0.1.0-SNAPSHOT:compile
+[INFO] |  |  |  \- (com.fasterxml.jackson.core:jackson-annotations:jar:2.21:compile - version managed from 2.21; omitted for duplicate)
+[INFO] |  |  +- (dev.rafex.ether.database:ether-database-core:jar:9.0.0:compile - version managed from 9.0.0; omitted for duplicate)
+[INFO] |  |  \- dev.rafex.ether.database:ether-database-postgres:jar:9.0.0:compile (version managed from 9.0.0)
+[INFO] |  |     \- (dev.rafex.ether.database:ether-database-core:jar:9.0.0:compile - version managed from 9.0.0; omitted for duplicate)
+[INFO] |  +- dev.rafex.kiwi:kiwi-infra-postgres:jar:0.1.0-SNAPSHOT:compile
+[INFO] |  |  +- (dev.rafex.kiwi:kiwi-common:jar:0.1.0-SNAPSHOT:compile - omitted for duplicate)
+[INFO] |  |  +- (dev.rafex.kiwi:kiwi-ports:jar:0.1.0-SNAPSHOT:compile - omitted for duplicate)
+[INFO] |  |  +- org.postgresql:postgresql:jar:42.7.9:compile (version managed from 42.7.9)
+[INFO] |  |  |  \- org.checkerframework:checker-qual:jar:3.52.0:runtime
+[INFO] |  |  +- com.zaxxer:HikariCP:jar:5.1.0:compile (version managed from 5.1.0)
+[INFO] |  |  |  \- (org.slf4j:slf4j-api:jar:1.7.36:compile - omitted for conflict with 2.0.17)
+[INFO] |  |  +- dev.rafex.ether.jdbc:ether-jdbc:jar:9.0.0:compile (version managed from 9.0.0)
+[INFO] |  |  |  \- (dev.rafex.ether.database:ether-database-core:jar:9.0.0:compile - version managed from 9.0.0; omitted for duplicate)
+[INFO] |  |  +- (dev.rafex.ether.database:ether-database-postgres:jar:9.0.0:compile - version managed from 9.0.0; omitted for duplicate)
+[INFO] |  |  \- (dev.rafex.ether.database:ether-database-core:jar:9.0.0:compile - version managed from 9.0.0; omitted for duplicate)
+[INFO] |  +- (dev.rafex.ether.config:ether-config:jar:9.0.0:compile - version managed from 9.0.0; omitted for duplicate)
+[INFO] |  \- dev.rafex.ether.database:ether-database-core:jar:9.0.0:compile (version managed from 9.0.0)
+[INFO] +- dev.rafex.kiwi:kiwi-tools:jar:0.1.0-SNAPSHOT:compile
+[INFO] |  +- (dev.rafex.kiwi:kiwi-infra-postgres:jar:0.1.0-SNAPSHOT:compile - omitted for duplicate)
+[INFO] |  \- (dev.rafex.kiwi:kiwi-core:jar:0.1.0-SNAPSHOT:compile - omitted for duplicate)
+[INFO] +- dev.rafex.ether.http:ether-http-jetty12:jar:9.0.0:compile
+[INFO] |  +- (dev.rafex.ether.config:ether-config:jar:9.0.0:compile - version managed from 9.0.0; omitted for duplicate)
+[INFO] |  +- dev.rafex.ether.http:ether-http-core:jar:9.0.0:compile (version managed from 9.0.0)
+[INFO] |  +- (dev.rafex.ether.http:ether-http-security:jar:9.0.0:compile - version managed from 9.0.0; omitted for duplicate)
+[INFO] |  +- (dev.rafex.ether.http:ether-http-problem:jar:9.0.0:compile - version managed from 9.0.0; omitted for duplicate)
+[INFO] |  +- (dev.rafex.ether.json:ether-json:jar:9.0.0:compile - version managed from 9.0.0; omitted for duplicate)
+[INFO] |  +- dev.rafex.ether.observability:ether-observability-core:jar:9.0.0:compile (version managed from 9.0.0)
+[INFO] |  \- (org.eclipse.jetty:jetty-server:jar:12.1.7:compile - version managed from 12.1.7; omitted for duplicate)
+[INFO] +- dev.rafex.ether.json:ether-json:jar:9.0.0:compile
+[INFO] |  +- (com.fasterxml.jackson.core:jackson-databind:jar:2.21.2:compile - omitted for duplicate)
+[INFO] |  +- com.fasterxml.jackson.core:jackson-core:jar:2.21.2:compile (version managed from 2.21.2)
+[INFO] |  +- com.fasterxml.jackson.core:jackson-annotations:jar:2.21:compile (version managed from 2.21)
+[INFO] |  +- (com.fasterxml.jackson.datatype:jackson-datatype-jsr310:jar:2.21.2:compile - version managed from 2.21.2; omitted for duplicate)
+[INFO] |  \- com.networknt:json-schema-validator:jar:1.5.9:compile
+[INFO] |     +- com.ethlo.time:itu:jar:1.14.0:compile
+[INFO] |     +- (com.fasterxml.jackson.core:jackson-databind:jar:2.18.3:compile - omitted for conflict with 2.21.2)
+[INFO] |     +- (com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:jar:2.21.2:compile - version managed from 2.18.3; omitted for duplicate)
+[INFO] |     \- (org.slf4j:slf4j-api:jar:2.0.17:compile - omitted for duplicate)
+[INFO] +- dev.rafex.ether.jwt:ether-jwt:jar:9.0.0:compile
+[INFO] |  \- (dev.rafex.ether.json:ether-json:jar:9.0.0:compile - version managed from 9.0.0; omitted for duplicate)
+[INFO] +- dev.rafex.ether.glowroot:ether-glowroot-jetty12:jar:9.0.0:compile
+[INFO] +- org.glowroot:glowroot-agent-api:jar:0.14.0-beta.3:provided
+[INFO] +- dev.rafex.ether.http:ether-http-problem:jar:9.0.0:compile
+[INFO] |  +- (dev.rafex.ether.http:ether-http-core:jar:9.0.0:compile - version managed from 9.0.0; omitted for duplicate)
+[INFO] |  \- (dev.rafex.ether.json:ether-json:jar:9.0.0:compile - version managed from 9.0.0; omitted for duplicate)
+[INFO] +- dev.rafex.ether.http:ether-http-security:jar:9.0.0:compile
+[INFO] +- dev.rafex.ether.config:ether-config:jar:9.0.0:compile
+[INFO] |  +- (com.fasterxml.jackson.core:jackson-databind:jar:2.21.2:compile - omitted for duplicate)
+[INFO] |  +- com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:jar:2.21.2:compile (version managed from 2.21.2)
+[INFO] |  |  +- (com.fasterxml.jackson.core:jackson-databind:jar:2.21.2:compile - omitted for duplicate)
+[INFO] |  |  +- org.yaml:snakeyaml:jar:2.5:compile
+[INFO] |  |  \- (com.fasterxml.jackson.core:jackson-core:jar:2.21.2:compile - version managed from 2.21.2; omitted for duplicate)
+[INFO] |  +- com.fasterxml.jackson.dataformat:jackson-dataformat-toml:jar:2.21.2:compile (version managed from 2.21.2)
+[INFO] |  |  +- (com.fasterxml.jackson.core:jackson-databind:jar:2.21.2:compile - omitted for duplicate)
+[INFO] |  |  \- (com.fasterxml.jackson.core:jackson-core:jar:2.21.2:compile - version managed from 2.21.2; omitted for duplicate)
+[INFO] |  \- (com.fasterxml.jackson.datatype:jackson-datatype-jsr310:jar:2.21.2:compile - version managed from 2.21.2; omitted for duplicate)
+[INFO] +- org.slf4j:slf4j-jdk14:jar:2.0.17:runtime
+[INFO] |  \- org.slf4j:slf4j-api:jar:2.0.17:compile (scope not updated to compile)
+[INFO] +- org.eclipse.jetty:jetty-server:jar:12.1.7:compile
+[INFO] |  +- org.eclipse.jetty:jetty-http:jar:12.1.7:compile (version managed from 12.1.7)
+[INFO] |  |  +- (org.eclipse.jetty:jetty-io:jar:12.1.7:compile - version managed from 12.1.7; omitted for duplicate)
+[INFO] |  |  +- org.eclipse.jetty:jetty-util:jar:12.1.7:compile (version managed from 12.1.7)
+[INFO] |  |  |  \- (org.slf4j:slf4j-api:jar:2.0.17:compile - omitted for duplicate)
+[INFO] |  |  \- (org.slf4j:slf4j-api:jar:2.0.17:compile - omitted for duplicate)
+[INFO] |  +- org.eclipse.jetty:jetty-io:jar:12.1.7:compile (version managed from 12.1.7)
+[INFO] |  |  +- (org.eclipse.jetty:jetty-util:jar:12.1.7:compile - version managed from 12.1.7; omitted for duplicate)
+[INFO] |  |  \- (org.slf4j:slf4j-api:jar:2.0.17:compile - omitted for duplicate)
+[INFO] |  \- (org.slf4j:slf4j-api:jar:2.0.17:compile - omitted for duplicate)
+[INFO] +- jakarta.servlet:jakarta.servlet-api:jar:6.0.0:provided
+[INFO] +- com.fasterxml.jackson.core:jackson-databind:jar:2.21.2:compile
+[INFO] |  +- (com.fasterxml.jackson.core:jackson-annotations:jar:2.21:compile - version managed from 2.21; omitted for duplicate)
+[INFO] |  \- (com.fasterxml.jackson.core:jackson-core:jar:2.21.2:compile - version managed from 2.21.2; omitted for duplicate)
+[INFO] +- com.fasterxml.jackson.datatype:jackson-datatype-jsr310:jar:2.21.2:compile
+[INFO] |  +- (com.fasterxml.jackson.core:jackson-annotations:jar:2.21:compile - version managed from 2.21; omitted for duplicate)
+[INFO] |  +- (com.fasterxml.jackson.core:jackson-core:jar:2.21.2:compile - version managed from 2.21.2; omitted for duplicate)
+[INFO] |  \- (com.fasterxml.jackson.core:jackson-databind:jar:2.21.2:compile - omitted for duplicate)
+[INFO] +- org.junit.jupiter:junit-jupiter-api:jar:6.0.3:test
+[INFO] |  +- org.opentest4j:opentest4j:jar:1.3.0:test
+[INFO] |  +- org.junit.platform:junit-platform-commons:jar:6.0.3:test (version managed from 6.0.3)
+[INFO] |  |  +- (org.apiguardian:apiguardian-api:jar:1.1.2:test - omitted for duplicate)
+[INFO] |  |  \- (org.jspecify:jspecify:jar:1.0.0:test - omitted for duplicate)
+[INFO] |  +- org.apiguardian:apiguardian-api:jar:1.1.2:test
+[INFO] |  \- org.jspecify:jspecify:jar:1.0.0:test
+[INFO] +- org.junit.jupiter:junit-jupiter-engine:jar:6.0.3:test
+[INFO] |  +- org.junit.platform:junit-platform-engine:jar:6.0.3:test (version managed from 6.0.3)
+[INFO] |  |  +- (org.opentest4j:opentest4j:jar:1.3.0:test - omitted for duplicate)
+[INFO] |  |  +- (org.junit.platform:junit-platform-commons:jar:6.0.3:test - version managed from 6.0.3; omitted for duplicate)
+[INFO] |  |  +- (org.apiguardian:apiguardian-api:jar:1.1.2:test - omitted for duplicate)
+[INFO] |  |  \- (org.jspecify:jspecify:jar:1.0.0:test - omitted for duplicate)
+[INFO] |  +- (org.junit.jupiter:junit-jupiter-api:jar:6.0.3:test - version managed from 6.0.3; omitted for duplicate)
+[INFO] |  +- (org.apiguardian:apiguardian-api:jar:1.1.2:test - omitted for duplicate)
+[INFO] |  \- (org.jspecify:jspecify:jar:1.0.0:test - omitted for duplicate)
+[INFO] +- org.mockito:mockito-core:jar:5.14.2:test
+[INFO] |  +- net.bytebuddy:byte-buddy:jar:1.15.4:test
+[INFO] |  +- net.bytebuddy:byte-buddy-agent:jar:1.15.4:test
+[INFO] |  \- org.objenesis:objenesis:jar:3.3:test
+[INFO] +- org.assertj:assertj-core:jar:3.26.3:test
+[INFO] |  \- (net.bytebuddy:byte-buddy:jar:1.14.18:test - omitted for conflict with 1.15.4)
+[INFO] \- com.tngtech.archunit:archunit-junit5:jar:1.4.1:test
+[INFO]    +- com.tngtech.archunit:archunit-junit5-api:jar:1.4.1:test
+[INFO]    |  \- com.tngtech.archunit:archunit:jar:1.4.1:test
+[INFO]    |     \- (org.slf4j:slf4j-api:jar:2.0.17:test - omitted for duplicate)
+[INFO]    \- com.tngtech.archunit:archunit-junit5-engine:jar:1.4.1:test
+[INFO]       +- (com.tngtech.archunit:archunit:jar:1.4.1:test - omitted for duplicate)
+[INFO]       +- (com.tngtech.archunit:archunit-junit5-api:jar:1.4.1:test - omitted for duplicate)
+[INFO]       \- com.tngtech.archunit:archunit-junit5-engine-api:jar:1.4.1:test
+[INFO]          \- (org.junit.platform:junit-platform-engine:jar:6.0.3:test - version managed from 1.12.2; omitted for duplicate)
+[INFO] 
+[INFO] ---------------< dev.rafex.kiwi:kiwi-architecture-tests >---------------
+[INFO] Building kiwi-architecture-tests 0.1.0-SNAPSHOT                   [9/11]
+[INFO]   from kiwi-architecture-tests/pom.xml
+[INFO] --------------------------------[ jar ]---------------------------------
+[INFO] 
+[INFO] --- dependency:3.7.0:tree (default-cli) @ kiwi-architecture-tests ---
+[INFO] dev.rafex.kiwi:kiwi-architecture-tests:jar:0.1.0-SNAPSHOT
+[INFO] +- dev.rafex.kiwi:kiwi-common:jar:0.1.0-SNAPSHOT:compile
+[INFO] |  +- dev.rafex.ether.logging:ether-logging-core:jar:9.0.0:compile (version managed from 9.0.0)
+[INFO] |  +- dev.rafex.ether.config:ether-config:jar:9.0.0:compile (version managed from 9.0.0)
+[INFO] |  |  +- (com.fasterxml.jackson.core:jackson-databind:jar:2.21.2:compile - omitted for duplicate)
+[INFO] |  |  +- com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:jar:2.21.2:compile (version managed from 2.21.2)
+[INFO] |  |  |  +- (com.fasterxml.jackson.core:jackson-databind:jar:2.21.2:compile - omitted for duplicate)
+[INFO] |  |  |  +- org.yaml:snakeyaml:jar:2.5:compile
+[INFO] |  |  |  \- (com.fasterxml.jackson.core:jackson-core:jar:2.21.2:compile - version managed from 2.21.2; omitted for duplicate)
+[INFO] |  |  +- com.fasterxml.jackson.dataformat:jackson-dataformat-toml:jar:2.21.2:compile (version managed from 2.21.2)
+[INFO] |  |  |  +- (com.fasterxml.jackson.core:jackson-databind:jar:2.21.2:compile - omitted for duplicate)
+[INFO] |  |  |  \- (com.fasterxml.jackson.core:jackson-core:jar:2.21.2:compile - version managed from 2.21.2; omitted for duplicate)
+[INFO] |  |  \- (com.fasterxml.jackson.datatype:jackson-datatype-jsr310:jar:2.21.2:compile - version managed from 2.21.2; omitted for duplicate)
+[INFO] |  +- dev.rafex.ether.crypto:ether-crypto:jar:9.0.0:compile (version managed from 9.0.0)
+[INFO] |  \- org.slf4j:slf4j-api:jar:2.0.17:compile (scope not updated to compile)
+[INFO] +- dev.rafex.kiwi:kiwi-ports:jar:0.1.0-SNAPSHOT:compile
+[INFO] |  \- com.fasterxml.jackson.core:jackson-annotations:jar:2.21:compile (version managed from 2.21)
+[INFO] +- dev.rafex.kiwi:kiwi-core:jar:0.1.0-SNAPSHOT:compile
+[INFO] |  +- (dev.rafex.kiwi:kiwi-common:jar:0.1.0-SNAPSHOT:compile - omitted for duplicate)
+[INFO] |  +- (dev.rafex.kiwi:kiwi-ports:jar:0.1.0-SNAPSHOT:compile - omitted for duplicate)
+[INFO] |  +- dev.rafex.ether.database:ether-database-core:jar:9.0.0:compile (version managed from 9.0.0)
+[INFO] |  \- dev.rafex.ether.database:ether-database-postgres:jar:9.0.0:compile (version managed from 9.0.0)
+[INFO] |     \- (dev.rafex.ether.database:ether-database-core:jar:9.0.0:compile - version managed from 9.0.0; omitted for duplicate)
+[INFO] +- dev.rafex.kiwi:kiwi-infra-postgres:jar:0.1.0-SNAPSHOT:compile
+[INFO] |  +- (dev.rafex.kiwi:kiwi-common:jar:0.1.0-SNAPSHOT:compile - omitted for duplicate)
+[INFO] |  +- (dev.rafex.kiwi:kiwi-ports:jar:0.1.0-SNAPSHOT:compile - omitted for duplicate)
+[INFO] |  +- org.postgresql:postgresql:jar:42.7.9:compile (version managed from 42.7.9)
+[INFO] |  |  \- org.checkerframework:checker-qual:jar:3.52.0:runtime
+[INFO] |  +- com.zaxxer:HikariCP:jar:5.1.0:compile (version managed from 5.1.0)
+[INFO] |  |  \- (org.slf4j:slf4j-api:jar:1.7.36:compile - omitted for conflict with 2.0.17)
+[INFO] |  +- dev.rafex.ether.jdbc:ether-jdbc:jar:9.0.0:compile (version managed from 9.0.0)
+[INFO] |  |  \- (dev.rafex.ether.database:ether-database-core:jar:9.0.0:compile - version managed from 9.0.0; omitted for duplicate)
+[INFO] |  +- (dev.rafex.ether.database:ether-database-postgres:jar:9.0.0:compile - version managed from 9.0.0; omitted for duplicate)
+[INFO] |  \- (dev.rafex.ether.database:ether-database-core:jar:9.0.0:compile - version managed from 9.0.0; omitted for duplicate)
+[INFO] +- dev.rafex.kiwi:kiwi-bootstrap:jar:0.1.0-SNAPSHOT:compile
+[INFO] |  +- (dev.rafex.kiwi:kiwi-common:jar:0.1.0-SNAPSHOT:compile - omitted for duplicate)
+[INFO] |  +- (dev.rafex.kiwi:kiwi-core:jar:0.1.0-SNAPSHOT:compile - omitted for duplicate)
+[INFO] |  +- (dev.rafex.kiwi:kiwi-infra-postgres:jar:0.1.0-SNAPSHOT:compile - omitted for duplicate)
+[INFO] |  +- (dev.rafex.ether.config:ether-config:jar:9.0.0:compile - version managed from 9.0.0; omitted for duplicate)
+[INFO] |  \- (dev.rafex.ether.database:ether-database-core:jar:9.0.0:compile - version managed from 9.0.0; omitted for duplicate)
+[INFO] +- dev.rafex.kiwi:kiwi-transport-jetty:jar:0.1.0-SNAPSHOT:compile
+[INFO] |  +- (dev.rafex.kiwi:kiwi-bootstrap:jar:0.1.0-SNAPSHOT:compile - omitted for duplicate)
+[INFO] |  +- dev.rafex.kiwi:kiwi-tools:jar:0.1.0-SNAPSHOT:compile
+[INFO] |  |  +- (dev.rafex.kiwi:kiwi-infra-postgres:jar:0.1.0-SNAPSHOT:compile - omitted for duplicate)
+[INFO] |  |  \- (dev.rafex.kiwi:kiwi-core:jar:0.1.0-SNAPSHOT:compile - omitted for duplicate)
+[INFO] |  +- dev.rafex.ether.http:ether-http-jetty12:jar:9.0.0:compile (version managed from 9.0.0)
+[INFO] |  |  +- (dev.rafex.ether.config:ether-config:jar:9.0.0:compile - version managed from 9.0.0; omitted for duplicate)
+[INFO] |  |  +- dev.rafex.ether.http:ether-http-core:jar:9.0.0:compile (version managed from 9.0.0)
+[INFO] |  |  +- (dev.rafex.ether.http:ether-http-security:jar:9.0.0:compile - version managed from 9.0.0; omitted for duplicate)
+[INFO] |  |  +- (dev.rafex.ether.http:ether-http-problem:jar:9.0.0:compile - version managed from 9.0.0; omitted for duplicate)
+[INFO] |  |  +- (dev.rafex.ether.json:ether-json:jar:9.0.0:compile - version managed from 9.0.0; omitted for duplicate)
+[INFO] |  |  +- dev.rafex.ether.observability:ether-observability-core:jar:9.0.0:compile (version managed from 9.0.0)
+[INFO] |  |  \- (org.eclipse.jetty:jetty-server:jar:12.1.7:compile - version managed from 12.1.7; omitted for duplicate)
+[INFO] |  +- dev.rafex.ether.json:ether-json:jar:9.0.0:compile (version managed from 9.0.0)
+[INFO] |  |  +- (com.fasterxml.jackson.core:jackson-databind:jar:2.21.2:compile - omitted for duplicate)
+[INFO] |  |  +- com.fasterxml.jackson.core:jackson-core:jar:2.21.2:compile (version managed from 2.21.2)
+[INFO] |  |  +- (com.fasterxml.jackson.core:jackson-annotations:jar:2.21:compile - version managed from 2.21; omitted for duplicate)
+[INFO] |  |  +- (com.fasterxml.jackson.datatype:jackson-datatype-jsr310:jar:2.21.2:compile - version managed from 2.21.2; omitted for duplicate)
+[INFO] |  |  \- com.networknt:json-schema-validator:jar:1.5.9:compile
+[INFO] |  |     +- com.ethlo.time:itu:jar:1.14.0:compile
+[INFO] |  |     +- (com.fasterxml.jackson.core:jackson-databind:jar:2.18.3:compile - omitted for conflict with 2.21.2)
+[INFO] |  |     +- (com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:jar:2.21.2:compile - version managed from 2.18.3; omitted for duplicate)
+[INFO] |  |     \- (org.slf4j:slf4j-api:jar:2.0.17:compile - omitted for duplicate)
+[INFO] |  +- dev.rafex.ether.jwt:ether-jwt:jar:9.0.0:compile (version managed from 9.0.0)
+[INFO] |  |  \- (dev.rafex.ether.json:ether-json:jar:9.0.0:compile - version managed from 9.0.0; omitted for duplicate)
+[INFO] |  +- dev.rafex.ether.glowroot:ether-glowroot-jetty12:jar:9.0.0:compile (version managed from 9.0.0)
+[INFO] |  +- dev.rafex.ether.http:ether-http-problem:jar:9.0.0:compile (version managed from 9.0.0)
+[INFO] |  |  +- (dev.rafex.ether.http:ether-http-core:jar:9.0.0:compile - version managed from 9.0.0; omitted for duplicate)
+[INFO] |  |  \- (dev.rafex.ether.json:ether-json:jar:9.0.0:compile - version managed from 9.0.0; omitted for duplicate)
+[INFO] |  +- dev.rafex.ether.http:ether-http-security:jar:9.0.0:compile (version managed from 9.0.0)
+[INFO] |  +- (dev.rafex.ether.config:ether-config:jar:9.0.0:compile - version managed from 9.0.0; omitted for duplicate)
+[INFO] |  +- org.slf4j:slf4j-jdk14:jar:2.0.17:runtime (version managed from 2.0.17)
+[INFO] |  |  \- (org.slf4j:slf4j-api:jar:2.0.17:runtime - omitted for duplicate)
+[INFO] |  +- org.eclipse.jetty:jetty-server:jar:12.1.7:compile (version managed from 12.1.7)
+[INFO] |  |  +- org.eclipse.jetty:jetty-http:jar:12.1.7:compile (version managed from 12.1.7)
+[INFO] |  |  |  +- (org.eclipse.jetty:jetty-io:jar:12.1.7:compile - version managed from 12.1.7; omitted for duplicate)
+[INFO] |  |  |  +- org.eclipse.jetty:jetty-util:jar:12.1.7:compile (version managed from 12.1.7)
+[INFO] |  |  |  |  \- (org.slf4j:slf4j-api:jar:2.0.17:compile - omitted for duplicate)
+[INFO] |  |  |  \- (org.slf4j:slf4j-api:jar:2.0.17:compile - omitted for duplicate)
+[INFO] |  |  +- org.eclipse.jetty:jetty-io:jar:12.1.7:compile (version managed from 12.1.7)
+[INFO] |  |  |  +- (org.eclipse.jetty:jetty-util:jar:12.1.7:compile - version managed from 12.1.7; omitted for duplicate)
+[INFO] |  |  |  \- (org.slf4j:slf4j-api:jar:2.0.17:compile - omitted for duplicate)
+[INFO] |  |  \- (org.slf4j:slf4j-api:jar:2.0.17:compile - omitted for duplicate)
+[INFO] |  +- com.fasterxml.jackson.core:jackson-databind:jar:2.21.2:compile
+[INFO] |  |  +- (com.fasterxml.jackson.core:jackson-annotations:jar:2.21:compile - version managed from 2.21; omitted for duplicate)
+[INFO] |  |  \- (com.fasterxml.jackson.core:jackson-core:jar:2.21.2:compile - version managed from 2.21.2; omitted for duplicate)
+[INFO] |  \- com.fasterxml.jackson.datatype:jackson-datatype-jsr310:jar:2.21.2:compile (version managed from 2.21.2)
+[INFO] |     +- (com.fasterxml.jackson.core:jackson-annotations:jar:2.21:compile - version managed from 2.21; omitted for duplicate)
+[INFO] |     +- (com.fasterxml.jackson.core:jackson-core:jar:2.21.2:compile - version managed from 2.21.2; omitted for duplicate)
+[INFO] |     \- (com.fasterxml.jackson.core:jackson-databind:jar:2.21.2:compile - omitted for duplicate)
+[INFO] \- com.tngtech.archunit:archunit-junit5:jar:1.4.1:test
+[INFO]    +- com.tngtech.archunit:archunit-junit5-api:jar:1.4.1:test
+[INFO]    |  \- com.tngtech.archunit:archunit:jar:1.4.1:test
+[INFO]    |     \- (org.slf4j:slf4j-api:jar:2.0.17:test - omitted for duplicate)
+[INFO]    \- com.tngtech.archunit:archunit-junit5-engine:jar:1.4.1:test
+[INFO]       +- (com.tngtech.archunit:archunit:jar:1.4.1:test - omitted for duplicate)
+[INFO]       +- (com.tngtech.archunit:archunit-junit5-api:jar:1.4.1:test - omitted for duplicate)
+[INFO]       \- com.tngtech.archunit:archunit-junit5-engine-api:jar:1.4.1:test
+[INFO]          \- org.junit.platform:junit-platform-engine:jar:6.0.3:test (version managed from 1.12.2)
+[INFO]             +- org.opentest4j:opentest4j:jar:1.3.0:test
+[INFO]             +- org.junit.platform:junit-platform-commons:jar:6.0.3:test (version managed from 6.0.3)
+[INFO]             |  +- (org.apiguardian:apiguardian-api:jar:1.1.2:test - omitted for duplicate)
+[INFO]             |  \- (org.jspecify:jspecify:jar:1.0.0:test - omitted for duplicate)
+[INFO]             +- org.apiguardian:apiguardian-api:jar:1.1.2:test
+[INFO]             \- org.jspecify:jspecify:jar:1.0.0:test
+[INFO] 
+[INFO] -----------------< dev.rafex.kiwi:kiwi-transport-grpc >-----------------
+[INFO] Building kiwi-transport-grpc 0.1.0-SNAPSHOT                      [10/11]
+[INFO]   from kiwi-transport-grpc/pom.xml
+[INFO] --------------------------------[ jar ]---------------------------------
+[INFO] 
+[INFO] --- dependency:3.7.0:tree (default-cli) @ kiwi-transport-grpc ---
+[INFO] dev.rafex.kiwi:kiwi-transport-grpc:jar:0.1.0-SNAPSHOT
+[INFO] \- com.tngtech.archunit:archunit-junit5:jar:1.4.1:test
+[INFO]    +- com.tngtech.archunit:archunit-junit5-api:jar:1.4.1:test
+[INFO]    |  \- com.tngtech.archunit:archunit:jar:1.4.1:test
+[INFO]    |     \- org.slf4j:slf4j-api:jar:2.0.17:test
+[INFO]    \- com.tngtech.archunit:archunit-junit5-engine:jar:1.4.1:test
+[INFO]       +- (com.tngtech.archunit:archunit:jar:1.4.1:test - omitted for duplicate)
+[INFO]       +- (com.tngtech.archunit:archunit-junit5-api:jar:1.4.1:test - omitted for duplicate)
+[INFO]       \- com.tngtech.archunit:archunit-junit5-engine-api:jar:1.4.1:test
+[INFO]          \- org.junit.platform:junit-platform-engine:jar:6.0.3:test (version managed from 1.12.2)
+[INFO]             +- org.opentest4j:opentest4j:jar:1.3.0:test
+[INFO]             +- org.junit.platform:junit-platform-commons:jar:6.0.3:test (version managed from 6.0.3)
+[INFO]             |  +- (org.apiguardian:apiguardian-api:jar:1.1.2:test - omitted for duplicate)
+[INFO]             |  \- (org.jspecify:jspecify:jar:1.0.0:test - omitted for duplicate)
+[INFO]             +- org.apiguardian:apiguardian-api:jar:1.1.2:test
+[INFO]             \- org.jspecify:jspecify:jar:1.0.0:test
+[INFO] 
+[INFO] ---------------< dev.rafex.kiwi:kiwi-transport-rabbitmq >---------------
+[INFO] Building kiwi-transport-rabbitmq 0.1.0-SNAPSHOT                  [11/11]
+[INFO]   from kiwi-transport-rabbitmq/pom.xml
+[INFO] --------------------------------[ jar ]---------------------------------
+[INFO] 
+[INFO] --- dependency:3.7.0:tree (default-cli) @ kiwi-transport-rabbitmq ---
+[INFO] dev.rafex.kiwi:kiwi-transport-rabbitmq:jar:0.1.0-SNAPSHOT
+[INFO] \- com.tngtech.archunit:archunit-junit5:jar:1.4.1:test
+[INFO]    +- com.tngtech.archunit:archunit-junit5-api:jar:1.4.1:test
+[INFO]    |  \- com.tngtech.archunit:archunit:jar:1.4.1:test
+[INFO]    |     \- org.slf4j:slf4j-api:jar:2.0.17:test
+[INFO]    \- com.tngtech.archunit:archunit-junit5-engine:jar:1.4.1:test
+[INFO]       +- (com.tngtech.archunit:archunit:jar:1.4.1:test - omitted for duplicate)
+[INFO]       +- (com.tngtech.archunit:archunit-junit5-api:jar:1.4.1:test - omitted for duplicate)
+[INFO]       \- com.tngtech.archunit:archunit-junit5-engine-api:jar:1.4.1:test
+[INFO]          \- org.junit.platform:junit-platform-engine:jar:6.0.3:test (version managed from 1.12.2)
+[INFO]             +- org.opentest4j:opentest4j:jar:1.3.0:test
+[INFO]             +- org.junit.platform:junit-platform-commons:jar:6.0.3:test (version managed from 6.0.3)
+[INFO]             |  +- (org.apiguardian:apiguardian-api:jar:1.1.2:test - omitted for duplicate)
+[INFO]             |  \- (org.jspecify:jspecify:jar:1.0.0:test - omitted for duplicate)
+[INFO]             +- org.apiguardian:apiguardian-api:jar:1.1.2:test
+[INFO]             \- org.jspecify:jspecify:jar:1.0.0:test
+[INFO] ------------------------------------------------------------------------
+[INFO] Reactor Summary:
+[INFO] 
+[INFO] kiwi-parent 1.0-SNAPSHOT ........................... SUCCESS [  0.493 s]
+[INFO] kiwi-common 0.1.0-SNAPSHOT ......................... SUCCESS [  0.049 s]
+[INFO] kiwi-ports 0.1.0-SNAPSHOT .......................... SUCCESS [  0.004 s]
+[INFO] kiwi-core 0.1.0-SNAPSHOT ........................... SUCCESS [  0.011 s]
+[INFO] kiwi-infra-postgres 0.1.0-SNAPSHOT ................. SUCCESS [  0.027 s]
+[INFO] kiwi-bootstrap 0.1.0-SNAPSHOT ...................... SUCCESS [  0.010 s]
+[INFO] kiwi-tools 0.1.0-SNAPSHOT .......................... SUCCESS [  0.008 s]
+[INFO] kiwi-transport-jetty 0.1.0-SNAPSHOT ................ SUCCESS [  0.075 s]
+[INFO] kiwi-architecture-tests 0.1.0-SNAPSHOT ............. SUCCESS [  0.008 s]
+[INFO] kiwi-transport-grpc 0.1.0-SNAPSHOT ................. SUCCESS [  0.006 s]
+[INFO] kiwi-transport-rabbitmq 0.1.0-SNAPSHOT ............. SUCCESS [  0.004 s]
+[INFO] ------------------------------------------------------------------------
+[INFO] BUILD SUCCESS
+[INFO] ------------------------------------------------------------------------
+[INFO] Total time:  0.870 s
+[INFO] Finished at: 2026-03-25T22:41:33-06:00
+[INFO] ------------------------------------------------------------------------

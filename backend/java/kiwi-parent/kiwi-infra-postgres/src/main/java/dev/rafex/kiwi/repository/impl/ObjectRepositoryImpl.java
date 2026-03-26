@@ -49,26 +49,28 @@ public class ObjectRepositoryImpl implements ObjectRepository {
 		params.add(tags == null ? SqlParameter.nullOf(Types.ARRAY) : PostgresParameters.textArray(tags));
 		params.add(metadataJson == null ? SqlParameter.nullOf(Types.OTHER) : PostgresParameters.jsonb(metadataJson));
 		params.add(SqlParameter.of(locationId));
-		db.execute(new SqlQuery("SELECT api_create_object(?::uuid, ?, ?, ?, ?::text[], ?::jsonb, ?::uuid)", params));
+		db.query(new SqlQuery("SELECT api_create_object(?::uuid, ?, ?, ?, ?::text[], ?::jsonb, ?::uuid)", params),
+				rs -> null);
 	}
 
 	@Override
 	public void moveObject(final UUID objectId, final UUID newLocationId) {
-		db.execute(new SqlQuery("SELECT api_move_object(?::uuid, ?::uuid)",
-				List.of(SqlParameter.of(objectId), SqlParameter.of(newLocationId))));
+		db.query(new SqlQuery("SELECT api_move_object(?::uuid, ?::uuid)",
+				List.of(SqlParameter.of(objectId), SqlParameter.of(newLocationId))), rs -> null);
 	}
 
 	@Override
 	public void updateTags(final UUID objectId, final String[] tags) {
 		final var tagsParam = tags == null ? SqlParameter.nullOf(Types.ARRAY) : PostgresParameters.textArray(tags);
-		db.execute(new SqlQuery("SELECT api_update_tags(?::uuid, ?::text[])",
-				List.of(SqlParameter.of(objectId), tagsParam)));
+		db.query(new SqlQuery("SELECT api_update_tags(?::uuid, ?::text[])",
+				List.of(SqlParameter.of(objectId), tagsParam)), rs -> null);
 	}
 
 	@Override
 	public void updateText(final UUID objectId, final String name, final String description) {
-		db.execute(new SqlQuery("SELECT api_update_text(?::uuid, ?, ?)",
-				List.of(SqlParameter.of(objectId), SqlParameter.text(name), SqlParameter.text(description))));
+		db.query(new SqlQuery("SELECT api_update_text(?::uuid, ?, ?)",
+				List.of(SqlParameter.of(objectId), SqlParameter.text(name), SqlParameter.text(description))),
+				rs -> null);
 	}
 
 	@Override
@@ -76,8 +78,8 @@ public class ObjectRepositoryImpl implements ObjectRepository {
 		final var metaParam = metadataJson == null
 				? SqlParameter.nullOf(Types.OTHER)
 				: PostgresParameters.jsonb(metadataJson);
-		db.execute(new SqlQuery("SELECT api_update_metadata(?::uuid, ?::jsonb)",
-				List.of(SqlParameter.of(objectId), metaParam)));
+		db.query(new SqlQuery("SELECT api_update_metadata(?::uuid, ?::jsonb)",
+				List.of(SqlParameter.of(objectId), metaParam)), rs -> null);
 	}
 
 	@Override

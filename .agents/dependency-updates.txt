@@ -1,0 +1,383 @@
+[INFO] Scanning for projects...
+[INFO] ------------------------------------------------------------------------
+[INFO] Reactor Build Order:
+[INFO] 
+[INFO] kiwi-parent                                                        [pom]
+[INFO] kiwi-common                                                        [jar]
+[INFO] kiwi-ports                                                         [jar]
+[INFO] kiwi-core                                                          [jar]
+[INFO] kiwi-infra-postgres                                                [jar]
+[INFO] kiwi-bootstrap                                                     [jar]
+[INFO] kiwi-tools                                                         [jar]
+[INFO] kiwi-transport-jetty                                               [jar]
+[INFO] kiwi-architecture-tests                                            [jar]
+[INFO] kiwi-transport-grpc                                                [jar]
+[INFO] kiwi-transport-rabbitmq                                            [jar]
+[INFO] 
+[INFO] ---------------------< dev.rafex.kiwi:kiwi-parent >---------------------
+[INFO] Building kiwi-parent 1.0-SNAPSHOT                                 [1/11]
+[INFO]   from pom.xml
+[INFO] --------------------------------[ pom ]---------------------------------
+[INFO] 
+[INFO] --- versions:2.21.0:display-dependency-updates (default-cli) @ kiwi-parent ---
+[WARNING] We can't getModel the version for the dependency com.fasterxml.jackson.core:jackson-databind because there does not exist a parent.
+[WARNING] We can't getModel the version for the dependency org.junit.jupiter:junit-jupiter because there does not exist a parent.
+[INFO] The following dependencies in Dependency Management have newer versions:
+[INFO]   com.fasterxml.jackson.core:jackson-annotations ....... 2.21 -> 3.0-rc5
+[INFO]   com.zaxxer:HikariCP ................................... 5.1.0 -> 7.0.2
+[INFO]   jakarta.servlet:jakarta.servlet-api ................ 6.0.0 -> 6.2.0-M1
+[INFO]   org.assertj:assertj-core .......................... 3.26.3 -> 4.0.0-M1
+[INFO]   org.junit.jupiter:junit-jupiter-api ................ 6.0.3 -> 6.1.0-M1
+[INFO]   org.junit.jupiter:junit-jupiter-engine ............. 6.0.3 -> 6.1.0-M1
+[INFO]   org.junit.jupiter:junit-jupiter-migrationsupport ... 6.0.3 -> 6.1.0-M1
+[INFO]   org.junit.jupiter:junit-jupiter-params ............. 6.0.3 -> 6.1.0-M1
+[INFO]   org.junit.platform:junit-platform-commons .......... 6.0.3 -> 6.1.0-M1
+[INFO]   org.junit.platform:junit-platform-console .......... 6.0.3 -> 6.1.0-M1
+[INFO]   org.junit.platform:junit-platform-engine ........... 6.0.3 -> 6.1.0-M1
+[INFO]   org.junit.platform:junit-platform-launcher ......... 6.0.3 -> 6.1.0-M1
+[INFO]   org.junit.platform:junit-platform-reporting ........ 6.0.3 -> 6.1.0-M1
+[INFO]   org.junit.platform:junit-platform-suite ............ 6.0.3 -> 6.1.0-M1
+[INFO]   org.junit.platform:junit-platform-suite-api ........ 6.0.3 -> 6.1.0-M1
+[INFO]   org.junit.platform:junit-platform-suite-engine ..... 6.0.3 -> 6.1.0-M1
+[INFO]   org.junit.platform:junit-platform-testkit .......... 6.0.3 -> 6.1.0-M1
+[INFO]   org.junit.vintage:junit-vintage-engine ............. 6.0.3 -> 6.1.0-M1
+[INFO]   org.mockito:mockito-core ............................ 5.14.2 -> 5.23.0
+[INFO]   org.postgresql:postgresql .......................... 42.7.9 -> 42.7.10
+[INFO]   org.slf4j:slf4j-jdk14 ......................... 2.0.17 -> 2.1.0-alpha1
+[INFO] 
+[INFO] 
+[INFO] ---------------------< dev.rafex.kiwi:kiwi-common >---------------------
+[INFO] Building kiwi-common 0.1.0-SNAPSHOT                               [2/11]
+[INFO]   from kiwi-common/pom.xml
+[INFO] --------------------------------[ jar ]---------------------------------
+[INFO] 
+[INFO] --- versions:2.21.0:display-dependency-updates (default-cli) @ kiwi-common ---
+[INFO] The following dependencies in Dependencies have newer versions:
+[INFO]   org.junit.jupiter:junit-jupiter .................... 6.0.3 -> 6.1.0-M1
+[INFO]   org.slf4j:slf4j-api ........................... 2.0.17 -> 2.1.0-alpha1
+[INFO] 
+[INFO] The following dependencies in Dependency Management have newer versions:
+[INFO]   com.fasterxml.jackson.core:jackson-annotations ....... 2.21 -> 3.0-rc5
+[INFO]   com.zaxxer:HikariCP ................................... 5.1.0 -> 7.0.2
+[INFO]   jakarta.servlet:jakarta.servlet-api ................ 6.0.0 -> 6.2.0-M1
+[INFO]   org.assertj:assertj-core .......................... 3.26.3 -> 4.0.0-M1
+[INFO]   org.junit.jupiter:junit-jupiter-api ................ 6.0.3 -> 6.1.0-M1
+[INFO]   org.junit.jupiter:junit-jupiter-engine ............. 6.0.3 -> 6.1.0-M1
+[INFO]   org.junit.jupiter:junit-jupiter-migrationsupport ... 6.0.3 -> 6.1.0-M1
+[INFO]   org.junit.jupiter:junit-jupiter-params ............. 6.0.3 -> 6.1.0-M1
+[INFO]   org.junit.platform:junit-platform-commons .......... 6.0.3 -> 6.1.0-M1
+[INFO]   org.junit.platform:junit-platform-console .......... 6.0.3 -> 6.1.0-M1
+[INFO]   org.junit.platform:junit-platform-engine ........... 6.0.3 -> 6.1.0-M1
+[INFO]   org.junit.platform:junit-platform-launcher ......... 6.0.3 -> 6.1.0-M1
+[INFO]   org.junit.platform:junit-platform-reporting ........ 6.0.3 -> 6.1.0-M1
+[INFO]   org.junit.platform:junit-platform-suite ............ 6.0.3 -> 6.1.0-M1
+[INFO]   org.junit.platform:junit-platform-suite-api ........ 6.0.3 -> 6.1.0-M1
+[INFO]   org.junit.platform:junit-platform-suite-engine ..... 6.0.3 -> 6.1.0-M1
+[INFO]   org.junit.platform:junit-platform-testkit .......... 6.0.3 -> 6.1.0-M1
+[INFO]   org.junit.vintage:junit-vintage-engine ............. 6.0.3 -> 6.1.0-M1
+[INFO]   org.mockito:mockito-core ............................ 5.14.2 -> 5.23.0
+[INFO]   org.postgresql:postgresql .......................... 42.7.9 -> 42.7.10
+[INFO]   org.slf4j:slf4j-jdk14 ......................... 2.0.17 -> 2.1.0-alpha1
+[INFO] 
+[INFO] 
+[INFO] ---------------------< dev.rafex.kiwi:kiwi-ports >----------------------
+[INFO] Building kiwi-ports 0.1.0-SNAPSHOT                                [3/11]
+[INFO]   from kiwi-ports/pom.xml
+[INFO] --------------------------------[ jar ]---------------------------------
+[INFO] 
+[INFO] --- versions:2.21.0:display-dependency-updates (default-cli) @ kiwi-ports ---
+[INFO] The following dependencies in Dependency Management have newer versions:
+[INFO]   com.fasterxml.jackson.core:jackson-annotations ....... 2.21 -> 3.0-rc5
+[INFO]   com.zaxxer:HikariCP ................................... 5.1.0 -> 7.0.2
+[INFO]   jakarta.servlet:jakarta.servlet-api ................ 6.0.0 -> 6.2.0-M1
+[INFO]   org.assertj:assertj-core .......................... 3.26.3 -> 4.0.0-M1
+[INFO]   org.junit.jupiter:junit-jupiter-api ................ 6.0.3 -> 6.1.0-M1
+[INFO]   org.junit.jupiter:junit-jupiter-engine ............. 6.0.3 -> 6.1.0-M1
+[INFO]   org.junit.jupiter:junit-jupiter-migrationsupport ... 6.0.3 -> 6.1.0-M1
+[INFO]   org.junit.jupiter:junit-jupiter-params ............. 6.0.3 -> 6.1.0-M1
+[INFO]   org.junit.platform:junit-platform-commons .......... 6.0.3 -> 6.1.0-M1
+[INFO]   org.junit.platform:junit-platform-console .......... 6.0.3 -> 6.1.0-M1
+[INFO]   org.junit.platform:junit-platform-engine ........... 6.0.3 -> 6.1.0-M1
+[INFO]   org.junit.platform:junit-platform-launcher ......... 6.0.3 -> 6.1.0-M1
+[INFO]   org.junit.platform:junit-platform-reporting ........ 6.0.3 -> 6.1.0-M1
+[INFO]   org.junit.platform:junit-platform-suite ............ 6.0.3 -> 6.1.0-M1
+[INFO]   org.junit.platform:junit-platform-suite-api ........ 6.0.3 -> 6.1.0-M1
+[INFO]   org.junit.platform:junit-platform-suite-engine ..... 6.0.3 -> 6.1.0-M1
+[INFO]   org.junit.platform:junit-platform-testkit .......... 6.0.3 -> 6.1.0-M1
+[INFO]   org.junit.vintage:junit-vintage-engine ............. 6.0.3 -> 6.1.0-M1
+[INFO]   org.mockito:mockito-core ............................ 5.14.2 -> 5.23.0
+[INFO]   org.postgresql:postgresql .......................... 42.7.9 -> 42.7.10
+[INFO]   org.slf4j:slf4j-jdk14 ......................... 2.0.17 -> 2.1.0-alpha1
+[INFO] 
+[INFO] 
+[INFO] ----------------------< dev.rafex.kiwi:kiwi-core >----------------------
+[INFO] Building kiwi-core 0.1.0-SNAPSHOT                                 [4/11]
+[INFO]   from kiwi-core/pom.xml
+[INFO] --------------------------------[ jar ]---------------------------------
+[INFO] 
+[INFO] --- versions:2.21.0:display-dependency-updates (default-cli) @ kiwi-core ---
+[INFO] No dependencies in Dependencies have newer versions.
+[INFO] 
+[INFO] The following dependencies in Dependency Management have newer versions:
+[INFO]   com.fasterxml.jackson.core:jackson-annotations ....... 2.21 -> 3.0-rc5
+[INFO]   com.zaxxer:HikariCP ................................... 5.1.0 -> 7.0.2
+[INFO]   jakarta.servlet:jakarta.servlet-api ................ 6.0.0 -> 6.2.0-M1
+[INFO]   org.assertj:assertj-core .......................... 3.26.3 -> 4.0.0-M1
+[INFO]   org.junit.jupiter:junit-jupiter-api ................ 6.0.3 -> 6.1.0-M1
+[INFO]   org.junit.jupiter:junit-jupiter-engine ............. 6.0.3 -> 6.1.0-M1
+[INFO]   org.junit.jupiter:junit-jupiter-migrationsupport ... 6.0.3 -> 6.1.0-M1
+[INFO]   org.junit.jupiter:junit-jupiter-params ............. 6.0.3 -> 6.1.0-M1
+[INFO]   org.junit.platform:junit-platform-commons .......... 6.0.3 -> 6.1.0-M1
+[INFO]   org.junit.platform:junit-platform-console .......... 6.0.3 -> 6.1.0-M1
+[INFO]   org.junit.platform:junit-platform-engine ........... 6.0.3 -> 6.1.0-M1
+[INFO]   org.junit.platform:junit-platform-launcher ......... 6.0.3 -> 6.1.0-M1
+[INFO]   org.junit.platform:junit-platform-reporting ........ 6.0.3 -> 6.1.0-M1
+[INFO]   org.junit.platform:junit-platform-suite ............ 6.0.3 -> 6.1.0-M1
+[INFO]   org.junit.platform:junit-platform-suite-api ........ 6.0.3 -> 6.1.0-M1
+[INFO]   org.junit.platform:junit-platform-suite-engine ..... 6.0.3 -> 6.1.0-M1
+[INFO]   org.junit.platform:junit-platform-testkit .......... 6.0.3 -> 6.1.0-M1
+[INFO]   org.junit.vintage:junit-vintage-engine ............. 6.0.3 -> 6.1.0-M1
+[INFO]   org.mockito:mockito-core ............................ 5.14.2 -> 5.23.0
+[INFO]   org.postgresql:postgresql .......................... 42.7.9 -> 42.7.10
+[INFO]   org.slf4j:slf4j-jdk14 ......................... 2.0.17 -> 2.1.0-alpha1
+[INFO] 
+[INFO] 
+[INFO] -----------------< dev.rafex.kiwi:kiwi-infra-postgres >-----------------
+[INFO] Building kiwi-infra-postgres 0.1.0-SNAPSHOT                       [5/11]
+[INFO]   from kiwi-infra-postgres/pom.xml
+[INFO] --------------------------------[ jar ]---------------------------------
+[INFO] 
+[INFO] --- versions:2.21.0:display-dependency-updates (default-cli) @ kiwi-infra-postgres ---
+[INFO] No dependencies in Dependencies have newer versions.
+[INFO] 
+[INFO] The following dependencies in Dependency Management have newer versions:
+[INFO]   com.fasterxml.jackson.core:jackson-annotations ....... 2.21 -> 3.0-rc5
+[INFO]   com.zaxxer:HikariCP ................................... 5.1.0 -> 7.0.2
+[INFO]   jakarta.servlet:jakarta.servlet-api ................ 6.0.0 -> 6.2.0-M1
+[INFO]   org.assertj:assertj-core .......................... 3.26.3 -> 4.0.0-M1
+[INFO]   org.junit.jupiter:junit-jupiter-api ................ 6.0.3 -> 6.1.0-M1
+[INFO]   org.junit.jupiter:junit-jupiter-engine ............. 6.0.3 -> 6.1.0-M1
+[INFO]   org.junit.jupiter:junit-jupiter-migrationsupport ... 6.0.3 -> 6.1.0-M1
+[INFO]   org.junit.jupiter:junit-jupiter-params ............. 6.0.3 -> 6.1.0-M1
+[INFO]   org.junit.platform:junit-platform-commons .......... 6.0.3 -> 6.1.0-M1
+[INFO]   org.junit.platform:junit-platform-console .......... 6.0.3 -> 6.1.0-M1
+[INFO]   org.junit.platform:junit-platform-engine ........... 6.0.3 -> 6.1.0-M1
+[INFO]   org.junit.platform:junit-platform-launcher ......... 6.0.3 -> 6.1.0-M1
+[INFO]   org.junit.platform:junit-platform-reporting ........ 6.0.3 -> 6.1.0-M1
+[INFO]   org.junit.platform:junit-platform-suite ............ 6.0.3 -> 6.1.0-M1
+[INFO]   org.junit.platform:junit-platform-suite-api ........ 6.0.3 -> 6.1.0-M1
+[INFO]   org.junit.platform:junit-platform-suite-engine ..... 6.0.3 -> 6.1.0-M1
+[INFO]   org.junit.platform:junit-platform-testkit .......... 6.0.3 -> 6.1.0-M1
+[INFO]   org.junit.vintage:junit-vintage-engine ............. 6.0.3 -> 6.1.0-M1
+[INFO]   org.mockito:mockito-core ............................ 5.14.2 -> 5.23.0
+[INFO]   org.postgresql:postgresql .......................... 42.7.9 -> 42.7.10
+[INFO]   org.slf4j:slf4j-jdk14 ......................... 2.0.17 -> 2.1.0-alpha1
+[INFO] 
+[INFO] 
+[INFO] -------------------< dev.rafex.kiwi:kiwi-bootstrap >--------------------
+[INFO] Building kiwi-bootstrap 0.1.0-SNAPSHOT                            [6/11]
+[INFO]   from kiwi-bootstrap/pom.xml
+[INFO] --------------------------------[ jar ]---------------------------------
+[INFO] 
+[INFO] --- versions:2.21.0:display-dependency-updates (default-cli) @ kiwi-bootstrap ---
+[INFO] No dependencies in Dependencies have newer versions.
+[INFO] 
+[INFO] The following dependencies in Dependency Management have newer versions:
+[INFO]   com.fasterxml.jackson.core:jackson-annotations ....... 2.21 -> 3.0-rc5
+[INFO]   com.zaxxer:HikariCP ................................... 5.1.0 -> 7.0.2
+[INFO]   jakarta.servlet:jakarta.servlet-api ................ 6.0.0 -> 6.2.0-M1
+[INFO]   org.assertj:assertj-core .......................... 3.26.3 -> 4.0.0-M1
+[INFO]   org.junit.jupiter:junit-jupiter-api ................ 6.0.3 -> 6.1.0-M1
+[INFO]   org.junit.jupiter:junit-jupiter-engine ............. 6.0.3 -> 6.1.0-M1
+[INFO]   org.junit.jupiter:junit-jupiter-migrationsupport ... 6.0.3 -> 6.1.0-M1
+[INFO]   org.junit.jupiter:junit-jupiter-params ............. 6.0.3 -> 6.1.0-M1
+[INFO]   org.junit.platform:junit-platform-commons .......... 6.0.3 -> 6.1.0-M1
+[INFO]   org.junit.platform:junit-platform-console .......... 6.0.3 -> 6.1.0-M1
+[INFO]   org.junit.platform:junit-platform-engine ........... 6.0.3 -> 6.1.0-M1
+[INFO]   org.junit.platform:junit-platform-launcher ......... 6.0.3 -> 6.1.0-M1
+[INFO]   org.junit.platform:junit-platform-reporting ........ 6.0.3 -> 6.1.0-M1
+[INFO]   org.junit.platform:junit-platform-suite ............ 6.0.3 -> 6.1.0-M1
+[INFO]   org.junit.platform:junit-platform-suite-api ........ 6.0.3 -> 6.1.0-M1
+[INFO]   org.junit.platform:junit-platform-suite-engine ..... 6.0.3 -> 6.1.0-M1
+[INFO]   org.junit.platform:junit-platform-testkit .......... 6.0.3 -> 6.1.0-M1
+[INFO]   org.junit.vintage:junit-vintage-engine ............. 6.0.3 -> 6.1.0-M1
+[INFO]   org.mockito:mockito-core ............................ 5.14.2 -> 5.23.0
+[INFO]   org.postgresql:postgresql .......................... 42.7.9 -> 42.7.10
+[INFO]   org.slf4j:slf4j-jdk14 ......................... 2.0.17 -> 2.1.0-alpha1
+[INFO] 
+[INFO] 
+[INFO] ---------------------< dev.rafex.kiwi:kiwi-tools >----------------------
+[INFO] Building kiwi-tools 0.1.0-SNAPSHOT                                [7/11]
+[INFO]   from kiwi-tools/pom.xml
+[INFO] --------------------------------[ jar ]---------------------------------
+[INFO] 
+[INFO] --- versions:2.21.0:display-dependency-updates (default-cli) @ kiwi-tools ---
+[INFO] No dependencies in Dependencies have newer versions.
+[INFO] 
+[INFO] The following dependencies in Dependency Management have newer versions:
+[INFO]   com.fasterxml.jackson.core:jackson-annotations ....... 2.21 -> 3.0-rc5
+[INFO]   com.zaxxer:HikariCP ................................... 5.1.0 -> 7.0.2
+[INFO]   jakarta.servlet:jakarta.servlet-api ................ 6.0.0 -> 6.2.0-M1
+[INFO]   org.assertj:assertj-core .......................... 3.26.3 -> 4.0.0-M1
+[INFO]   org.junit.jupiter:junit-jupiter-api ................ 6.0.3 -> 6.1.0-M1
+[INFO]   org.junit.jupiter:junit-jupiter-engine ............. 6.0.3 -> 6.1.0-M1
+[INFO]   org.junit.jupiter:junit-jupiter-migrationsupport ... 6.0.3 -> 6.1.0-M1
+[INFO]   org.junit.jupiter:junit-jupiter-params ............. 6.0.3 -> 6.1.0-M1
+[INFO]   org.junit.platform:junit-platform-commons .......... 6.0.3 -> 6.1.0-M1
+[INFO]   org.junit.platform:junit-platform-console .......... 6.0.3 -> 6.1.0-M1
+[INFO]   org.junit.platform:junit-platform-engine ........... 6.0.3 -> 6.1.0-M1
+[INFO]   org.junit.platform:junit-platform-launcher ......... 6.0.3 -> 6.1.0-M1
+[INFO]   org.junit.platform:junit-platform-reporting ........ 6.0.3 -> 6.1.0-M1
+[INFO]   org.junit.platform:junit-platform-suite ............ 6.0.3 -> 6.1.0-M1
+[INFO]   org.junit.platform:junit-platform-suite-api ........ 6.0.3 -> 6.1.0-M1
+[INFO]   org.junit.platform:junit-platform-suite-engine ..... 6.0.3 -> 6.1.0-M1
+[INFO]   org.junit.platform:junit-platform-testkit .......... 6.0.3 -> 6.1.0-M1
+[INFO]   org.junit.vintage:junit-vintage-engine ............. 6.0.3 -> 6.1.0-M1
+[INFO]   org.mockito:mockito-core ............................ 5.14.2 -> 5.23.0
+[INFO]   org.postgresql:postgresql .......................... 42.7.9 -> 42.7.10
+[INFO]   org.slf4j:slf4j-jdk14 ......................... 2.0.17 -> 2.1.0-alpha1
+[INFO] 
+[INFO] 
+[INFO] ----------------< dev.rafex.kiwi:kiwi-transport-jetty >-----------------
+[INFO] Building kiwi-transport-jetty 0.1.0-SNAPSHOT                      [8/11]
+[INFO]   from kiwi-transport-jetty/pom.xml
+[INFO] --------------------------------[ jar ]---------------------------------
+[INFO] 
+[INFO] --- versions:2.21.0:display-dependency-updates (default-cli) @ kiwi-transport-jetty ---
+[INFO] No dependencies in Dependencies have newer versions.
+[INFO] 
+[INFO] The following dependencies in Dependency Management have newer versions:
+[INFO]   com.fasterxml.jackson.core:jackson-annotations ....... 2.21 -> 3.0-rc5
+[INFO]   com.zaxxer:HikariCP ................................... 5.1.0 -> 7.0.2
+[INFO]   jakarta.servlet:jakarta.servlet-api ................ 6.0.0 -> 6.2.0-M1
+[INFO]   org.assertj:assertj-core .......................... 3.26.3 -> 4.0.0-M1
+[INFO]   org.junit.jupiter:junit-jupiter-api ................ 6.0.3 -> 6.1.0-M1
+[INFO]   org.junit.jupiter:junit-jupiter-engine ............. 6.0.3 -> 6.1.0-M1
+[INFO]   org.junit.jupiter:junit-jupiter-migrationsupport ... 6.0.3 -> 6.1.0-M1
+[INFO]   org.junit.jupiter:junit-jupiter-params ............. 6.0.3 -> 6.1.0-M1
+[INFO]   org.junit.platform:junit-platform-commons .......... 6.0.3 -> 6.1.0-M1
+[INFO]   org.junit.platform:junit-platform-console .......... 6.0.3 -> 6.1.0-M1
+[INFO]   org.junit.platform:junit-platform-engine ........... 6.0.3 -> 6.1.0-M1
+[INFO]   org.junit.platform:junit-platform-launcher ......... 6.0.3 -> 6.1.0-M1
+[INFO]   org.junit.platform:junit-platform-reporting ........ 6.0.3 -> 6.1.0-M1
+[INFO]   org.junit.platform:junit-platform-suite ............ 6.0.3 -> 6.1.0-M1
+[INFO]   org.junit.platform:junit-platform-suite-api ........ 6.0.3 -> 6.1.0-M1
+[INFO]   org.junit.platform:junit-platform-suite-engine ..... 6.0.3 -> 6.1.0-M1
+[INFO]   org.junit.platform:junit-platform-testkit .......... 6.0.3 -> 6.1.0-M1
+[INFO]   org.junit.vintage:junit-vintage-engine ............. 6.0.3 -> 6.1.0-M1
+[INFO]   org.mockito:mockito-core ............................ 5.14.2 -> 5.23.0
+[INFO]   org.postgresql:postgresql .......................... 42.7.9 -> 42.7.10
+[INFO]   org.slf4j:slf4j-jdk14 ......................... 2.0.17 -> 2.1.0-alpha1
+[INFO] 
+[INFO] 
+[INFO] ---------------< dev.rafex.kiwi:kiwi-architecture-tests >---------------
+[INFO] Building kiwi-architecture-tests 0.1.0-SNAPSHOT                   [9/11]
+[INFO]   from kiwi-architecture-tests/pom.xml
+[INFO] --------------------------------[ jar ]---------------------------------
+[INFO] 
+[INFO] --- versions:2.21.0:display-dependency-updates (default-cli) @ kiwi-architecture-tests ---
+[INFO] No dependencies in Dependencies have newer versions.
+[INFO] 
+[INFO] The following dependencies in Dependency Management have newer versions:
+[INFO]   com.fasterxml.jackson.core:jackson-annotations ....... 2.21 -> 3.0-rc5
+[INFO]   com.zaxxer:HikariCP ................................... 5.1.0 -> 7.0.2
+[INFO]   jakarta.servlet:jakarta.servlet-api ................ 6.0.0 -> 6.2.0-M1
+[INFO]   org.assertj:assertj-core .......................... 3.26.3 -> 4.0.0-M1
+[INFO]   org.junit.jupiter:junit-jupiter-api ................ 6.0.3 -> 6.1.0-M1
+[INFO]   org.junit.jupiter:junit-jupiter-engine ............. 6.0.3 -> 6.1.0-M1
+[INFO]   org.junit.jupiter:junit-jupiter-migrationsupport ... 6.0.3 -> 6.1.0-M1
+[INFO]   org.junit.jupiter:junit-jupiter-params ............. 6.0.3 -> 6.1.0-M1
+[INFO]   org.junit.platform:junit-platform-commons .......... 6.0.3 -> 6.1.0-M1
+[INFO]   org.junit.platform:junit-platform-console .......... 6.0.3 -> 6.1.0-M1
+[INFO]   org.junit.platform:junit-platform-engine ........... 6.0.3 -> 6.1.0-M1
+[INFO]   org.junit.platform:junit-platform-launcher ......... 6.0.3 -> 6.1.0-M1
+[INFO]   org.junit.platform:junit-platform-reporting ........ 6.0.3 -> 6.1.0-M1
+[INFO]   org.junit.platform:junit-platform-suite ............ 6.0.3 -> 6.1.0-M1
+[INFO]   org.junit.platform:junit-platform-suite-api ........ 6.0.3 -> 6.1.0-M1
+[INFO]   org.junit.platform:junit-platform-suite-engine ..... 6.0.3 -> 6.1.0-M1
+[INFO]   org.junit.platform:junit-platform-testkit .......... 6.0.3 -> 6.1.0-M1
+[INFO]   org.junit.vintage:junit-vintage-engine ............. 6.0.3 -> 6.1.0-M1
+[INFO]   org.mockito:mockito-core ............................ 5.14.2 -> 5.23.0
+[INFO]   org.postgresql:postgresql .......................... 42.7.9 -> 42.7.10
+[INFO]   org.slf4j:slf4j-jdk14 ......................... 2.0.17 -> 2.1.0-alpha1
+[INFO] 
+[INFO] 
+[INFO] -----------------< dev.rafex.kiwi:kiwi-transport-grpc >-----------------
+[INFO] Building kiwi-transport-grpc 0.1.0-SNAPSHOT                      [10/11]
+[INFO]   from kiwi-transport-grpc/pom.xml
+[INFO] --------------------------------[ jar ]---------------------------------
+[INFO] 
+[INFO] --- versions:2.21.0:display-dependency-updates (default-cli) @ kiwi-transport-grpc ---
+[INFO] The following dependencies in Dependency Management have newer versions:
+[INFO]   com.fasterxml.jackson.core:jackson-annotations ....... 2.21 -> 3.0-rc5
+[INFO]   com.zaxxer:HikariCP ................................... 5.1.0 -> 7.0.2
+[INFO]   jakarta.servlet:jakarta.servlet-api ................ 6.0.0 -> 6.2.0-M1
+[INFO]   org.assertj:assertj-core .......................... 3.26.3 -> 4.0.0-M1
+[INFO]   org.junit.jupiter:junit-jupiter-api ................ 6.0.3 -> 6.1.0-M1
+[INFO]   org.junit.jupiter:junit-jupiter-engine ............. 6.0.3 -> 6.1.0-M1
+[INFO]   org.junit.jupiter:junit-jupiter-migrationsupport ... 6.0.3 -> 6.1.0-M1
+[INFO]   org.junit.jupiter:junit-jupiter-params ............. 6.0.3 -> 6.1.0-M1
+[INFO]   org.junit.platform:junit-platform-commons .......... 6.0.3 -> 6.1.0-M1
+[INFO]   org.junit.platform:junit-platform-console .......... 6.0.3 -> 6.1.0-M1
+[INFO]   org.junit.platform:junit-platform-engine ........... 6.0.3 -> 6.1.0-M1
+[INFO]   org.junit.platform:junit-platform-launcher ......... 6.0.3 -> 6.1.0-M1
+[INFO]   org.junit.platform:junit-platform-reporting ........ 6.0.3 -> 6.1.0-M1
+[INFO]   org.junit.platform:junit-platform-suite ............ 6.0.3 -> 6.1.0-M1
+[INFO]   org.junit.platform:junit-platform-suite-api ........ 6.0.3 -> 6.1.0-M1
+[INFO]   org.junit.platform:junit-platform-suite-engine ..... 6.0.3 -> 6.1.0-M1
+[INFO]   org.junit.platform:junit-platform-testkit .......... 6.0.3 -> 6.1.0-M1
+[INFO]   org.junit.vintage:junit-vintage-engine ............. 6.0.3 -> 6.1.0-M1
+[INFO]   org.mockito:mockito-core ............................ 5.14.2 -> 5.23.0
+[INFO]   org.postgresql:postgresql .......................... 42.7.9 -> 42.7.10
+[INFO]   org.slf4j:slf4j-jdk14 ......................... 2.0.17 -> 2.1.0-alpha1
+[INFO] 
+[INFO] 
+[INFO] ---------------< dev.rafex.kiwi:kiwi-transport-rabbitmq >---------------
+[INFO] Building kiwi-transport-rabbitmq 0.1.0-SNAPSHOT                  [11/11]
+[INFO]   from kiwi-transport-rabbitmq/pom.xml
+[INFO] --------------------------------[ jar ]---------------------------------
+[INFO] 
+[INFO] --- versions:2.21.0:display-dependency-updates (default-cli) @ kiwi-transport-rabbitmq ---
+[INFO] The following dependencies in Dependency Management have newer versions:
+[INFO]   com.fasterxml.jackson.core:jackson-annotations ....... 2.21 -> 3.0-rc5
+[INFO]   com.zaxxer:HikariCP ................................... 5.1.0 -> 7.0.2
+[INFO]   jakarta.servlet:jakarta.servlet-api ................ 6.0.0 -> 6.2.0-M1
+[INFO]   org.assertj:assertj-core .......................... 3.26.3 -> 4.0.0-M1
+[INFO]   org.junit.jupiter:junit-jupiter-api ................ 6.0.3 -> 6.1.0-M1
+[INFO]   org.junit.jupiter:junit-jupiter-engine ............. 6.0.3 -> 6.1.0-M1
+[INFO]   org.junit.jupiter:junit-jupiter-migrationsupport ... 6.0.3 -> 6.1.0-M1
+[INFO]   org.junit.jupiter:junit-jupiter-params ............. 6.0.3 -> 6.1.0-M1
+[INFO]   org.junit.platform:junit-platform-commons .......... 6.0.3 -> 6.1.0-M1
+[INFO]   org.junit.platform:junit-platform-console .......... 6.0.3 -> 6.1.0-M1
+[INFO]   org.junit.platform:junit-platform-engine ........... 6.0.3 -> 6.1.0-M1
+[INFO]   org.junit.platform:junit-platform-launcher ......... 6.0.3 -> 6.1.0-M1
+[INFO]   org.junit.platform:junit-platform-reporting ........ 6.0.3 -> 6.1.0-M1
+[INFO]   org.junit.platform:junit-platform-suite ............ 6.0.3 -> 6.1.0-M1
+[INFO]   org.junit.platform:junit-platform-suite-api ........ 6.0.3 -> 6.1.0-M1
+[INFO]   org.junit.platform:junit-platform-suite-engine ..... 6.0.3 -> 6.1.0-M1
+[INFO]   org.junit.platform:junit-platform-testkit .......... 6.0.3 -> 6.1.0-M1
+[INFO]   org.junit.vintage:junit-vintage-engine ............. 6.0.3 -> 6.1.0-M1
+[INFO]   org.mockito:mockito-core ............................ 5.14.2 -> 5.23.0
+[INFO]   org.postgresql:postgresql .......................... 42.7.9 -> 42.7.10
+[INFO]   org.slf4j:slf4j-jdk14 ......................... 2.0.17 -> 2.1.0-alpha1
+[INFO] 
+[INFO] ------------------------------------------------------------------------
+[INFO] Reactor Summary:
+[INFO] 
+[INFO] kiwi-parent 1.0-SNAPSHOT ........................... SUCCESS [  0.500 s]
+[INFO] kiwi-common 0.1.0-SNAPSHOT ......................... SUCCESS [  0.082 s]
+[INFO] kiwi-ports 0.1.0-SNAPSHOT .......................... SUCCESS [  0.062 s]
+[INFO] kiwi-core 0.1.0-SNAPSHOT ........................... SUCCESS [  0.056 s]
+[INFO] kiwi-infra-postgres 0.1.0-SNAPSHOT ................. SUCCESS [  0.061 s]
+[INFO] kiwi-bootstrap 0.1.0-SNAPSHOT ...................... SUCCESS [  0.060 s]
+[INFO] kiwi-tools 0.1.0-SNAPSHOT .......................... SUCCESS [  0.053 s]
+[INFO] kiwi-transport-jetty 0.1.0-SNAPSHOT ................ SUCCESS [  0.044 s]
+[INFO] kiwi-architecture-tests 0.1.0-SNAPSHOT ............. SUCCESS [  0.044 s]
+[INFO] kiwi-transport-grpc 0.1.0-SNAPSHOT ................. SUCCESS [  0.046 s]
+[INFO] kiwi-transport-rabbitmq 0.1.0-SNAPSHOT ............. SUCCESS [  0.037 s]
+[INFO] ------------------------------------------------------------------------
+[INFO] BUILD SUCCESS
+[INFO] ------------------------------------------------------------------------
+[INFO] Total time:  1.159 s
+[INFO] Finished at: 2026-03-25T22:41:35-06:00
+[INFO] ------------------------------------------------------------------------

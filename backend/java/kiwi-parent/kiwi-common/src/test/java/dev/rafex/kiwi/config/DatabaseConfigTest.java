@@ -19,6 +19,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 import dev.rafex.ether.config.EtherConfig;
 import dev.rafex.ether.config.sources.MapConfigSource;
+import dev.rafex.kiwi.BasePostgresTest;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -30,7 +31,7 @@ import org.junit.jupiter.api.Test;
  * Unit tests for {@link DatabaseConfig}.
  */
 @DisplayName("DatabaseConfig Tests")
-class DatabaseConfigTest {
+class DatabaseConfigTest extends BasePostgresTest {
 
 	private static EtherConfig createConfig(Map<String, String> map) {
 		return EtherConfig.of(new MapConfigSource("test", map));
@@ -224,5 +225,37 @@ class DatabaseConfigTest {
 
 		// Then
 		assertEquals("localhost:5432", maskedUrl);
+	}
+
+	@Test
+	@DisplayName("Should load configuration from Testcontainer")
+	void shouldLoadConfigurationFromContainer() {
+		// Given
+		Map<String, String> configMap = new HashMap<>();
+		configMap.put("DB_URL", getJdbcUrl());
+		configMap.put("DB_USER", getUsername());
+		configMap.put("DB_PASSWORD", getPassword());
+		configMap.put("DB_MAX_POOL_SIZE", "10");
+		configMap.put("DB_MIN_IDLE", "3");
+		configMap.put("DB_CONNECTION_TIMEOUT_MS", "15000");
+		configMap.put("DB_IDLE_TIMEOUT_MS", "300000");
+		configMap.put("DB_MAX_LIFETIME_MS", "900000");
+		configMap.put("DB_VALIDATION_TIMEOUT_MS", "10000");
+
+		EtherConfig configSource = createConfig(configMap);
+
+		// When
+		DatabaseConfig config = DatabaseConfig.from(configSource);
+
+		// Then
+		assertEquals(getJdbcUrl(), config.url());
+		assertEquals(getUsername(), config.user());
+		assertEquals(getPassword(), config.password());
+		assertEquals(10, config.maxPoolSize());
+		assertEquals(3, config.minIdle());
+		assertEquals(15000L, config.connectionTimeoutMs());
+		assertEquals(300000L, config.idleTimeoutMs());
+		assertEquals(900000L, config.maxLifetimeMs());
+		assertEquals(10000L, config.validationTimeoutMs());
 	}
 }

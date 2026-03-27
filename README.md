@@ -118,3 +118,4 @@ make release-tag
 ## Contribución
 
 Para contribuir al proyecto Kiwi, asegúrate de seguir las instrucciones de contribución en `docs/contributing.md`. Esto incluye información sobre cómo enviar solicitudes de extracción y cómo reportar errores.
+# Test commit para activar workflow

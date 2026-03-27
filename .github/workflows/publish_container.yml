@@ -63,7 +63,7 @@ jobs:
             IMAGE_TAG="${{ github.event.inputs.release_version }}"
           elif [ "${GITHUB_EVENT_NAME}" = "workflow_run" ]; then
             # Obtener la última release del workflow_run usando jq para formato robusto
-            IMAGE_TAG=$(gh release list --limit 1 --json tagName --jq '.[0].tagName')
+            IMAGE_TAG=$(gh release list --limit 1 --json tagName --jq '.[0].tagName' 2>/dev/null || echo "")
             if [ -z "$IMAGE_TAG" ]; then
               # Si no hay releases, generar una versión basada en la fecha
               IMAGE_TAG="v1.$(date +%Y%m%d)-1"
@@ -71,6 +71,7 @@ jobs:
           else
             IMAGE_TAG="latest"
           fi
+          # Validar formato para tags que no sean "latest"
           if [ "$IMAGE_TAG" != "latest" ] && ! echo "$IMAGE_TAG" | grep -Eq '^v[0-9]+\.[0-9]{8}(-[0-9]+)?(-SNAPSHOT)?$'; then
             echo "Invalid tag format: $IMAGE_TAG"
             echo "Expected format: vN.YYYYmmDD[-N] (examples: v1.20260313, v1.20260313-1, v2.20260313)"

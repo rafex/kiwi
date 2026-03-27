@@ -119,3 +119,4 @@ make release-tag
 
 Para contribuir al proyecto Kiwi, asegúrate de seguir las instrucciones de contribución en `docs/contributing.md`. Esto incluye información sobre cómo enviar solicitudes de extracción y cómo reportar errores.
 # Test commit para activar workflow
+# Test pipeline - viernes, 27 de marzo de 2026, 13:48:42 CST

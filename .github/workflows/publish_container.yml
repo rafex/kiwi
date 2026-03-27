@@ -106,14 +106,16 @@ jobs:
           if [ "${GITHUB_EVENT_NAME}" = "push" ]; then
             # Para push a develop, construir el JAR directamente
             echo "Building JAR for develop branch"
+            mkdir -p artifacts
             cd backend/java/kiwi-parent
             make build-without-tests
             JAR_FILE=$(find target -name "kiwi-transport-jetty*.jar" | head -1)
             if [ -z "$JAR_FILE" ]; then
               JAR_FILE=$(find target -name "*.jar" | head -1)
             fi
-            cp "$JAR_FILE" ../artifacts/
-            cd ../..
+            # Copiar el JAR a la carpeta artifacts del root
+            cp "$JAR_FILE" ../../../artifacts/
+            cd ../../..
           else
             # Descargar el JAR desde la release
             gh release download "${{ steps.image_tag.outputs.value }}" --pattern "*.jar" --dir ./artifacts

@@ -2,18 +2,20 @@
 name: Deploy Kiwi Backend
 
 on:
+  workflow_run:
+    workflows: ["Java Build (Makefile)"]
+    types:
+      - completed
+    branches:
+      - main
+      - develop
   workflow_dispatch:
     inputs:
-      version_tag:
-        description: 'Tag de imagen a desplegar (opcional, formato vN.YYYYmmDD[-N])'
+      release_version:
+        description: 'Versión de la release'
         required: false
         default: ''
         type: string
-  workflow_run:
-    workflows: ["Build and Publish Container"]
-    types:
-      - completed
-    branches: main
 
 jobs:
   deploy-backend:
@@ -41,12 +43,10 @@ jobs:
       - name: Resolve deploy image tag
         id: deploy_tag
         run: |
-          if [ "${GITHUB_EVENT_NAME}" = "workflow_dispatch" ] && [ -n "${{ github.event.inputs.version_tag }}" ]; then
-            IMAGE_TAG="${{ github.event.inputs.version_tag }}"
+          if [ "${GITHUB_EVENT_NAME}" = "workflow_dispatch" ] && [ -n "${{ github.event.inputs.release_version }}" ]; then
+            IMAGE_TAG="${{ github.event.inputs.release_version }}"
           elif [ "${GITHUB_EVENT_NAME}" = "workflow_run" ]; then
             IMAGE_TAG="${{ github.event.workflow_run.head_branch }}"
-          elif [ "${GITHUB_REF_TYPE}" = "tag" ]; then
-            IMAGE_TAG="${GITHUB_REF_NAME}"
           else
             IMAGE_TAG="latest"
           fi

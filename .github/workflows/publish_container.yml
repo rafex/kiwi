@@ -6,11 +6,13 @@ on:
     workflows: ["Java Build (Makefile)"]
     types:
       - completed
-    branches: main
+    branches:
+      - main
+      - develop
   workflow_dispatch:
     inputs:
-      version_tag:
-        description: 'Tag de versión para la imagen (formato vN.YYYYmmDD[-N], ej: v1.20260313 o v1.20260313-1)'
+      release_version:
+        description: 'Versión de la release (ej: v1.20260327-8)'
         required: true
         type: string
 
@@ -58,29 +60,37 @@ jobs:
         id: image_tag
         run: |
           if [ "${GITHUB_EVENT_NAME}" = "workflow_dispatch" ]; then
-            IMAGE_TAG="${{ github.event.inputs.version_tag }}"
+            IMAGE_TAG="${{ github.event.inputs.release_version }}"
           elif [ "${GITHUB_EVENT_NAME}" = "workflow_run" ]; then
-            IMAGE_TAG="${{ github.event.workflow_run.head_branch }}"
+            # Obtener la última release del workflow_run
+            IMAGE_TAG=$(gh release list --limit 1 | awk '{print $1}')
+            if [ -z "$IMAGE_TAG" ]; then
+              # Si no hay releases, generar una versión basada en la fecha
+              IMAGE_TAG="v1.$(date +%Y%m%d)-1"
+            fi
           else
-            IMAGE_TAG="${GITHUB_REF_NAME}"
+            IMAGE_TAG="latest"
           fi
-          if [ "$IMAGE_TAG" != "latest" ] && ! echo "$IMAGE_TAG" | grep -Eq '^v[0-9]+\.[0-9]{8}(-[0-9]+)?$'; then
+          if [ "$IMAGE_TAG" != "latest" ] && ! echo "$IMAGE_TAG" | grep -Eq '^v[0-9]+\.[0-9]{8}(-[0-9]+)?(-SNAPSHOT)?$'; then
             echo "Invalid tag format: $IMAGE_TAG"
             echo "Expected format: vN.YYYYmmDD[-N] (examples: v1.20260313, v1.20260313-1, v2.20260313)"
             exit 1
           fi
           echo "value=$IMAGE_TAG" >> "$GITHUB_OUTPUT"
+          echo "Using image tag: $IMAGE_TAG"
 
-      - name: Set up Java
-        uses: actions/setup-java@v4
-        with:
-          distribution: temurin
-          java-version: '25'
-          architecture: x64
-          cache: maven
-      - name: Run the Maven verify phase
-        working-directory: backend/java/kiwi-parent
-        run: make build
+      - name: Download JAR from release
+        run: |
+          echo "Downloading JAR for version: ${{ steps.image_tag.outputs.value }}"
+          # Descargar el JAR desde la release (ajustar el nombre del archivo según la nomenclatura)
+          gh release download "${{ steps.image_tag.outputs.value }}" --pattern "*.jar" --dir ./artifacts
+          ls -la ./artifacts/
+          # Encontrar el JAR principal (ajustar según el nombre real)
+          JAR_FILE=$(find ./artifacts -name "kiwi-transport-jetty*.jar" | head -1)
+          if [ -z "$JAR_FILE" ]; then
+            JAR_FILE=$(find ./artifacts -name "*.jar" | head -1)
+          fi
+          echo "JAR_FILE=$JAR_FILE" >> $GITHUB_ENV
 
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v3
@@ -98,12 +108,14 @@ jobs:
       - name: Build and push (release/latest + sha tags)
         uses: docker/build-push-action@v6
         with:
-          context: backend/java
+          context: .
           file: backend/java/Dockerfile
           push: true
           provenance: false
           sbom: false
           platforms: linux/amd64,linux/arm64
+          build-args: |
+            JAR_FILE=${{ env.JAR_FILE }}
           tags: |
             ghcr.io/${{ github.repository_owner }}/kiwi-jetty-backend:${{ steps.image_tag.outputs.value }}
             ghcr.io/${{ github.repository_owner }}/kiwi-jetty-backend:${{ github.sha }}

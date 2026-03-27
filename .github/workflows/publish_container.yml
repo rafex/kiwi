@@ -92,6 +92,14 @@ jobs:
           echo "value=$IMAGE_TAG" >> "$GITHUB_OUTPUT"
           echo "Using image tag: $IMAGE_TAG"
 
+      - name: Setup Java for build
+        if: ${{ github.event_name == 'push' }}
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '25'
+          architecture: 'x64'
+
       - name: Download JAR from release or build
         run: |
           echo "Downloading JAR for version: ${{ steps.image_tag.outputs.value }}"
@@ -99,7 +107,7 @@ jobs:
             # Para push a develop, construir el JAR directamente
             echo "Building JAR for develop branch"
             cd backend/java/kiwi-parent
-            make build
+            make build-without-tests
             JAR_FILE=$(find target -name "kiwi-transport-jetty*.jar" | head -1)
             if [ -z "$JAR_FILE" ]; then
               JAR_FILE=$(find target -name "*.jar" | head -1)

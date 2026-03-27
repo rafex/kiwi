@@ -77,10 +77,11 @@ jobs:
            ./scripts/update-context.sh
            git config --global user.name "github-actions"
            git config --global user.email "github-actions@github.com"
-           git add context/
-           git diff --cached --quiet || git commit -m "docs: auto-update context"
            # Create a temporary branch for the update
            git checkout -b temp-docs-update
+           # Add and commit changes on the new branch
+           git add context/
+           git diff --cached --quiet || git commit -m "docs: auto-update context"
            # Fetch main branch and rebase changes
            git fetch origin main
            git rebase origin/main

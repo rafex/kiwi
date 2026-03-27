@@ -14,6 +14,12 @@ ENV_GITIGNORE_ENTRY ?= .env
 
 # Variables requeridas (las que imprimimos)
 REQUIRED_ENV_VARS ?= FLYWAY_URL FLYWAY_USER FLYWAY_PASSWORD DB_URL DB_USER DB_PASSWORD
+
+# Variables para Makefiles anidados
+BACKEND_MAKE := backend/java/Makefile
+BACKEND_PARENT_MAKE := backend/java/kiwi-parent/Makefile
+DB_MAKE := db/Makefile
+CLIENT_MAKE := openapi/node-client/Makefile
 TAG_MAJOR ?= 1
 TAG_DATE ?= $(shell date +%Y%m%d)
 TAG_PREFIX ?= v$(TAG_MAJOR).$(TAG_DATE)
@@ -66,6 +72,7 @@ DB_MAKE := db/Makefile
 .PHONY: backend-help backend-build backend-quality backend-agent backend-native backend-run-native
 .PHONY: backend-image backend-run-image backend-run-publish-image
 .PHONY: db-help db-migrate db-info db-validate db-repair db-clean
+.PHONY: client-help client-install client-run
 
 help:
 	@echo "=== KIWI PROJECT - PUNTO DE ENTRADA ÚNICO ==="
@@ -99,6 +106,11 @@ help:
 	@echo "  db-validate        Validate migrations"
 	@echo "  db-repair          Repair Flyway metadata"
 	@echo "  db-clean           Clean database (DANGER)"
+	@echo ""
+	@echo "=== Cliente API (openapi/node-client/Makefile) ==="
+	@echo "  client-help        Show all client targets"
+	@echo "  client-install     Install npm dependencies"
+	@echo "  client-run         Run the API explorer web server"
 	@echo ""
 	@echo "=== Uso ==="
 	@echo "  eval \"\$$(make print_env)\""
@@ -218,3 +230,13 @@ db-repair:
 
 db-clean:
 	@$(MAKE) -C db clean
+
+# === Cliente API (openapi/node-client/Makefile) ===
+client-help:
+	@$(MAKE) -C openapi/node-client help
+
+client-install:
+	@$(MAKE) -C openapi/node-client install
+
+client-run:
+	@$(MAKE) -C openapi/node-client run

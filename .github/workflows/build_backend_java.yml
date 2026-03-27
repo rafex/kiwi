@@ -176,5 +176,6 @@ jobs:
           files: |
             backend/java/kiwi-parent/kiwi-jetty*.bin
             backend/java/kiwi-parent/target/*.jar
+            backend/java/kiwi-parent/kiwi-transport-jetty/target/*-jar-with-dependencies.jar
           draft: false
           prerelease: ${{ github.ref == 'refs/heads/develop' }}

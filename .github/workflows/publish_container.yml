@@ -62,8 +62,8 @@ jobs:
           if [ "${GITHUB_EVENT_NAME}" = "workflow_dispatch" ]; then
             IMAGE_TAG="${{ github.event.inputs.release_version }}"
           elif [ "${GITHUB_EVENT_NAME}" = "workflow_run" ]; then
-            # Obtener la última release del workflow_run
-            IMAGE_TAG=$(gh release list --limit 1 | awk '{print $1}')
+            # Obtener la última release del workflow_run usando jq para formato robusto
+            IMAGE_TAG=$(gh release list --limit 1 --json tagName --jq '.[0].tagName')
             if [ -z "$IMAGE_TAG" ]; then
               # Si no hay releases, generar una versión basada en la fecha
               IMAGE_TAG="v1.$(date +%Y%m%d)-1"
@@ -90,7 +90,7 @@ jobs:
           if [ -z "$JAR_FILE" ]; then
             JAR_FILE=$(find ./artifacts -name "*.jar" | head -1)
           fi
-          echo "JAR_FILE=$JAR_FILE" >> $GITHUB_ENV
+          echo "JAR_FILE=$JAR_FILE" >> "$GITHUB_ENV"
 
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v3

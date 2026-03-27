@@ -33,6 +33,11 @@ public class LocationRepositoryImpl implements LocationRepository {
 	}
 
 	@Override
+	/**
+	 * Crea una nueva ubicación.
+	 * Esta operación ejecuta una función PostgreSQL que devuelve VOID.
+	 * Se utiliza {@code db.query(..., rs -> null)} para descartar el {@link java.sql.ResultSet}.
+	 */
 	public void createLocation(final UUID locationId, final String name, final UUID parentLocationId) {
 		final var parentParam = parentLocationId == null
 				? SqlParameter.nullOf(Types.OTHER)

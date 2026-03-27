@@ -39,6 +39,11 @@ public class ObjectRepositoryImpl implements ObjectRepository {
 	}
 
 	@Override
+	/**
+	 * Crea un nuevo objeto.
+	 * Esta operación ejecuta una función PostgreSQL que devuelve VOID.
+	 * Se utiliza {@code db.query(..., rs -> null)} para descartar el {@link java.sql.ResultSet}.
+	 */
 	public void createObject(final UUID objectId, final String name, final String description, final String type,
 			final String[] tags, final String metadataJson, final UUID locationId) {
 		final var params = new ArrayList<SqlParameter>();
@@ -54,12 +59,22 @@ public class ObjectRepositoryImpl implements ObjectRepository {
 	}
 
 	@Override
+	/**
+	 * Mueve un objeto a una nueva ubicación.
+	 * Esta operación ejecuta una función PostgreSQL que devuelve VOID.
+	 * Se utiliza {@code db.query(..., rs -> null)} para descartar el {@link java.sql.ResultSet}.
+	 */
 	public void moveObject(final UUID objectId, final UUID newLocationId) {
 		db.query(new SqlQuery("SELECT api_move_object(?::uuid, ?::uuid)",
 				List.of(SqlParameter.of(objectId), SqlParameter.of(newLocationId))), rs -> null);
 	}
 
 	@Override
+	/**
+	 * Actualiza las etiquetas de un objeto.
+	 * Esta operación ejecuta una función PostgreSQL que devuelve VOID.
+	 * Se utiliza {@code db.query(..., rs -> null)} para descartar el {@link java.sql.ResultSet}.
+	 */
 	public void updateTags(final UUID objectId, final String[] tags) {
 		final var tagsParam = tags == null ? SqlParameter.nullOf(Types.ARRAY) : PostgresParameters.textArray(tags);
 		db.query(new SqlQuery("SELECT api_update_tags(?::uuid, ?::text[])",
@@ -67,6 +82,11 @@ public class ObjectRepositoryImpl implements ObjectRepository {
 	}
 
 	@Override
+	/**
+	 * Actualiza el nombre y la descripción de un objeto.
+	 * Esta operación ejecuta una función PostgreSQL que devuelve VOID.
+	 * Se utiliza {@code db.query(..., rs -> null)} para descartar el {@link java.sql.ResultSet}.
+	 */
 	public void updateText(final UUID objectId, final String name, final String description) {
 		db.query(new SqlQuery("SELECT api_update_text(?::uuid, ?, ?)",
 				List.of(SqlParameter.of(objectId), SqlParameter.text(name), SqlParameter.text(description))),
@@ -74,6 +94,11 @@ public class ObjectRepositoryImpl implements ObjectRepository {
 	}
 
 	@Override
+	/**
+	 * Actualiza los metadatos de un objeto.
+	 * Esta operación ejecuta una función PostgreSQL que devuelve VOID.
+	 * Se utiliza {@code db.query(..., rs -> null)} para descartar el {@link java.sql.ResultSet}.
+	 */
 	public void updateMetadata(final UUID objectId, final String metadataJson) {
 		final var metaParam = metadataJson == null
 				? SqlParameter.nullOf(Types.OTHER)

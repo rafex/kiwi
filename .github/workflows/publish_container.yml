@@ -8,6 +8,8 @@ on:
       - completed
     branches:
       - main
+  push:
+    branches:
       - develop
   workflow_dispatch:
     inputs:
@@ -34,11 +36,18 @@ jobs:
       - name: Check for changes in backend/java/kiwi* or backend/java/Dockerfile
         id: check
         run: |
-          if [ "${GITHUB_EVENT_NAME}" = "workflow_dispatch" ] || [ "${GITHUB_REF_TYPE}" = "tag" ] || [ "${GITHUB_EVENT_NAME}" = "workflow_run" ]; then
-            echo "Detected manual run, tag push, or workflow dependency; allowing build."
+          if [ "${GITHUB_EVENT_NAME}" = "workflow_dispatch" ]; then
+            echo "Manual run detected; allowing build."
             echo "changed=true" >> "$GITHUB_OUTPUT"
             exit 0
           fi
+          # Para push a main o develop, siempre ejecutar build
+          if [ "${GITHUB_REF}" = "refs/heads/main" ] || [ "${GITHUB_REF}" = "refs/heads/develop" ]; then
+            echo "Push to main or develop detected; allowing build."
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          # Para otros eventos, verificar cambios
           PARENT=$(git rev-parse "${GITHUB_SHA}^" 2>/dev/null || true)
           if [ -z "$PARENT" ]; then
             git diff --name-only "${GITHUB_SHA}" | grep -E '^backend/java/(kiwi|Dockerfile$)' > /dev/null && echo "changed=true" >> "$GITHUB_OUTPUT" || echo "changed=false" >> "$GITHUB_OUTPUT"
@@ -68,6 +77,9 @@ jobs:
               # Si no hay releases, generar una versión basada en la fecha
               IMAGE_TAG="v1.$(date +%Y%m%d)-1"
             fi
+          elif [ "${GITHUB_EVENT_NAME}" = "push" ]; then
+            # Para push a develop, usar versión SNAPSHOT
+            IMAGE_TAG="v1.$(date +%Y%m%d)-SNAPSHOT"
           else
             IMAGE_TAG="latest"
           fi
@@ -80,16 +92,29 @@ jobs:
           echo "value=$IMAGE_TAG" >> "$GITHUB_OUTPUT"
           echo "Using image tag: $IMAGE_TAG"
 
-      - name: Download JAR from release
+      - name: Download JAR from release or build
         run: |
           echo "Downloading JAR for version: ${{ steps.image_tag.outputs.value }}"
-          # Descargar el JAR desde la release (ajustar el nombre del archivo según la nomenclatura)
-          gh release download "${{ steps.image_tag.outputs.value }}" --pattern "*.jar" --dir ./artifacts
-          ls -la ./artifacts/
-          # Encontrar el JAR principal (ajustar según el nombre real)
-          JAR_FILE=$(find ./artifacts -name "kiwi-transport-jetty*.jar" | head -1)
-          if [ -z "$JAR_FILE" ]; then
-            JAR_FILE=$(find ./artifacts -name "*.jar" | head -1)
+          if [ "${GITHUB_EVENT_NAME}" = "push" ]; then
+            # Para push a develop, construir el JAR directamente
+            echo "Building JAR for develop branch"
+            cd backend/java/kiwi-parent
+            make build
+            JAR_FILE=$(find target -name "kiwi-transport-jetty*.jar" | head -1)
+            if [ -z "$JAR_FILE" ]; then
+              JAR_FILE=$(find target -name "*.jar" | head -1)
+            fi
+            cp "$JAR_FILE" ../artifacts/
+            cd ../..
+          else
+            # Descargar el JAR desde la release
+            gh release download "${{ steps.image_tag.outputs.value }}" --pattern "*.jar" --dir ./artifacts
+            ls -la ./artifacts/
+            # Encontrar el JAR principal
+            JAR_FILE=$(find ./artifacts -name "kiwi-transport-jetty*.jar" | head -1)
+            if [ -z "$JAR_FILE" ]; then
+              JAR_FILE=$(find ./artifacts -name "*.jar" | head -1)
+            fi
           fi
           echo "JAR_FILE=$JAR_FILE" >> "$GITHUB_ENV"
 

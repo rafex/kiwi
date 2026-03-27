@@ -79,7 +79,13 @@ jobs:
            git config --global user.email "github-actions@github.com"
            git add context/
            git diff --cached --quiet || git commit -m "docs: auto-update context"
-           git push
+           # Create a temporary branch for the update
+           git checkout -b temp-docs-update
+           # Fetch main branch and rebase changes
+           git fetch origin main
+           git rebase origin/main
+           # Force push to main (assuming docs update is authoritative)
+           git push --force origin temp-docs-update:main
 
       - name: Set up GraalVM
         if: ${{ (github.event_name == 'workflow_dispatch' && github.event.inputs.release_tag != '') || startsWith(github.ref, 'refs/tags/') || github.event.inputs.build_native == 'true' }}

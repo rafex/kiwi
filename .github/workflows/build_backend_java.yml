@@ -82,10 +82,13 @@ jobs:
            # Add and commit changes on the new branch
            git add context/
            git diff --cached --quiet || git commit -m "docs: auto-update context"
-           # Fetch main branch and rebase changes
+           # Fetch main branch
            git fetch origin main
-           git rebase origin/main
-           # Force push to main (assuming docs update is authoritative)
+           # Clean any unstaged changes that might conflict (artifacts from update script)
+           git reset --hard HEAD
+           # Merge main (accepting incoming changes if any conflict)
+           git merge origin/main -Xours --no-edit
+           # Force push to main
            git push --force origin temp-docs-update:main
 
       - name: Set up GraalVM

@@ -121,3 +121,4 @@ Para contribuir al proyecto Kiwi, asegúrate de seguir las instrucciones de cont
 # Test commit para activar workflow
 # Test pipeline - viernes, 27 de marzo de 2026, 13:48:42 CST
 # Test pipeline v2 - viernes, 27 de marzo de 2026, 13:58:07 CST
+Test commit after path fix - viernes, 27 de marzo de 2026, 15:06:32 CST

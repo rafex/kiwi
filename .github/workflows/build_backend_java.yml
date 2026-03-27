@@ -79,7 +79,7 @@ jobs:
            git config --global user.email "github-actions@github.com"
            git add context/
            git diff --cached --quiet || git commit -m "docs: auto-update context"
-           git push
+           git push origin HEAD:main
 
       - name: Set up GraalVM
         if: ${{ (github.event_name == 'workflow_dispatch' && github.event.inputs.release_tag != '') || startsWith(github.ref, 'refs/tags/') || github.event.inputs.build_native == 'true' }}

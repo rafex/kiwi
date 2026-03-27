@@ -3,8 +3,6 @@ name: Build and Publish Container
 
 on:
   push:
-    branches:
-      - main
     tags: ['v*.*']
   workflow_dispatch:
     inputs:
@@ -31,8 +29,8 @@ jobs:
       - name: Check for changes in backend/java/kiwi* or backend/java/Dockerfile
         id: check
         run: |
-          if [ "${GITHUB_EVENT_NAME}" = "workflow_dispatch" ] || [ "${GITHUB_REF_TYPE}" = "tag" ] || [ "${GITHUB_REF_NAME}" = "main" ]; then
-            echo "Detected manual run, tag push or main push; allowing build."
+          if [ "${GITHUB_EVENT_NAME}" = "workflow_dispatch" ] || [ "${GITHUB_REF_TYPE}" = "tag" ]; then
+            echo "Detected manual run or tag push; allowing build."
             echo "changed=true" >> "$GITHUB_OUTPUT"
             exit 0
           fi
@@ -56,9 +54,7 @@ jobs:
       - name: Resolve and validate image tag
         id: image_tag
         run: |
-          if [ "${GITHUB_REF_NAME}" = "main" ]; then
-            IMAGE_TAG="latest"
-          elif [ "${GITHUB_EVENT_NAME}" = "workflow_dispatch" ]; then
+          if [ "${GITHUB_EVENT_NAME}" = "workflow_dispatch" ]; then
             IMAGE_TAG="${{ github.event.inputs.version_tag }}"
           else
             IMAGE_TAG="${GITHUB_REF_NAME}"

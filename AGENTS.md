@@ -288,6 +288,9 @@ Este Makefile delega a los Makefiles de los sub‑directorios:
 | | `db-validate` | Valida la integridad de migraciones. |
 | | `db-repair` | Repara metadatos de Flyway. |
 | | `db-clean` | **Peligro:** elimina todas las tablas y datos. |
+| **Cliente API** | `client-help` | Muestra los targets del Makefile del cliente. |
+| | `client-install` | Instala las dependencias npm del cliente. |
+| | `client-run` | Ejecuta el servidor web del cliente API explorer. |
 
 ### Uso típico
 
@@ -301,6 +304,9 @@ make backend-image
 
 # Ejecutar migraciones de base de datos
 make db-migrate
+
+# Ejecutar el cliente API explorer
+make client-run
 
 # Publicar una nueva versión
 make release-tag

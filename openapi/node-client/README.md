@@ -6,20 +6,34 @@ Cliente visual tipo Postman para la API Kiwi, generado automáticamente desde el
 
 - Node.js 18+
 
-## Instalación
+## Ejecución recomendada (desde la raíz del repositorio)
+
+El proyecto está configurado con un sistema de Makefiles anidados. Para ejecutar el cliente API desde la raíz del repositorio:
 
 ```bash
-cd openapi/node-client
-npm install
+# Instalar dependencias (solo primera vez)
+make client-install
+
+# Ejecutar el servidor web
+make client-run
 ```
 
-## Uso
+## Ejecución directa (desde este directorio)
 
 ```bash
+npm install
 npm run web
 ```
 
-Abre: `http://localhost:3030`
+## Puerto
+
+El servidor por defecto escucha en el puerto 3030:
+`http://localhost:3030`
+
+Para usar un puerto personalizado:
+```bash
+KIWI_CLIENT_PORT=3001 npm run web
+```
 
 ## Funcionalidades
 
@@ -30,9 +44,3 @@ Abre: `http://localhost:3030`
 - Body JSON editable con skeleton autogenerado desde el schema
 - Response con status HTTP, tiempo en ms, headers y body formateado
 - Paneles redimensionables
-
-## Puerto
-
-```bash
-KIWI_CLIENT_PORT=3030 npm run web
-```

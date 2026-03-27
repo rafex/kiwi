@@ -108,6 +108,8 @@ make backend-run-image
 
 # Aplicar migraciones de base de datos
 make db-migrate
+# Ejecutar cliente API
+make client-run
 
 # Crear y publicar una nueva etiqueta de release
 make release-tag

@@ -78,7 +78,7 @@ public class RoleRepositoryImpl implements RoleRepository {
 
 	@Override
 	public void assignRoleToUser(final UUID userId, final UUID roleId) {
-		db.execute(new SqlQuery("SELECT api_assign_role_to_user(?::uuid, ?::uuid)",
-				List.of(SqlParameter.of(userId), SqlParameter.of(roleId))));
+		db.query(new SqlQuery("SELECT api_assign_role_to_user(?::uuid, ?::uuid)",
+				List.of(SqlParameter.of(userId), SqlParameter.of(roleId))), rs -> null);
 	}
 }

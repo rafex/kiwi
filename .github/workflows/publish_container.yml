@@ -109,10 +109,15 @@ jobs:
             mkdir -p artifacts
             cd backend/java/kiwi-parent
             make build-without-tests
-            JAR_FILE=$(find target -name "kiwi-transport-jetty*.jar" | head -1)
+            # Buscar el JAR principal ANTES de cambiar de directorio
+            JAR_FILE=$(find target -name "kiwi-transport-jetty*-jar-with-dependencies.jar" | head -1)
+            if [ -z "$JAR_FILE" ]; then
+              JAR_FILE=$(find target -name "kiwi-transport-jetty*.jar" | head -1)
+            fi
             if [ -z "$JAR_FILE" ]; then
               JAR_FILE=$(find target -name "*.jar" | head -1)
             fi
+            echo "Found JAR: $JAR_FILE"
             # Copiar el JAR a la carpeta artifacts del root
             cp "$JAR_FILE" ../../../artifacts/
             cd ../../..
@@ -121,7 +126,10 @@ jobs:
             gh release download "${{ steps.image_tag.outputs.value }}" --pattern "*.jar" --dir ./artifacts
             ls -la ./artifacts/
             # Encontrar el JAR principal
-            JAR_FILE=$(find ./artifacts -name "kiwi-transport-jetty*.jar" | head -1)
+            JAR_FILE=$(find ./artifacts -name "kiwi-transport-jetty*-jar-with-dependencies.jar" | head -1)
+            if [ -z "$JAR_FILE" ]; then
+              JAR_FILE=$(find ./artifacts -name "kiwi-transport-jetty*.jar" | head -1)
+            fi
             if [ -z "$JAR_FILE" ]; then
               JAR_FILE=$(find ./artifacts -name "*.jar" | head -1)
             fi

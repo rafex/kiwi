@@ -20,8 +20,20 @@ import dev.rafex.kiwi.services.HelloService;
 
 import java.util.Map;
 
+/**
+ * Implementación del servicio de saludo.
+ * Proporciona mensajes de saludo básicos.
+ */
 public class HelloServiceImpl implements HelloService {
 
+	/**
+	 * Crea una instancia de HelloServiceImpl.
+	 */
+	public HelloServiceImpl() { }
+
+	/**
+	 * {@inheritDoc}
+	 */
 	@Override
 	public Map<String, String> sayHello(final String name) {
 
@@ -32,6 +44,9 @@ public class HelloServiceImpl implements HelloService {
 		return Map.of("name", realName, "status", "ok");
 	}
 
+	/**
+	 * {@inheritDoc}
+	 */
 	@Override
 	public Map<String, String> sayHello() {
 		return sayHello(null);

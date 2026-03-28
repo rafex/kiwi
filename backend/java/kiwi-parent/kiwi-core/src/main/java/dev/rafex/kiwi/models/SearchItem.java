@@ -19,5 +19,13 @@ import java.util.UUID;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+/**
+ * Representa un ítem de búsqueda con su puntuación de relevancia.
+ * Utilizado en resultados de búsqueda para mostrar objetos con ranking.
+ *
+ * @param objectId Identificador único del objeto.
+ * @param name     Nombre del objeto.
+ * @param rank     Puntuación de relevancia en la búsqueda (mayor valor = más relevante).
+ */
 public record SearchItem(@JsonProperty("object_id") UUID objectId, String name, double rank) {
 }

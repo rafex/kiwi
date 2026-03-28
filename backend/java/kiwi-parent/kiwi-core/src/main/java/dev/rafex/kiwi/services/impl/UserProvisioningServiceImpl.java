@@ -30,6 +30,10 @@ import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
 
+/**
+ * Implementación del servicio de aprovisionamiento de usuarios.
+ * Maneja la creación de usuarios con hash seguro de contraseñas y asignación de roles.
+ */
 public class UserProvisioningServiceImpl implements UserProvisioningService {
 
 	private final UserRepository userRepo;
@@ -41,6 +45,15 @@ public class UserProvisioningServiceImpl implements UserProvisioningService {
 	// configuración de autenticación
 	private final AuthConfig authConfig;
 
+	/**
+	 * Crea una instancia de UserProvisioningServiceImpl.
+	 *
+	 * @param userRepo repositorio de usuarios para operaciones de persistencia
+	 * @param roleRepo repositorio de roles para gestión de permisos
+	 * @param hasher generador de hash PBKDF2 para contraseñas
+	 * @param authConfig configuración de autenticación
+	 * @throws IllegalArgumentException si la configuración de seguridad es insuficiente
+	 */
 	public UserProvisioningServiceImpl(final UserRepository userRepo, final RoleRepository roleRepo,
 			final PasswordHasherPBKDF2 hasher, final AuthConfig authConfig) {
 		this.userRepo = Objects.requireNonNull(userRepo);
@@ -57,8 +70,14 @@ public class UserProvisioningServiceImpl implements UserProvisioningService {
 	}
 
 	/**
-	 * Crea usuario + roles en una transacción. - username UNIQUE - password se hash
-	 * con PBKDF2-HMAC-SHA256 - roles se crean si no existen (ensureRole)
+	 * {@inheritDoc}
+	 *
+	 * <p>Crea usuario + roles en una transacción:
+	 * <ul>
+	 *   <li>username debe ser UNIQUE</li>
+	 *   <li>password se hash con PBKDF2-HMAC-SHA256</li>
+	 *   <li>roles se crean si no existen (ensureRole)</li>
+	 * </ul>
 	 */
 	@Override
 	public CreateUserResult createUser(final String username, final char[] password, final List<String> roles)
@@ -101,6 +120,11 @@ public class UserProvisioningServiceImpl implements UserProvisioningService {
 		}
 	}
 
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>Verifica si existe al menos un usuario en el sistema.
+	 */
 	@Override
 	public boolean existsAnyUser() throws KiwiError {
 		try {

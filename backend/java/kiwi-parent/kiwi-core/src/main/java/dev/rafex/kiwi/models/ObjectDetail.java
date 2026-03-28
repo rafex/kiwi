@@ -18,6 +18,22 @@ package dev.rafex.kiwi.models;
 import java.time.Instant;
 import java.util.UUID;
 
+/**
+ * Representa los detalles completos de un objeto en el sistema.
+ * Contiene identificador, nombre, descripción, tipo, estado, ubicación actual,
+ * etiquetas, metadata y timestamps de creación/actualización.
+ *
+ * @param objectId            Identificador único del objeto.
+ * @param name                Nombre del objeto.
+ * @param description         Descripción del objeto.
+ * @param type                Tipo de objeto (ej. "document", "image", "asset").
+ * @param status              Estado del objeto (ej. "active", "archived", "draft").
+ * @param currentLocationId   Identificador de la ubicación actual del objeto.
+ * @param tags                Etiquetas asociadas al objeto.
+ * @param metadataJson        Metadata en formato JSON.
+ * @param createdAt           Fecha y hora de creación del objeto.
+ * @param updatedAt           Fecha y hora de última actualización del objeto.
+ */
 public record ObjectDetail(UUID objectId, String name, String description, String type, String status,
 		UUID currentLocationId, String[] tags, String metadataJson, Instant createdAt, Instant updatedAt) {
 }

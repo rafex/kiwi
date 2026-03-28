@@ -31,14 +31,26 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
+/**
+ * Implementación del servicio de gestión de objetos.
+ * Maneja el ciclo de vida completo de objetos: creación, movimiento, búsqueda y actualización.
+ */
 public class ObjectServiceImpl implements ObjectService {
 
 	private final ObjectRepository repo;
 
+	/**
+	 * Crea una instancia de ObjectServiceImpl.
+	 *
+	 * @param repo repositorio de objetos para operaciones de persistencia
+	 */
 	public ObjectServiceImpl(final ObjectRepository repo) {
 		this.repo = repo;
 	}
 
+	/**
+	 * {@inheritDoc}
+	 */
 	@Override
 	public void create(final UUID objectId, final String name, final String description, final String type,
 			final String[] tags, final String metadataJson, final UUID locationId) throws KiwiError {
@@ -50,6 +62,9 @@ public class ObjectServiceImpl implements ObjectService {
 		}
 	}
 
+	/**
+	 * {@inheritDoc}
+	 */
 	@Override
 	public void move(final UUID objectId, final UUID newLocationId) throws KiwiError {
 		try {
@@ -66,6 +81,9 @@ public class ObjectServiceImpl implements ObjectService {
 
 	}
 
+	/**
+	 * {@inheritDoc}
+	 */
 	@Override
 	public List<SearchItem> search(final QuerySpec querySpec) {
 		try {
@@ -82,6 +100,9 @@ public class ObjectServiceImpl implements ObjectService {
 		}
 	}
 
+	/**
+	 * {@inheritDoc}
+	 */
 	@Override
 	public void updateTags(final UUID objectId, final String[] tags) throws KiwiError {
 		try {
@@ -92,6 +113,9 @@ public class ObjectServiceImpl implements ObjectService {
 		}
 	}
 
+	/**
+	 * {@inheritDoc}
+	 */
 	@Override
 	public void updateText(final UUID objectId, final String name, final String description) throws KiwiError {
 		try {
@@ -102,6 +126,9 @@ public class ObjectServiceImpl implements ObjectService {
 		}
 	}
 
+	/**
+	 * {@inheritDoc}
+	 */
 	@Override
 	public void updateMetadata(final UUID objectId, final String metadataJson) throws KiwiError {
 		try {
@@ -112,6 +139,9 @@ public class ObjectServiceImpl implements ObjectService {
 		}
 	}
 
+	/**
+	 * {@inheritDoc}
+	 */
 	@Override
 	public List<FuzzyItem> fuzzy(final String text, final int limit, final int offset) throws KiwiError {
 		try {
@@ -128,6 +158,9 @@ public class ObjectServiceImpl implements ObjectService {
 		}
 	}
 
+	/**
+	 * {@inheritDoc}
+	 */
 	@Override
 	public Optional<ObjectDetail> getById(final UUID objectId) throws KiwiError {
 		try {

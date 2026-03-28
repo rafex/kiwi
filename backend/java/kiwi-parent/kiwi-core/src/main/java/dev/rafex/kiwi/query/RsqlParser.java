@@ -18,8 +18,39 @@ package dev.rafex.kiwi.query;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Parser RSQL (RESTful Service Query Language) para construir árboles de filtros.
+ * <p>
+ * Convierte cadenas RSQL en un árbol de nodos {@link RsqlNode} que representa
+ * expresiones lógicas y comparaciones.
+ * <p>
+ * Características soportadas:
+ * <ul>
+ *   <li>Operadores: ==, !=, =in=, =out=, =like=</li>
+ *   <li>Operadores lógicos: AND (;), OR (,)</li>
+ *   <li>Paréntesis para agrupación</li>
+ *   <li>Valores entre comillas con secuencias de escape</li>
+ *   <li>Listas para operadores IN y OUT</li>
+ * </ul>
+ * <p>
+ * Ejemplos:
+ * <ul>
+ *   <li>name=="example"</li>
+ *   <li>status=="active";(type=="doc",type=="image")</li>
+ *   <li>tags=in=("tag1","tag2")</li>
+ * </ul>
+ */
 public final class RsqlParser {
 
+	/**
+	 * Parsea una cadena RSQL en un árbol de nodos.
+	 * <p>
+	 * Si la entrada es {@code null} o está en blanco, retorna {@code null}.
+	 *
+	 * @param input Cadena RSQL a parsear (ej. "name==\"example\"").
+	 * @return Árbol de nodos RSQL o {@code null} si la entrada está vacía.
+	 * @throws IllegalArgumentException Si la sintaxis RSQL es inválida.
+	 */
 	public RsqlNode parse(final String input) {
 		if (input == null || input.isBlank()) {
 			return null;

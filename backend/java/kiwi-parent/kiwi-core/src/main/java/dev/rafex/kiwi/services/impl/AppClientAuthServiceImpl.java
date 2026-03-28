@@ -29,6 +29,12 @@ import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
 
+/**
+ * Implementación del servicio de autenticación de clientes de aplicación.
+ * <p>
+ * Maneja la autenticación de clientes OAuth2-like y la creación de nuevos clientes.
+ * Utiliza PBKDF2 para hashing de secretos de cliente y valida parámetros de seguridad.
+ */
 public final class AppClientAuthServiceImpl implements AppClientAuthService {
 
 	private final AppClientRepository repository;
@@ -37,16 +43,46 @@ public final class AppClientAuthServiceImpl implements AppClientAuthService {
 	private final int saltBytes;
 	private final int iterations;
 
+	/**
+	 * Crea una nueva instancia del servicio usando valores por defecto del entorno.
+	 * <p>
+	 * Los valores se obtienen de las variables de entorno:
+	 * <ul>
+	 *   <li>{@code AUTH_SALT_BYTES} (por defecto: 16)</li>
+	 *   <li>{@code AUTH_PBKDF2_ITERATIONS} (por defecto: 120000)</li>
+	 * </ul>
+	 *
+	 * @param repository Repositorio de clientes de aplicación.
+	 * @param hasher     Hasher de contraseñas PBKDF2.
+	 */
 	public AppClientAuthServiceImpl(final AppClientRepository repository, final PasswordHasherPBKDF2 hasher) {
 		this(repository, hasher, new SecureRandom(),
 				Integer.parseInt(System.getenv().getOrDefault("AUTH_SALT_BYTES", "16")),
 				Integer.parseInt(System.getenv().getOrDefault("AUTH_PBKDF2_ITERATIONS", "120000")));
 	}
+	
+	/**
+	 * Crea una nueva instancia del servicio usando configuración de autenticación.
+	 *
+	 * @param repository  Repositorio de clientes de aplicación.
+	 * @param hasher      Hasher de contraseñas PBKDF2.
+	 * @param authConfig  Configuración de autenticación con parámetros de seguridad.
+	 */
 	public AppClientAuthServiceImpl(final AppClientRepository repository, final PasswordHasherPBKDF2 hasher,
 			final AuthConfig authConfig) {
 		this(repository, hasher, new SecureRandom(), authConfig.saltBytes(), authConfig.iterations());
 	}
 
+	/**
+	 * Constructor principal que valida parámetros de seguridad.
+	 *
+	 * @param repository Repositorio de clientes de aplicación.
+	 * @param hasher     Hasher de contraseñas PBKDF2.
+	 * @param random     Generador de números aleatorios seguros para salting.
+	 * @param saltBytes  Número de bytes para el salt (mínimo 16).
+	 * @param iterations Número de iteraciones PBKDF2 (mínimo 10,000).
+	 * @throws IllegalArgumentException Si {@code saltBytes < 16} o {@code iterations < 10_000}.
+	 */
 	public AppClientAuthServiceImpl(final AppClientRepository repository, final PasswordHasherPBKDF2 hasher,
 			final SecureRandom random, final int saltBytes, final int iterations) {
 		this.repository = Objects.requireNonNull(repository);
@@ -62,6 +98,18 @@ public final class AppClientAuthServiceImpl implements AppClientAuthService {
 		this.iterations = iterations;
 	}
 
+	/**
+	 * {@inheritDoc}
+	 * <p>
+	 * Autentica un cliente de aplicación verificando:
+	 * <ol>
+	 *   <li>Entrada válida (clientId y clientSecret no vacíos)</li>
+	 *   <li>Existencia del cliente en el repositorio</li>
+	 *   <li>Estado activo del cliente</li>
+	 *   <li>Validez del secreto usando PBKDF2</li>
+	 *   <li>Actualiza timestamp de último uso</li>
+	 * </ol>
+	 */
 	@Override
 	public AuthResult authenticate(final String clientId, final char[] clientSecret) {
 		if (clientId == null || clientId.isBlank() || clientSecret == null || clientSecret.length == 0) {
@@ -94,6 +142,19 @@ public final class AppClientAuthServiceImpl implements AppClientAuthService {
 		}
 	}
 
+	/**
+	 * {@inheritDoc}
+	 * <p>
+	 * Crea un nuevo cliente de aplicación con:
+	 * <ol>
+	 *   <li>Validación de entrada (clientId no vacío, longitud máxima 120 caracteres)</li>
+	 *   <li>Generación de salt aleatorio</li>
+	 *   <li>Hashing del secreto usando PBKDF2</li>
+	 *   <li>Normalización de roles</li>
+	 *   <li>Persistencia en el repositorio</li>
+	 *   <li>Manejo de violación de unicidad (clientId duplicado)</li>
+	 * </ol>
+	 */
 	@Override
 	public CreateClientResult createClient(final String clientId, final String name, final char[] clientSecret,
 			final List<String> roles) {

@@ -24,16 +24,42 @@ import dev.rafex.kiwi.services.AuthService;
 import java.util.Arrays;
 import java.util.Objects;
 
+/**
+ * Implementación del servicio de autenticación de usuarios.
+ * <p>
+ * Valida credenciales de usuario (nombre de usuario y contraseña) utilizando
+ * el repositorio de usuarios y el hasher PBKDF2. Realiza validación de estado
+ * del usuario y recupera roles asociados.
+ */
 public final class AuthServiceImpl implements AuthService {
 
 	private final UserRepository repository;
 	private final PasswordHasherPBKDF2 hasher;
 
+	/**
+	 * Crea una nueva instancia del servicio de autenticación.
+	 *
+	 * @param userRepo Repositorio de usuarios para consulta de usuarios.
+	 * @param hasher   Hasher de contraseñas PBKDF2 para validación de credenciales.
+	 */
 	public AuthServiceImpl(final UserRepository userRepo, final PasswordHasherPBKDF2 hasher) {
 		repository = Objects.requireNonNull(userRepo);
 		this.hasher = Objects.requireNonNull(hasher);
 	}
 
+	/**
+	 * {@inheritDoc}
+	 * <p>
+	 * El proceso de autenticación incluye:
+	 * <ol>
+	 *   <li>Validación básica de entrada (username y password no nulos)</li>
+	 *   <li>Búsqueda del usuario por nombre de usuario</li>
+	 *   <li>Verificación de estado activo del usuario</li>
+	 *   <li>Validación de contraseña utilizando PBKDF2</li>
+	 *   <li>Recuperación de roles del usuario</li>
+	 *   <li>Limpieza segura del arreglo de contraseña</li>
+	 * </ol>
+	 */
 	@Override
 	public AuthResult authenticate(final String username, final char[] password) {
 		if (username == null || username.isBlank() || password == null || password.length == 0) {

@@ -17,7 +17,19 @@ package dev.rafex.kiwi.services;
 
 import java.util.UUID;
 
+/**
+ * Servicio de gestión de ubicaciones.
+ * Maneja la creación y organización jerárquica de ubicaciones.
+ */
 public interface LocationService {
 
+	/**
+	 * Crea una nueva ubicación.
+	 *
+	 * @param locationId Identificador único de la ubicación.
+	 * @param name Nombre de la ubicación.
+	 * @param parentId Identificador de la ubicación padre (opcional).
+	 * @throws Exception Si ocurre un error durante la creación.
+	 */
 	void create(UUID locationId, String name, UUID parentId) throws Exception;
 }

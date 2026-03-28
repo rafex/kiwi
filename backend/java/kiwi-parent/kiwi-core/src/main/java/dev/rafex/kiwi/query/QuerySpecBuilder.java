@@ -18,15 +18,49 @@ package dev.rafex.kiwi.query;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Constructor de {@link QuerySpec} a partir de parámetros HTTP crudos.
+ * Convierte parámetros de consulta como filtros RSQL, tags, locationId, enabled,
+ * ordenamiento, limit y offset en una especificación de consulta estructurada.
+ * <p>
+ * Proporciona validación y saneamiento de valores, incluyendo:
+ * <ul>
+ *   <li>Parseo de filtros RSQL</li>
+ *   <li>Conversión de filtros clásicos (tags, locationId, enabled)</li>
+ *   <li>Validación de límites y offsets</li>
+ *   <li>Parseo de criterios de ordenamiento</li>
+ *   <li>Detección de búsqueda de texto libre</li>
+ * </ul>
+ */
 public final class QuerySpecBuilder {
 
+	/** Límite mínimo permitido para paginación. */
 	private static final int MIN_LIMIT = 1;
+	/** Límite máximo permitido para paginación. */
 	private static final int MAX_LIMIT = 200;
+	/** Offset mínimo permitido para paginación. */
 	private static final int MIN_OFFSET = 0;
+	/** Offset máximo permitido para paginación. */
 	private static final int MAX_OFFSET = 100_000;
 
 	private final RsqlParser parser = new RsqlParser();
 
+	/**
+	 * Construye un {@link QuerySpec} a partir de parámetros HTTP crudos.
+	 * <p>
+	 * Procesa y combina filtros RSQL con filtros clásicos, valida límites y offsets,
+	 * y parsea criterios de ordenamiento.
+	 *
+	 * @param q         Filtro RSQL (ej. "name==\"ejemplo\"").
+	 * @param tags      Tags separados por comas (ej. "tag1,tag2,tag3").
+	 * @param locationId Identificador de ubicación para filtrar.
+	 * @param enabled   Estado "true" o "false" para filtrar por habilitado.
+	 * @param sort      Criterios de ordenamiento (ej. "name,-createdAt").
+	 * @param limit     Límite de resultados (1-200).
+	 * @param offset    Offset para paginación (0-100000).
+	 * @return Especificación de consulta estructurada.
+	 * @throws IllegalArgumentException Si algún parámetro es inválido.
+	 */
 	public QuerySpec fromRawParams(final String q, final String tags, final String locationId, final String enabled,
 			final String sort, final String limit, final String offset) {
 

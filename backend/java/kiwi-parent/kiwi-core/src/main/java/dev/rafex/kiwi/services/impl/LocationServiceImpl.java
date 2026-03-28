@@ -24,14 +24,26 @@ import dev.rafex.kiwi.services.LocationService;
 
 import java.util.UUID;
 
+/**
+ * Implementación del servicio de gestión de ubicaciones.
+ * Maneja la creación de ubicaciones jerárquicas y valida restricciones de integridad referencial.
+ */
 public class LocationServiceImpl implements LocationService {
 
 	private final LocationRepository repo;
 
+	/**
+	 * Crea una instancia de LocationServiceImpl.
+	 *
+	 * @param repo repositorio de ubicaciones para operaciones de persistencia
+	 */
 	public LocationServiceImpl(final LocationRepository repo) {
 		this.repo = repo;
 	}
 
+	/**
+	 * {@inheritDoc}
+	 */
 	@Override
 	public void create(final UUID locationId, final String name, final UUID parentId) throws KiwiError {
 		try {

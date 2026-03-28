@@ -17,9 +17,24 @@ package dev.rafex.kiwi.services;
 
 import java.util.Map;
 
+/**
+ * Servicio de saludo.
+ * Proporciona funcionalidad básica para generar mensajes de saludo.
+ */
 public interface HelloService {
 
+	/**
+	 * Saluda a una persona específica.
+	 *
+	 * @param name Nombre de la persona a saludar.
+	 * @return Mapa con el mensaje de saludo.
+	 */
 	Map<String, String> sayHello(String name);
 
+	/**
+	 * Saluda de manera general.
+	 *
+	 * @return Mapa con el mensaje de saludo genérico.
+	 */
 	Map<String, String> sayHello();
 }

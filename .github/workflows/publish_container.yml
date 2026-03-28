@@ -72,6 +72,9 @@ jobs:
             exit 1
           fi
           echo "value=$IMAGE_TAG" >> "$GITHUB_OUTPUT"
+          # Extraer YYYYmmDD[-N] quitando el prefijo vN.
+          DATE_TAG="${IMAGE_TAG#v[0-9]*.}"
+          echo "date_tag=$DATE_TAG" >> "$GITHUB_OUTPUT"
 
       - name: Set up Java
         uses: actions/setup-java@v4
@@ -108,6 +111,7 @@ jobs:
           platforms: linux/amd64,linux/arm64
           tags: |
             ghcr.io/${{ github.repository_owner }}/kiwi-jetty-backend:${{ steps.image_tag.outputs.value }}
+            ghcr.io/${{ github.repository_owner }}/kiwi-jetty-backend:${{ steps.image_tag.outputs.date_tag }}
             ghcr.io/${{ github.repository_owner }}/kiwi-jetty-backend:${{ github.sha }}
           cache-from: |
             type=registry,ref=ghcr.io/${{ github.repository_owner }}/kiwi-jetty-backend:${{ github.sha }}
@@ -117,5 +121,6 @@ jobs:
           IMAGE_BASE="ghcr.io/${{ github.repository_owner }}/kiwi-jetty-backend"
           echo "Image pushed to: $IMAGE_BASE"
           echo "Final image URL (primary): $IMAGE_BASE:${{ steps.image_tag.outputs.value }}"
+          echo "Final image URL (date): $IMAGE_BASE:${{ steps.image_tag.outputs.date_tag }}"
           echo "Final image URL (sha): $IMAGE_BASE:${{ github.sha }}"
           echo "Make the package public in GitHub Packages UI if you want anonymous pulls."

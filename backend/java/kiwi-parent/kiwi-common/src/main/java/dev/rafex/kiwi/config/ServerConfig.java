@@ -23,16 +23,14 @@ import java.util.Set;
 /**
  * HTTP server configuration.
  *
- * @param port
- *            server port (default 8080)
- * @param maxThreads
- *            maximum number of HTTP threads (default max(cpus * 2, 16))
- * @param minThreads
- *            minimum number of HTTP threads (default 4)
- * @param idleTimeoutMs
- *            thread idle timeout in milliseconds (default 30000)
- * @param threadPoolName
- *            name of the thread pool (default "kiwi-http")
+ * @param port                     server port (default 8080)
+ * @param maxThreads               maximum number of HTTP threads (default max(cpus * 2, 16))
+ * @param minThreads               minimum number of HTTP threads (default 4)
+ * @param idleTimeoutMs            thread idle timeout in milliseconds (default 30000)
+ * @param threadPoolName           name of the thread pool (default "kiwi-http")
+ * @param environment              execution environment (e.g., "dev", "prod")
+ * @param enableUserProvisioning   flag to enable user provisioning endpoint
+ * @param bootstrapToken           token used for bootstrapping the application
  */
 public record ServerConfig(int port, int maxThreads, int minThreads, int idleTimeoutMs, String threadPoolName,
 		String environment, boolean enableUserProvisioning, String bootstrapToken) {
@@ -56,6 +54,9 @@ public record ServerConfig(int port, int maxThreads, int minThreads, int idleTim
 
 	/**
 	 * Load server configuration from EtherConfig.
+	 *
+	 * @param config The EtherConfig source.
+	 * @return The loaded ServerConfig.
 	 */
 	public static ServerConfig from(final EtherConfig config) {
 		final var cpus = Runtime.getRuntime().availableProcessors();
@@ -73,6 +74,11 @@ public record ServerConfig(int port, int maxThreads, int minThreads, int idleTim
 				enableUserProvisioning, bootstrapToken);
 	}
 
+	/**
+	 * Checks if the current environment is a sandbox or development environment.
+	 *
+	 * @return true if environment is "work02", "sandbox", or "dev".
+	 */
 	public boolean isSandbox() {
 		return Set.of("work02", "sandbox", "dev").contains(environment.toLowerCase());
 	}

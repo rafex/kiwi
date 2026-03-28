@@ -169,6 +169,13 @@ jobs:
         if: ${{ github.ref == 'refs/heads/main' || github.event_name == 'workflow_dispatch' }}
         run: echo "${{ steps.release_version.outputs.value }}" > release-tag.txt
 
+      - name: Upload build artifacts for container workflow
+        if: ${{ github.ref == 'refs/heads/main' || github.event_name == 'workflow_dispatch' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: java-build-artifacts
+          path: backend/java/kiwi-parent/kiwi-transport-jetty/target/kiwi-transport-jetty-*-jar-with-dependencies.jar
+
       - name: Upload release tag artifact
         if: ${{ github.ref == 'refs/heads/main' || github.event_name == 'workflow_dispatch' }}
         uses: actions/upload-artifact@v4

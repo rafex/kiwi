@@ -7,12 +7,12 @@
 	<parent>
 		<groupId>dev.rafex.kiwi</groupId>
 		<artifactId>kiwi-parent</artifactId>
-		<version>1.2.1</version>
+		<version>1.2.2</version>
 		<relativePath>../pom.xml</relativePath>
 	</parent>
 
 	<artifactId>kiwi-tools</artifactId>
-	<version>1.2.1</version>
+	<version>1.2.2</version>
 
 	<name>kiwi-tools</name>
 
@@ -24,12 +24,12 @@
 		<dependency>
 			<groupId>dev.rafex.kiwi</groupId>
 			<artifactId>kiwi-infra-postgres</artifactId>
-			<version>1.2.1</version>
+			<version>1.2.2</version>
 		</dependency>
 		<dependency>
 			<groupId>dev.rafex.kiwi</groupId>
 			<artifactId>kiwi-core</artifactId>
-			<version>1.2.1</version>
+			<version>1.2.2</version>
 		</dependency>
 	</dependencies>
 

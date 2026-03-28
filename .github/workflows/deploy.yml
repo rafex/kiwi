@@ -38,17 +38,21 @@ jobs:
       - name: Install Helm
         uses: azure/setup-helm@v4
 
+      - name: Download release tag artifact
+        if: ${{ github.event_name == 'workflow_run' }}
+        uses: actions/download-artifact@v4
+        with:
+          name: release-tag
+          run-id: ${{ github.event.workflow_run.id }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Resolve deploy image tag
         id: deploy_tag
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           if [ "${GITHUB_EVENT_NAME}" = "workflow_dispatch" ] && [ -n "${{ github.event.inputs.version_tag }}" ]; then
             IMAGE_TAG="${{ github.event.inputs.version_tag }}"
           elif [ "${GITHUB_EVENT_NAME}" = "workflow_run" ]; then
-            IMAGE_TAG=$(gh api repos/${{ github.repository }}/releases/latest --jq '.tag_name')
-          elif [ "${GITHUB_REF_TYPE}" = "tag" ]; then
-            IMAGE_TAG="${GITHUB_REF_NAME}"
+            IMAGE_TAG=$(cat release-tag.txt)
           else
             IMAGE_TAG="latest"
           fi

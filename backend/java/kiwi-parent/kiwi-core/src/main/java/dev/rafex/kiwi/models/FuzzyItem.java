@@ -19,6 +19,14 @@ import java.util.UUID;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+/**
+ * Represents an item found during a fuzzy search operation.
+ * Contains the object identifier, name, and relevance score.
+ *
+ * @param objectId The unique identifier of the object.
+ * @param name     The name of the object.
+ * @param score    The relevance score of the match (0.0 to 1.0).
+ */
 public record FuzzyItem(@JsonProperty("object_id") UUID objectId, String name, float score) {
 
 }

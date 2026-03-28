@@ -54,15 +54,21 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Download release tag artifact
+        if: ${{ github.event_name == 'workflow_run' }}
+        uses: actions/download-artifact@v4
+        with:
+          name: release-tag
+          run-id: ${{ github.event.workflow_run.id }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Resolve and validate image tag
         id: image_tag
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           if [ "${GITHUB_EVENT_NAME}" = "workflow_dispatch" ]; then
             IMAGE_TAG="${{ github.event.inputs.version_tag }}"
           elif [ "${GITHUB_EVENT_NAME}" = "workflow_run" ]; then
-            IMAGE_TAG=$(gh api repos/${{ github.repository }}/releases/latest --jq '.tag_name')
+            IMAGE_TAG=$(cat release-tag.txt)
           else
             IMAGE_TAG="${GITHUB_REF_NAME}"
           fi
@@ -115,6 +121,14 @@ jobs:
             ghcr.io/${{ github.repository_owner }}/kiwi-jetty-backend:${{ github.sha }}
           cache-from: |
             type=registry,ref=ghcr.io/${{ github.repository_owner }}/kiwi-jetty-backend:${{ github.sha }}
+
+      - name: Save and upload release tag for deploy workflow
+        run: echo "${{ steps.image_tag.outputs.value }}" > release-tag.txt
+      - name: Upload release tag artifact for deploy workflow
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-tag
+          path: release-tag.txt
 
       - name: Publish visibility note
         run: |

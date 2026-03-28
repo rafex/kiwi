@@ -79,25 +79,14 @@ jobs:
         working-directory: backend/java/kiwi-parent
         run: make build
 
-      # Temporarily disabled context documentation update
-      # - name: Update Context Documentation
-      #   run: |
-      #      chmod +x scripts/update-context.sh
-      #      ./scripts/update-context.sh
-      #      git config --global user.name "github-actions"
-      #      git config --global user.email "github-actions@github.com"
-      #      git add context/
-      #      git diff --cached --quiet || git commit -m "docs: auto-update context"
-      #      git push origin HEAD:main
-
       - name: Set up GraalVM
         if: ${{ github.event.inputs.build_native != 'false' && (github.ref == 'refs/heads/main' || github.event_name == 'workflow_dispatch') }}
         uses: graalvm/setup-graalvm@v1
         with:
-          java-version: '25'  # See 'Options' for more details
-          distribution: 'graalvm'  # See 'Supported distributions' for available options
+          java-version: '25'
+          distribution: 'graalvm'
 
-      - name: Make native build (Java backend)
+      - name: Make native build Linux (Java backend)
         if: ${{ github.event.inputs.build_native != 'false' && (github.ref == 'refs/heads/main' || github.event_name == 'workflow_dispatch') }}
         working-directory: backend/java/kiwi-parent
         env:
@@ -109,23 +98,14 @@ jobs:
           # Renombrar binarios con sufijo de arquitectura
           for bin in kiwi-jetty*.bin; do
             if [ -f "$bin" ]; then
-              # Extraer nombre base y extensión
               base="${bin%.*}"
               ext="${bin##*.}"
-
-              # Determinar arquitectura basada en el nombre
               if [[ "$bin" == *"x86-64-v3"* ]]; then
                 mv "$bin" "${base}-x64.${ext}"
               elif [[ "$bin" == *"x86-64-v2"* ]]; then
                 mv "$bin" "${base}-x86.${ext}"
               elif [[ "$bin" == *"aarm64"* ]] || [[ "$bin" == *"arm64"* ]]; then
-                # Determinar si es Linux ARM o Darwin ARM
-                uname_output=$(uname -s)
-                if [ "$uname_output" == "Darwin" ]; then
-                  mv "$bin" "${base}-darwin.${ext}"
-                else
-                  mv "$bin" "${base}-arm64.${ext}"
-                fi
+                mv "$bin" "${base}-arm64.${ext}"
               elif [[ "$bin" == *"compatibility"* ]]; then
                 mv "$bin" "${base}-linux.${ext}"
               fi
@@ -135,56 +115,118 @@ jobs:
           echo "Generated binaries:"
           ls -la kiwi-jetty*.bin 2>/dev/null || echo "No binarios encontrados"
 
-      - name: Resolve release version
-        id: release_version
-        if: ${{ github.ref == 'refs/heads/main' || github.event_name == 'workflow_dispatch' }}
-        run: |
-          # Determinar versión basada en la rama
-          if [ "${GITHUB_EVENT_NAME}" = "workflow_dispatch" ] && [ -n "${{ github.event.inputs.release_version }}" ]; then
-            RELEASE_VERSION="${{ github.event.inputs.release_version }}"
-          elif [ "${GITHUB_REF}" = "refs/heads/main" ]; then
-            # Para main, usar fecha y número secuencial
-            DATE=$(date +%Y%m%d)
-            # Buscar la última versión con esa fecha en los tags
-            LAST_TAG=$(git tag -l "v1.${DATE}-*" | sort -V | tail -1)
-            if [ -z "$LAST_TAG" ]; then
-              NEXT_NUM=1
-            else
-              # Extraer el número después del guion
-              LAST_NUM=$(echo "$LAST_TAG" | sed -n "s/v1.${DATE}-//p")
-              NEXT_NUM=$((LAST_NUM + 1))
-            fi
-            RELEASE_VERSION="v1.${DATE}-${NEXT_NUM}"
-          elif [ "${GITHUB_REF}" = "refs/heads/develop" ]; then
-            # Para develop, usar versión SNAPSHOT
-            RELEASE_VERSION="v1.$(date +%Y%m%d)-SNAPSHOT"
-          else
-            RELEASE_VERSION="v1.$(date +%Y%m%d)-$(git rev-parse --short HEAD)"
-          fi
-
-          echo "Release version: $RELEASE_VERSION"
-          echo "value=$RELEASE_VERSION" >> "$GITHUB_OUTPUT"
-
-      - name: Save release tag for downstream workflows
-        if: ${{ github.ref == 'refs/heads/main' || github.event_name == 'workflow_dispatch' }}
-        run: echo "${{ steps.release_version.outputs.value }}" > release-tag.txt
-
-      - name: Upload build artifacts for container workflow
+      - name: Upload fat jar artifact for container workflow
         if: ${{ github.ref == 'refs/heads/main' || github.event_name == 'workflow_dispatch' }}
         uses: actions/upload-artifact@v4
         with:
           name: java-build-artifacts
           path: backend/java/kiwi-parent/kiwi-transport-jetty/target/kiwi-transport-jetty-*-jar-with-dependencies.jar
 
+      - name: Upload Linux binaries artifact
+        if: ${{ github.event.inputs.build_native != 'false' && (github.ref == 'refs/heads/main' || github.event_name == 'workflow_dispatch') }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: linux-binaries
+          path: backend/java/kiwi-parent/kiwi-jetty*.bin
+
+  build-macos:
+    name: Build macOS native binary (Apple Silicon)
+    needs: check_paths
+    if: ${{ (github.event_name == 'workflow_dispatch' || needs.check_paths.outputs.changed == 'true') && (github.ref == 'refs/heads/main' || github.event_name == 'workflow_dispatch') && github.event.inputs.build_native != 'false' }}
+    runs-on: macos-14
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Set up GraalVM
+        uses: graalvm/setup-graalvm@v1
+        with:
+          java-version: '25'
+          distribution: 'graalvm'
+          cache: 'maven'
+
+      - name: Make native build macOS (Apple Silicon)
+        working-directory: backend/java/kiwi-parent
+        run: make native
+
+      - name: Rename darwin binary
+        working-directory: backend/java/kiwi-parent
+        run: |
+          for bin in kiwi-jetty*.bin; do
+            [ -f "$bin" ] && mv "$bin" "kiwi-jetty-darwin.bin"
+          done
+          echo "Generated binary:"
+          ls -la kiwi-jetty-darwin.bin
+
+      - name: Upload macOS binary artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: macos-artifacts
+          path: backend/java/kiwi-parent/kiwi-jetty-darwin.bin
+
+  release:
+    needs: [build, build-macos]
+    if: ${{ github.ref == 'refs/heads/main' || github.event_name == 'workflow_dispatch' }}
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Resolve release version
+        id: release_version
+        run: |
+          if [ "${GITHUB_EVENT_NAME}" = "workflow_dispatch" ] && [ -n "${{ github.event.inputs.release_version }}" ]; then
+            RELEASE_VERSION="${{ github.event.inputs.release_version }}"
+          elif [ "${GITHUB_REF}" = "refs/heads/main" ]; then
+            DATE=$(date +%Y%m%d)
+            LAST_TAG=$(git tag -l "v1.${DATE}-*" | sort -V | tail -1)
+            if [ -z "$LAST_TAG" ]; then
+              NEXT_NUM=1
+            else
+              LAST_NUM=$(echo "$LAST_TAG" | sed -n "s/v1.${DATE}-//p")
+              NEXT_NUM=$((LAST_NUM + 1))
+            fi
+            RELEASE_VERSION="v1.${DATE}-${NEXT_NUM}"
+          else
+            RELEASE_VERSION="v1.$(date +%Y%m%d)-$(git rev-parse --short HEAD)"
+          fi
+          echo "Release version: $RELEASE_VERSION"
+          echo "value=$RELEASE_VERSION" >> "$GITHUB_OUTPUT"
+
+      - name: Download Linux binaries
+        if: ${{ needs.build.result == 'success' }}
+        uses: actions/download-artifact@v4
+        with:
+          name: linux-binaries
+          path: release-assets
+
+      - name: Download macOS binary
+        if: ${{ needs.build-macos.result == 'success' }}
+        uses: actions/download-artifact@v4
+        with:
+          name: macos-artifacts
+          path: release-assets
+
+      - name: Download fat jar
+        uses: actions/download-artifact@v4
+        with:
+          name: java-build-artifacts
+          path: release-assets
+
+      - name: Save release tag for downstream workflows
+        run: echo "${{ steps.release_version.outputs.value }}" > release-tag.txt
+
       - name: Upload release tag artifact
-        if: ${{ github.ref == 'refs/heads/main' || github.event_name == 'workflow_dispatch' }}
         uses: actions/upload-artifact@v4
         with:
           name: release-tag
           path: release-tag.txt
 
       - name: Publish release and upload assets
-        if: ${{ github.ref == 'refs/heads/main' || github.event_name == 'workflow_dispatch' }}
         uses: softprops/action-gh-release@v2
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -192,9 +234,6 @@ jobs:
           tag_name: ${{ steps.release_version.outputs.value }}
           name: Release ${{ steps.release_version.outputs.value }}
           body: 'Release created by CI from ${{ github.ref }}'
-          files: |
-            backend/java/kiwi-parent/kiwi-jetty*.bin
-            backend/java/kiwi-parent/target/*.jar
-            backend/java/kiwi-parent/kiwi-transport-jetty/target/*-jar-with-dependencies.jar
+          files: release-assets/*
           draft: false
-          prerelease: ${{ github.ref == 'refs/heads/develop' }}
+          prerelease: false

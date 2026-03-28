@@ -137,6 +137,7 @@ jobs:
 
       - name: Resolve release version
         id: release_version
+        if: ${{ github.ref == 'refs/heads/main' || github.event_name == 'workflow_dispatch' }}
         run: |
           # Determinar versión basada en la rama
           if [ "${GITHUB_EVENT_NAME}" = "workflow_dispatch" ] && [ -n "${{ github.event.inputs.release_version }}" ]; then

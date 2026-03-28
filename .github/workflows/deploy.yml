@@ -2,20 +2,18 @@
 name: Deploy Kiwi Backend
 
 on:
+  workflow_dispatch:
+    inputs:
+      version_tag:
+        description: 'Tag de imagen a desplegar (opcional, formato vN.YYYYmmDD[-N])'
+        required: false
+        default: ''
+        type: string
   workflow_run:
     workflows: ["Build and Publish Container"]
     types:
       - completed
-    branches:
-      - main
-      - develop
-  workflow_dispatch:
-    inputs:
-      release_version:
-        description: 'Versión de la release'
-        required: false
-        default: ''
-        type: string
+    branches: main
 
 jobs:
   deploy-backend:
@@ -42,29 +40,20 @@ jobs:
 
       - name: Resolve deploy image tag
         id: deploy_tag
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          if [ "${GITHUB_EVENT_NAME}" = "workflow_dispatch" ] && [ -n "${{ github.event.inputs.release_version }}" ]; then
-            IMAGE_TAG="${{ github.event.inputs.release_version }}"
+          if [ "${GITHUB_EVENT_NAME}" = "workflow_dispatch" ] && [ -n "${{ github.event.inputs.version_tag }}" ]; then
+            IMAGE_TAG="${{ github.event.inputs.version_tag }}"
           elif [ "${GITHUB_EVENT_NAME}" = "workflow_run" ]; then
-            # El workflow padre es Build and Publish Container, necesitamos inferir el tag
-            # Basado en si es main (release) o develop (SNAPSHOT)
-            if [ "${{ github.event.workflow_run.head_branch }}" = "develop" ]; then
-              # Para develop, buscar la última release SNAPSHOT o usar la fecha
-              IMAGE_TAG=$(gh release list --limit 1 --json tagName --jq '.[0].tagName' 2>/dev/null || echo "")
-              if [ -z "$IMAGE_TAG" ] || [[ "$IMAGE_TAG" != *"-SNAPSHOT" ]]; then
-                IMAGE_TAG="v1.$(date +%Y%m%d)-SNAPSHOT"
-              fi
-            elif [ "${{ github.event.workflow_run.head_branch }}" = "main" ]; then
-              # Para main, obtener la última release real
-              IMAGE_TAG=$(gh release list --limit 1 --json tagName --jq '.[0].tagName' 2>/dev/null || echo "latest")
-            else
-              IMAGE_TAG="latest"
-            fi
+            IMAGE_TAG=$(gh api repos/${{ github.repository }}/releases/latest --jq '.tag_name')
+          elif [ "${GITHUB_REF_TYPE}" = "tag" ]; then
+            IMAGE_TAG="${GITHUB_REF_NAME}"
           else
             IMAGE_TAG="latest"
           fi
 
-          if [ "$IMAGE_TAG" != "latest" ] && ! echo "$IMAGE_TAG" | grep -Eq '^v[0-9]+\.[0-9]{8}(-[0-9]+)?(-SNAPSHOT)?$'; then
+          if [ "$IMAGE_TAG" != "latest" ] && ! echo "$IMAGE_TAG" | grep -Eq '^v[0-9]+\.[0-9]{8}(-[0-9]+)?$'; then
             echo "Invalid deploy tag format: $IMAGE_TAG"
             echo "Expected format: vN.YYYYmmDD[-N] (examples: v1.20260313, v1.20260313-1, v2.20260313)"
             exit 1

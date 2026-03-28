@@ -6,15 +6,11 @@ on:
     workflows: ["Java Build (Makefile)"]
     types:
       - completed
-    branches:
-      - main
-  push:
-    branches:
-      - develop
+    branches: main
   workflow_dispatch:
     inputs:
-      release_version:
-        description: 'Versión de la release (ej: v1.20260327-8)'
+      version_tag:
+        description: 'Tag de versión para la imagen (formato vN.YYYYmmDD[-N], ej: v1.20260313 o v1.20260313-1)'
         required: true
         type: string
 
@@ -36,18 +32,11 @@ jobs:
       - name: Check for changes in backend/java/kiwi* or backend/java/Dockerfile
         id: check
         run: |
-          if [ "${GITHUB_EVENT_NAME}" = "workflow_dispatch" ]; then
-            echo "Manual run detected; allowing build."
+          if [ "${GITHUB_EVENT_NAME}" = "workflow_dispatch" ] || [ "${GITHUB_REF_TYPE}" = "tag" ] || [ "${GITHUB_EVENT_NAME}" = "workflow_run" ]; then
+            echo "Detected manual run, tag push, or workflow dependency; allowing build."
             echo "changed=true" >> "$GITHUB_OUTPUT"
             exit 0
           fi
-          # Para push a main o develop, siempre ejecutar build
-          if [ "${GITHUB_REF}" = "refs/heads/main" ] || [ "${GITHUB_REF}" = "refs/heads/develop" ]; then
-            echo "Push to main or develop detected; allowing build."
-            echo "changed=true" >> "$GITHUB_OUTPUT"
-            exit 0
-          fi
-          # Para otros eventos, verificar cambios
           PARENT=$(git rev-parse "${GITHUB_SHA}^" 2>/dev/null || true)
           if [ -z "$PARENT" ]; then
             git diff --name-only "${GITHUB_SHA}" | grep -E '^backend/java/(kiwi|Dockerfile$)' > /dev/null && echo "changed=true" >> "$GITHUB_OUTPUT" || echo "changed=false" >> "$GITHUB_OUTPUT"
@@ -67,74 +56,33 @@ jobs:
 
       - name: Resolve and validate image tag
         id: image_tag
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           if [ "${GITHUB_EVENT_NAME}" = "workflow_dispatch" ]; then
-            IMAGE_TAG="${{ github.event.inputs.release_version }}"
+            IMAGE_TAG="${{ github.event.inputs.version_tag }}"
           elif [ "${GITHUB_EVENT_NAME}" = "workflow_run" ]; then
-            # Obtener la última release del workflow_run usando jq para formato robusto
-            IMAGE_TAG=$(gh release list --limit 1 --json tagName --jq '.[0].tagName' 2>/dev/null || echo "")
-            if [ -z "$IMAGE_TAG" ]; then
-              # Si no hay releases, generar una versión basada en la fecha
-              IMAGE_TAG="v1.$(date +%Y%m%d)-1"
-            fi
-          elif [ "${GITHUB_EVENT_NAME}" = "push" ]; then
-            # Para push a develop, usar versión SNAPSHOT
-            IMAGE_TAG="v1.$(date +%Y%m%d)-SNAPSHOT"
+            IMAGE_TAG=$(gh api repos/${{ github.repository }}/releases/latest --jq '.tag_name')
           else
-            IMAGE_TAG="latest"
+            IMAGE_TAG="${GITHUB_REF_NAME}"
           fi
-          # Validar formato para tags que no sean "latest"
-          if [ "$IMAGE_TAG" != "latest" ] && ! echo "$IMAGE_TAG" | grep -Eq '^v[0-9]+\.[0-9]{8}(-[0-9]+)?(-SNAPSHOT)?$'; then
+          if [ "$IMAGE_TAG" != "latest" ] && ! echo "$IMAGE_TAG" | grep -Eq '^v[0-9]+\.[0-9]{8}(-[0-9]+)?$'; then
             echo "Invalid tag format: $IMAGE_TAG"
             echo "Expected format: vN.YYYYmmDD[-N] (examples: v1.20260313, v1.20260313-1, v2.20260313)"
             exit 1
           fi
           echo "value=$IMAGE_TAG" >> "$GITHUB_OUTPUT"
-          echo "Using image tag: $IMAGE_TAG"
 
-      - name: Setup Java for build
-        if: ${{ github.event_name == 'push' }}
+      - name: Set up Java
         uses: actions/setup-java@v4
         with:
-          distribution: 'temurin'
+          distribution: temurin
           java-version: '25'
-          architecture: 'x64'
-
-      - name: Download JAR from release or build
-        run: |
-          echo "Downloading JAR for version: ${{ steps.image_tag.outputs.value }}"
-          if [ "${GITHUB_EVENT_NAME}" = "push" ]; then
-            # Para push a develop, construir el JAR directamente
-            echo "Building JAR for develop branch"
-            mkdir -p artifacts
-            cd backend/java/kiwi-parent
-            make build-without-tests
-            # Buscar el JAR principal ANTES de cambiar de directorio
-            JAR_FILE=$(find target -name "kiwi-transport-jetty*-jar-with-dependencies.jar" | head -1)
-            if [ -z "$JAR_FILE" ]; then
-              JAR_FILE=$(find target -name "kiwi-transport-jetty*.jar" | head -1)
-            fi
-            if [ -z "$JAR_FILE" ]; then
-              JAR_FILE=$(find target -name "*.jar" | head -1)
-            fi
-            echo "Found JAR: $JAR_FILE"
-            # Copiar el JAR a la carpeta artifacts del root
-            cp "$JAR_FILE" ../../../artifacts/
-            cd ../../..
-          else
-            # Descargar el JAR desde la release
-            gh release download "${{ steps.image_tag.outputs.value }}" --pattern "*.jar" --dir ./artifacts
-            ls -la ./artifacts/
-            # Encontrar el JAR principal
-            JAR_FILE=$(find ./artifacts -name "kiwi-transport-jetty*-jar-with-dependencies.jar" | head -1)
-            if [ -z "$JAR_FILE" ]; then
-              JAR_FILE=$(find ./artifacts -name "kiwi-transport-jetty*.jar" | head -1)
-            fi
-            if [ -z "$JAR_FILE" ]; then
-              JAR_FILE=$(find ./artifacts -name "*.jar" | head -1)
-            fi
-          fi
-          echo "JAR_FILE=$JAR_FILE" >> "$GITHUB_ENV"
+          architecture: x64
+          cache: maven
+      - name: Run the Maven verify phase
+        working-directory: backend/java/kiwi-parent
+        run: make build
 
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v3
@@ -152,14 +100,12 @@ jobs:
       - name: Build and push (release/latest + sha tags)
         uses: docker/build-push-action@v6
         with:
-          context: .
+          context: backend/java
           file: backend/java/Dockerfile
           push: true
           provenance: false
           sbom: false
           platforms: linux/amd64,linux/arm64
-          build-args: |
-            JAR_FILE=${{ env.JAR_FILE }}
           tags: |
             ghcr.io/${{ github.repository_owner }}/kiwi-jetty-backend:${{ steps.image_tag.outputs.value }}
             ghcr.io/${{ github.repository_owner }}/kiwi-jetty-backend:${{ github.sha }}

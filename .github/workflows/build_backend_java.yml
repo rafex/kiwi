@@ -164,6 +164,17 @@ jobs:
           echo "Release version: $RELEASE_VERSION"
           echo "value=$RELEASE_VERSION" >> "$GITHUB_OUTPUT"
 
+      - name: Save release tag for downstream workflows
+        if: ${{ github.ref == 'refs/heads/main' || github.event_name == 'workflow_dispatch' }}
+        run: echo "${{ steps.release_version.outputs.value }}" > release-tag.txt
+
+      - name: Upload release tag artifact
+        if: ${{ github.ref == 'refs/heads/main' || github.event_name == 'workflow_dispatch' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-tag
+          path: release-tag.txt
+
       - name: Publish release and upload assets
         if: ${{ github.ref == 'refs/heads/main' || github.event_name == 'workflow_dispatch' }}
         uses: softprops/action-gh-release@v2

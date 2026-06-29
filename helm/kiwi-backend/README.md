@@ -13,7 +13,7 @@ Para producción se recomienda fijar un tag inmutable (por ejemplo SHA).
 1) Crear secret con credenciales y secretos:
 
 ```bash
-kubectl -n kiwi create secret generic kiwi-backend-secrets \
+kubectl -n poc-kiwi create secret generic kiwi-backend-secrets \
   --from-literal=DB_URL='jdbc:postgresql://postgres:5432/kiwi' \
   --from-literal=DB_USER='kiwi_app' \
   --from-literal=DB_PASSWORD='changeme' \
@@ -24,9 +24,10 @@ kubectl -n kiwi create secret generic kiwi-backend-secrets \
 
 ```bash
 helm upgrade --install kiwi-backend ./helm/kiwi-backend \
-  --namespace kiwi --create-namespace \
+  --namespace poc-kiwi --create-namespace \
   --set image.tag="<sha-o-tag-version>" \
-  --set existingSecret="kiwi-backend-secrets"
+  --set existingSecret="kiwi-backend-secrets" \
+  --set imagePullSecrets[0].name="ghcr-pull-secret"
 ```
 
 ## Notas de operación
@@ -45,20 +46,22 @@ helm upgrade --install kiwi-backend ./helm/kiwi-backend \
 ## Usar otro secret existente
 
 ```bash
-kubectl -n kiwi create secret generic kiwi-backend-secrets \
+kubectl -n poc-kiwi create secret generic kiwi-backend-secrets \
   --from-literal=DB_URL='jdbc:postgresql://postgres:5432/kiwi' \
   --from-literal=DB_USER='kiwi_app' \
   --from-literal=DB_PASSWORD='changeme' \
   --from-literal=JWT_SECRET='CHANGE_ME'
 
 helm upgrade --install kiwi-backend ./helm/kiwi-backend \
-  --namespace kiwi --create-namespace \
-  --set existingSecret=kiwi-backend-secrets
+  --namespace poc-kiwi --create-namespace \
+  --set existingSecret=kiwi-backend-secrets \
+  --set imagePullSecrets[0].name=ghcr-pull-secret
 ```
 
 ## Valores importantes
 
 - `image.repository`, `image.tag`
+- `imagePullSecrets[0].name` (`ghcr-pull-secret` en Server 2)
 - `service.port` (HTTP 8080)
 - `service.glowrootPort` (4000)
 - `service.exposeGlowroot` (true/false)

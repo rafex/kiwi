@@ -19,11 +19,12 @@ jobs:
   deploy-backend:
     runs-on: ubuntu-latest
     env:
-      K3S_NAMESPACE: mvps
+      K3S_NAMESPACE: poc-kiwi
       RELEASE_NAME: kiwi-backend
       CHART_PATH: ./helm/kiwi-backend
       IMAGE_REPOSITORY: ghcr.io/rafex/kiwi-jetty-backend
       EXISTING_SECRET: kiwi-backend-secrets
+      GHCR_PULL_SECRET: ghcr-pull-secret
 
     steps:
       - name: Checkout code
@@ -73,6 +74,7 @@ jobs:
       - name: Validate required secret
         run: |
           kubectl -n "$K3S_NAMESPACE" get secret "$EXISTING_SECRET" >/dev/null
+          kubectl -n "$K3S_NAMESPACE" get secret "$GHCR_PULL_SECRET" >/dev/null
 
       - name: Lint chart
         run: |
@@ -87,6 +89,7 @@ jobs:
             --set image.repository="$IMAGE_REPOSITORY" \
             --set image.tag="${{ steps.deploy_tag.outputs.value }}" \
             --set existingSecret="$EXISTING_SECRET" \
+            --set imagePullSecrets[0].name="$GHCR_PULL_SECRET" \
             --wait --timeout 5m
 
       - name: Show rollout status
@@ -118,6 +121,7 @@ jobs:
             --set image.repository="$IMAGE_REPOSITORY" \
             --set image.tag="${{ steps.deploy_tag.outputs.value }}" \
             --set existingSecret="$EXISTING_SECRET" \
+            --set imagePullSecrets[0].name="$GHCR_PULL_SECRET" \
             > "$dump_dir/helm-template.yaml" 2> "$dump_dir/helm-template.stderr" || true
 
           helm status "$RELEASE_NAME" --namespace "$K3S_NAMESPACE" > "$dump_dir/helm-status.txt" 2>&1 || true

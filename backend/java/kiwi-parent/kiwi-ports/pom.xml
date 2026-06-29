@@ -7,12 +7,12 @@
 	<parent>
 		<groupId>dev.rafex.kiwi</groupId>
 		<artifactId>kiwi-parent</artifactId>
-		<version>1.2.4</version>
+		<version>1.2.5</version>
 		<relativePath>../pom.xml</relativePath>
 	</parent>
 
 	<artifactId>kiwi-ports</artifactId>
-	<version>1.2.4</version>
+	<version>1.2.5</version>
 
 	<name>kiwi-ports</name>
 

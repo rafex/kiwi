@@ -25,6 +25,10 @@ jobs:
       IMAGE_REPOSITORY: ghcr.io/rafex/kiwi-jetty-backend
       EXISTING_SECRET: kiwi-backend-secrets
       GHCR_PULL_SECRET: ghcr-pull-secret
+      GHCR_REGISTRY: ghcr.io
+      GHCR_PULL_USERNAME: ${{ secrets.GHCR_PULL_USERNAME }}
+      GHCR_PULL_TOKEN: ${{ secrets.GHCR_PULL_TOKEN }}
+      GHCR_PULL_EMAIL: ${{ vars.GHCR_PULL_EMAIL || 'noreply@github.com' }}
 
     steps:
       - name: Checkout code
@@ -74,7 +78,18 @@ jobs:
       - name: Validate required secret
         run: |
           kubectl -n "$K3S_NAMESPACE" get secret "$EXISTING_SECRET" >/dev/null
-          kubectl -n "$K3S_NAMESPACE" get secret "$GHCR_PULL_SECRET" >/dev/null
+
+      - name: Ensure GHCR pull secret
+        run: |
+          test -n "$GHCR_PULL_USERNAME"
+          test -n "$GHCR_PULL_TOKEN"
+          kubectl -n "$K3S_NAMESPACE" create secret docker-registry "$GHCR_PULL_SECRET" \
+            --docker-server="$GHCR_REGISTRY" \
+            --docker-username="$GHCR_PULL_USERNAME" \
+            --docker-password="$GHCR_PULL_TOKEN" \
+            --docker-email="$GHCR_PULL_EMAIL" \
+            --dry-run=client -o yaml \
+            | kubectl apply -f -
 
       - name: Lint chart
         run: |

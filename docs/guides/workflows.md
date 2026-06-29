@@ -92,7 +92,8 @@ El proyecto Kiwi usa varios flujos de trabajo definidos en `.github/workflows` p
 * **Jobs:**
   * `deploy-backend` – configura kubeconfig, valida secret, lint del chart, ejecuta `helm upgrade --install`, verifica rollout y sube artefactos de diagnóstico.
 * **Entorno:** Despliegue en namespace `poc-kiwi` de Server 2 usando Helm chart `helm/kiwi-backend`. La imagen proviene de GHCR (`ghcr.io/rafex/kiwi-jetty-backend`).
-* **Secrets requeridos:** GitHub Actions debe tener `KUBE_CONFIG_DATA` con un kubeconfig base64 acotado a `poc-kiwi`. Kubernetes debe tener `poc-kiwi/kiwi-backend-secrets` y `poc-kiwi/ghcr-pull-secret`.
+* **Secrets requeridos en GitHub Actions:** `KUBE_CONFIG_DATA` con un kubeconfig base64 acotado a `poc-kiwi`, `GHCR_PULL_USERNAME` y `GHCR_PULL_TOKEN`.
+* **Secrets requeridos en Kubernetes:** `poc-kiwi/kiwi-backend-secrets`. El workflow crea o actualiza `poc-kiwi/ghcr-pull-secret` durante cada despliegue.
 
 ### 7.4 Resumen de la Cadena CI/CD
 

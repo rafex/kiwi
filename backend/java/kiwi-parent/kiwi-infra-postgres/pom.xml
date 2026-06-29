@@ -7,12 +7,12 @@
 	<parent>
 		<groupId>dev.rafex.kiwi</groupId>
 		<artifactId>kiwi-parent</artifactId>
-		<version>1.2.2</version>
+		<version>1.2.3</version>
 		<relativePath>../pom.xml</relativePath>
 	</parent>
 
 	<artifactId>kiwi-infra-postgres</artifactId>
-	<version>1.2.2</version>
+	<version>1.2.3</version>
 	
 	<name>kiwi-infra-postgres</name>
 
@@ -20,13 +20,13 @@
 		<dependency>
 			<groupId>dev.rafex.kiwi</groupId>
 			<artifactId>kiwi-common</artifactId>
-			<version>1.2.2</version>
+			<version>1.2.3</version>
 		</dependency>
 		
 		<dependency>
 			<groupId>dev.rafex.kiwi</groupId>
 			<artifactId>kiwi-ports</artifactId>
-			<version>1.2.2</version>
+			<version>1.2.3</version>
 		</dependency>
 	
 		<!-- PostgreSQL JDBC -->

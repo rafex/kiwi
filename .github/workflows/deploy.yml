@@ -90,6 +90,8 @@ jobs:
             --set image.tag="${{ steps.deploy_tag.outputs.value }}" \
             --set existingSecret="$EXISTING_SECRET" \
             --set imagePullSecrets[0].name="$GHCR_PULL_SECRET" \
+            --set serviceAccount.create=false \
+            --set serviceAccount.name=kiwi-backend \
             --wait --timeout 5m
 
       - name: Show rollout status
@@ -122,6 +124,8 @@ jobs:
             --set image.tag="${{ steps.deploy_tag.outputs.value }}" \
             --set existingSecret="$EXISTING_SECRET" \
             --set imagePullSecrets[0].name="$GHCR_PULL_SECRET" \
+            --set serviceAccount.create=false \
+            --set serviceAccount.name=kiwi-backend \
             > "$dump_dir/helm-template.yaml" 2> "$dump_dir/helm-template.stderr" || true
 
           helm status "$RELEASE_NAME" --namespace "$K3S_NAMESPACE" > "$dump_dir/helm-status.txt" 2>&1 || true

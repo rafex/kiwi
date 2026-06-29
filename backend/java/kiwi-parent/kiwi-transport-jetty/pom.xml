@@ -7,12 +7,12 @@
 	<parent>
 		<groupId>dev.rafex.kiwi</groupId>
 		<artifactId>kiwi-parent</artifactId>
-		<version>1.2.3</version>
+		<version>1.2.4</version>
 		<relativePath>../pom.xml</relativePath>
 	</parent>
 
 	<artifactId>kiwi-transport-jetty</artifactId>
-	<version>1.2.3</version>
+	<version>1.2.4</version>
 
 	<name>kiwi-transport-jetty</name>
 
@@ -24,12 +24,12 @@
 		<dependency>
 			<groupId>dev.rafex.kiwi</groupId>
 			<artifactId>kiwi-bootstrap</artifactId>
-			<version>1.2.3</version>
+			<version>1.2.4</version>
 		</dependency>
 		<dependency>
 			<groupId>dev.rafex.kiwi</groupId>
 			<artifactId>kiwi-tools</artifactId>
-			<version>1.2.3</version>
+			<version>1.2.4</version>
 		</dependency>
 		<dependency>
 			<groupId>dev.rafex.ether.http</groupId>

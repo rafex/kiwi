@@ -7,12 +7,12 @@
   <parent>
     <groupId>dev.rafex.kiwi</groupId>
     <artifactId>kiwi-parent</artifactId>
-    <version>1.2.3</version>
+    <version>1.2.4</version>
     <relativePath>../pom.xml</relativePath>
   </parent>
 
   <artifactId>kiwi-transport-rabbitmq</artifactId>
-  <version>1.2.3</version>
+  <version>1.2.4</version>
   
   <name>kiwi-transport-rabbitmq</name>
 </project>

@@ -7,12 +7,12 @@
 	<parent>
 		<groupId>dev.rafex.kiwi</groupId>
 		<artifactId>kiwi-parent</artifactId>
-		<version>1.2.5</version>
+		<version>1.2.6</version>
 		<relativePath>../pom.xml</relativePath>
 	</parent>
 
 	<artifactId>kiwi-core</artifactId>
-	<version>1.2.5</version>
+	<version>1.2.6</version>
 
 	<name>kiwi-core</name>
 
@@ -20,12 +20,12 @@
 		<dependency>
 			<groupId>dev.rafex.kiwi</groupId>
 			<artifactId>kiwi-common</artifactId>
-			<version>1.2.5</version>
+			<version>1.2.6</version>
 		</dependency>
 		<dependency>
 			<groupId>dev.rafex.kiwi</groupId>
 			<artifactId>kiwi-ports</artifactId>
-			<version>1.2.5</version>
+			<version>1.2.6</version>
 		</dependency>
 		<dependency>
 			<groupId>dev.rafex.ether.database</groupId>

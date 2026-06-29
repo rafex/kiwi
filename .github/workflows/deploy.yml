@@ -67,9 +67,9 @@ jobs:
           echo "value=$IMAGE_TAG" >> "$GITHUB_OUTPUT"
           echo "Deploy image: ${IMAGE_REPOSITORY}:$IMAGE_TAG"
 
-      - name: Ensure namespace exists
+      - name: Validate namespace access
         run: |
-          kubectl get namespace "$K3S_NAMESPACE" >/dev/null 2>&1 || kubectl create namespace "$K3S_NAMESPACE"
+          kubectl -n "$K3S_NAMESPACE" auth can-i get deployments >/dev/null
 
       - name: Validate required secret
         run: |

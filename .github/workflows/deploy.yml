@@ -24,11 +24,6 @@ jobs:
       CHART_PATH: ./helm/kiwi-backend
       IMAGE_REPOSITORY: ghcr.io/rafex/kiwi-jetty-backend
       EXISTING_SECRET: kiwi-backend-secrets
-      GHCR_PULL_SECRET: ghcr-pull-secret
-      GHCR_REGISTRY: ghcr.io
-      GHCR_PULL_USERNAME: ${{ secrets.GHCR_PULL_USERNAME }}
-      GHCR_PULL_TOKEN: ${{ secrets.GHCR_PULL_TOKEN }}
-      GHCR_PULL_EMAIL: ${{ vars.GHCR_PULL_EMAIL || 'noreply@github.com' }}
 
     steps:
       - name: Checkout code
@@ -79,18 +74,6 @@ jobs:
         run: |
           kubectl -n "$K3S_NAMESPACE" get secret "$EXISTING_SECRET" >/dev/null
 
-      - name: Ensure GHCR pull secret
-        run: |
-          test -n "$GHCR_PULL_USERNAME"
-          test -n "$GHCR_PULL_TOKEN"
-          kubectl -n "$K3S_NAMESPACE" create secret docker-registry "$GHCR_PULL_SECRET" \
-            --docker-server="$GHCR_REGISTRY" \
-            --docker-username="$GHCR_PULL_USERNAME" \
-            --docker-password="$GHCR_PULL_TOKEN" \
-            --docker-email="$GHCR_PULL_EMAIL" \
-            --dry-run=client -o yaml \
-            | kubectl apply -f -
-
       - name: Lint chart
         run: |
           helm lint "$CHART_PATH"
@@ -104,7 +87,6 @@ jobs:
             --set image.repository="$IMAGE_REPOSITORY" \
             --set image.tag="${{ steps.deploy_tag.outputs.value }}" \
             --set existingSecret="$EXISTING_SECRET" \
-            --set imagePullSecrets[0].name="$GHCR_PULL_SECRET" \
             --set serviceAccount.create=false \
             --set serviceAccount.name=kiwi-backend \
             --wait --timeout 5m
@@ -138,7 +120,6 @@ jobs:
             --set image.repository="$IMAGE_REPOSITORY" \
             --set image.tag="${{ steps.deploy_tag.outputs.value }}" \
             --set existingSecret="$EXISTING_SECRET" \
-            --set imagePullSecrets[0].name="$GHCR_PULL_SECRET" \
             --set serviceAccount.create=false \
             --set serviceAccount.name=kiwi-backend \
             > "$dump_dir/helm-template.yaml" 2> "$dump_dir/helm-template.stderr" || true

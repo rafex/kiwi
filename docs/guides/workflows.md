@@ -87,13 +87,13 @@ El proyecto Kiwi usa varios flujos de trabajo definidos en `.github/workflows` p
 
 ### 7.3 `Deploy Kiwi Backend`
 
-* **Evento desencadenador:** `workflow_dispatch` manual (con input `version_tag`) y `push` de tags `v*.*` que afectan el chart Helm.
+* **Evento desencadenador:** `workflow_dispatch` manual (con input `version_tag`) y finalización exitosa de `Build and Publish Container` en `main`.
 * **Objetivo:** Desplegar la imagen Docker en un clúster K3s mediante Helm.
 * **Jobs:**
   * `deploy-backend` – configura kubeconfig, valida secret, lint del chart, ejecuta `helm upgrade --install`, verifica rollout y sube artefactos de diagnóstico.
 * **Entorno:** Despliegue en namespace `poc-kiwi` de Server 2 usando Helm chart `helm/kiwi-backend`. La imagen proviene de GHCR (`ghcr.io/rafex/kiwi-jetty-backend`).
-* **Secrets requeridos en GitHub Actions:** `KUBE_CONFIG_DATA` con un kubeconfig base64 acotado a `poc-kiwi`, `GHCR_PULL_USERNAME` y `GHCR_PULL_TOKEN`.
-* **Secrets requeridos en Kubernetes:** `poc-kiwi/kiwi-backend-secrets`. El workflow crea o actualiza `poc-kiwi/ghcr-pull-secret` durante cada despliegue.
+* **Secret requerido en GitHub Actions:** `KUBE_CONFIG_DATA` con un kubeconfig base64 para el ServiceAccount de despliegue, limitado al namespace `poc-kiwi`. Rota el token antes de su expiración.
+* **Secret requerido en Kubernetes:** `poc-kiwi/kiwi-backend-secrets` para la configuración de la aplicación. La imagen GHCR es pública; el workflow la descarga sin credenciales ni `imagePullSecret`.
 
 ### 7.4 Resumen de la Cadena CI/CD
 

@@ -26,8 +26,7 @@ kubectl -n poc-kiwi create secret generic kiwi-backend-secrets \
 helm upgrade --install kiwi-backend ./helm/kiwi-backend \
   --namespace poc-kiwi --create-namespace \
   --set image.tag="<sha-o-tag-version>" \
-  --set existingSecret="kiwi-backend-secrets" \
-  --set imagePullSecrets[0].name="ghcr-pull-secret"
+  --set existingSecret="kiwi-backend-secrets"
 ```
 
 ## Notas de operación
@@ -54,14 +53,13 @@ kubectl -n poc-kiwi create secret generic kiwi-backend-secrets \
 
 helm upgrade --install kiwi-backend ./helm/kiwi-backend \
   --namespace poc-kiwi --create-namespace \
-  --set existingSecret=kiwi-backend-secrets \
-  --set imagePullSecrets[0].name=ghcr-pull-secret
+  --set existingSecret=kiwi-backend-secrets
 ```
 
 ## Valores importantes
 
 - `image.repository`, `image.tag`
-- `imagePullSecrets[0].name` (`ghcr-pull-secret` en Server 2)
+- `imagePullSecrets` es opcional y sólo se necesita para registros privados.
 - `service.port` (HTTP 8080)
 - `service.glowrootPort` (4000)
 - `service.exposeGlowroot` (true/false)
